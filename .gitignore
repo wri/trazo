@@ -1,0 +1,12 @@
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Build metadata
+*.egg-info/
+.eggs/
+
+# Virtual envs
+.venv/
