@@ -4,21 +4,23 @@
 """
 Step 5 CLI: Inference and post processing.
 
-This CLI exposes three subcommands:
+Subcommands:
 
-  1. tilepairs
-     Select best Sentinel-2 scene pairs per tile for a given AOI and year,
-     then write 8-band stacks and a summary CSV.
-     (Delegates to: tkt.pt5_inference.tilepairs)
+  tilepairs
+      AOI based selector and stack writer.
+      Delegates to tkt.pt5_inference.tilepairs.main(argv).
 
-  2. multi-infer
-     Run multi-model batch inference over precomputed 8-band stacks, where
-     a directory of checkpoints is applied to a directory of TIFF stacks.
-     (Delegates to: tkt.pt5_inference.multimodelinference)
+  tilepairs-tilelist
+      Tile list based selector using SOS/EOS and progressive cloud constraints.
+      Delegates to tkt.pt5_inference.tilepairs_tilelist.main(argv).
 
-  3. batch-infer-legacy
-     Legacy batch inference hook for older scripts.
-     (Delegates to: tkt.pt5_inference.batchinference, if it defines a main())
+  multi-infer
+      Multi model batch inference over a folder of TIFFs.
+      Delegates to tkt.pt5_inference.multimodelinference.main(argv).
+
+  batch-infer
+      Batch inference utility (single or multiple checkpoints).
+      Delegates to tkt.pt5_inference.batchinference.main(argv).
 """
 
 import argparse
@@ -36,41 +38,44 @@ def build_parser() -> argparse.ArgumentParser:
         help="Subcommands for Step 5.",
     )
 
-    # ------------------------------------------------------------------
-    # tilepairs: delegate to tkt.pt5_inference.tilepairs
-    # ------------------------------------------------------------------
+    # tilepairs (AOI based stacks)
     p_pairs = subparsers.add_parser(
         "tilepairs",
         help=(
-            "Select best Sentinel-2 scene pairs per tile for an AOI and year, "
-            "and write 8-band stacks plus a summary CSV."
+            "AOI based Sentinel-2 scene pairing and 8 band stack creation "
+            "(delegates to tkt.pt5_inference.tilepairs)."
         ),
     )
-    # Do not duplicate all options here; forward remaining args to tilepairs.main()
     p_pairs.set_defaults(command="tilepairs")
 
-    # ------------------------------------------------------------------
-    # multi-infer: delegate to tkt.pt5_inference.multimodelinference
-    # ------------------------------------------------------------------
+    # tilepairs-tilelist (tile list + SOS/EOS)
+    p_pairs_tile = subparsers.add_parser(
+        "tilepairs-tilelist",
+        help=(
+            "Tile list based Sentinel-2 scene pairing using SOS/EOS derived "
+            "date windows (delegates to tkt.pt5_inference.tilepairs_tilelist)."
+        ),
+    )
+    p_pairs_tile.set_defaults(command="tilepairs-tilelist")
+
+    # multi-infer (multi model inference over TIFFs)
     p_multi = subparsers.add_parser(
         "multi-infer",
         help=(
-            "Run multi-model batch inference over precomputed stack TIFFs, "
-            "using a directory of checkpoints."
+            "Multi model batch inference over a directory of TIFFs "
+            "(delegates to tkt.pt5_inference.multimodelinference)."
         ),
     )
-    # Same pattern: let multimodelinference.main parse its own arguments
     p_multi.set_defaults(command="multi-infer")
 
-    # ------------------------------------------------------------------
-    # batch-infer-legacy: delegate to tkt.pt5_inference.batchinference
-    # ------------------------------------------------------------------
-    p_legacy = subparsers.add_parser(
-        "batch-infer-legacy",
-        help="Legacy batch inference helper (older behavior).",
+    # batch-infer (general batch inference utility)
+    p_batch = subparsers.add_parser(
+        "batch-infer",
+        help=(
+            "Batch inference utility (delegates to tkt.pt5_inference.batchinference)."
+        ),
     )
-    # Any arguments are forwarded; legacy module may or may not use them
-    p_legacy.set_defaults(command="batch-infer-legacy")
+    p_batch.set_defaults(command="batch-infer")
 
     return parser
 
@@ -80,8 +85,6 @@ def main(argv=None) -> None:
         argv = sys.argv[1:]
 
     parser = build_parser()
-
-    # Parse only known args here; pass through the rest to the underlying modules.
     args, remaining = parser.parse_known_args(argv)
 
     if not args.command:
@@ -91,32 +94,31 @@ def main(argv=None) -> None:
     if args.command == "tilepairs":
         from . import tilepairs
 
-        print("[pt5_inference] Running tilepairs selector/stacker...")
+        print("[pt5_inference] Running AOI based tilepairs selector and stacker...")
         tilepairs.main(remaining)
+        return
+
+    if args.command == "tilepairs-tilelist":
+        from . import tilepairs_tilelist
+
+        print("[pt5_inference] Running tile list based tilepairs selector...")
+        tilepairs_tilelist.main(remaining)
         return
 
     if args.command == "multi-infer":
         from . import multimodelinference
 
-        print("[pt5_inference] Running multi-model batch inference...")
+        print("[pt5_inference] Running multi model inference over stacks...")
         multimodelinference.main(remaining)
         return
 
-    if args.command == "batch-infer-legacy":
+    if args.command == "batch-infer":
         from . import batchinference
 
-        print("[pt5_inference] Running legacy batch inference...")
-        # Be defensive in case batchinference has no main()
-        if hasattr(batchinference, "main"):
-            batchinference.main(remaining)
-        else:
-            print(
-                "[WARN] tkt.pt5_inference.batchinference has no main() function. "
-                "Update it or remove this subcommand."
-            )
+        print("[pt5_inference] Running batch inference utility...")
+        batchinference.main(remaining)
         return
 
-    # Fallback: should not get here, but just in case.
     parser.print_help()
 
 
