@@ -1,6 +1,6 @@
 # Toolkit for Traceability Package
 
-<video src="assets/fieldscropped.mp4?raw=1" width="600" controls>
+<video src="assets/fieldscropped.mp4?raw=1" width="300" controls>
 </video>
 
 End to end utilities for creating training data, preparing chips and masks, and running inference for field boundary modeling. This repository builds on the Fields of the World repo: https://github.com/fieldsoftheworld
