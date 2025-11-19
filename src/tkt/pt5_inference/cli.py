@@ -4,14 +4,21 @@
 """
 Step 5 CLI: Inference and post processing.
 
-This CLI currently exposes:
+This CLI exposes three subcommands:
 
   1. tilepairs
      Select best Sentinel-2 scene pairs per tile for a given AOI and year,
      then write 8-band stacks and a summary CSV.
+     (Delegates to: tkt.pt5_inference.tilepairs)
 
-  2. batch-infer (placeholder)
-     Future hook for running model inference over precomputed stacks.
+  2. multi-infer
+     Run multi-model batch inference over precomputed 8-band stacks, where
+     a directory of checkpoints is applied to a directory of TIFF stacks.
+     (Delegates to: tkt.pt5_inference.multimodelinference)
+
+  3. batch-infer-legacy
+     Legacy batch inference hook for older scripts.
+     (Delegates to: tkt.pt5_inference.batchinference, if it defines a main())
 """
 
 import argparse
@@ -39,39 +46,31 @@ def build_parser() -> argparse.ArgumentParser:
             "and write 8-band stacks plus a summary CSV."
         ),
     )
-    # We do not duplicate all options here. Instead, we forward remaining
-    # arguments directly to tkt.pt5_inference.tilepairs.main(argv).
-    # So the user can pass all the same flags as if they ran the module.
+    # Do not duplicate all options here; forward remaining args to tilepairs.main()
     p_pairs.set_defaults(command="tilepairs")
 
     # ------------------------------------------------------------------
-    # batch-infer: placeholder for future FTW model inference
+    # multi-infer: delegate to tkt.pt5_inference.multimodelinference
     # ------------------------------------------------------------------
-    p_infer = subparsers.add_parser(
-        "batch-infer",
-        help="Batch inference over precomputed stacks (placeholder for now).",
+    p_multi = subparsers.add_parser(
+        "multi-infer",
+        help=(
+            "Run multi-model batch inference over precomputed stack TIFFs, "
+            "using a directory of checkpoints."
+        ),
     )
-    p_infer.add_argument(
-        "--config",
-        default=None,
-        help="Optional config file for batch inference.",
+    # Same pattern: let multimodelinference.main parse its own arguments
+    p_multi.set_defaults(command="multi-infer")
+
+    # ------------------------------------------------------------------
+    # batch-infer-legacy: delegate to tkt.pt5_inference.batchinference
+    # ------------------------------------------------------------------
+    p_legacy = subparsers.add_parser(
+        "batch-infer-legacy",
+        help="Legacy batch inference helper (older behavior).",
     )
-    p_infer.add_argument(
-        "--checkpoint",
-        default=None,
-        help="Model checkpoint or directory of checkpoints.",
-    )
-    p_infer.add_argument(
-        "--input-dir",
-        default=None,
-        help="Directory containing input stack GeoTIFFs.",
-    )
-    p_infer.add_argument(
-        "--output-dir",
-        default=None,
-        help="Directory where inference outputs will be written.",
-    )
-    p_infer.set_defaults(command="batch-infer")
+    # Any arguments are forwarded; legacy module may or may not use them
+    p_legacy.set_defaults(command="batch-infer-legacy")
 
     return parser
 
@@ -82,8 +81,7 @@ def main(argv=None) -> None:
 
     parser = build_parser()
 
-    # We allow subcommands to own their arguments. So we parse known args here
-    # and forward the remaining args to the underlying implementation.
+    # Parse only known args here; pass through the rest to the underlying modules.
     args, remaining = parser.parse_known_args(argv)
 
     if not args.command:
@@ -91,23 +89,34 @@ def main(argv=None) -> None:
         return
 
     if args.command == "tilepairs":
-        # Delegate to tkt.pt5_inference.tilepairs.main(remaining_args)
         from . import tilepairs
 
         print("[pt5_inference] Running tilepairs selector/stacker...")
         tilepairs.main(remaining)
         return
 
-    if args.command == "batch-infer":
-        # Placeholder behavior for now
-        print("[pt5_inference] batch-infer placeholder.")
-        print("config    :", args.config)
-        print("checkpoint:", args.checkpoint)
-        print("input-dir :", args.input_dir)
-        print("output-dir:", args.output_dir)
+    if args.command == "multi-infer":
+        from . import multimodelinference
+
+        print("[pt5_inference] Running multi-model batch inference...")
+        multimodelinference.main(remaining)
         return
 
-    # Fallback
+    if args.command == "batch-infer-legacy":
+        from . import batchinference
+
+        print("[pt5_inference] Running legacy batch inference...")
+        # Be defensive in case batchinference has no main()
+        if hasattr(batchinference, "main"):
+            batchinference.main(remaining)
+        else:
+            print(
+                "[WARN] tkt.pt5_inference.batchinference has no main() function. "
+                "Update it or remove this subcommand."
+            )
+        return
+
+    # Fallback: should not get here, but just in case.
     parser.print_help()
 
 
