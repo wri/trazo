@@ -1,4 +1,4 @@
-# Toolkit for Traceability Package
+# TkT Package (name pending)
 
 <p align="center">
   <img src="assets/fieldscropped2.gif" alt="Field Boundaries" />
