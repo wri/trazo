@@ -10,6 +10,10 @@ Subcommands:
       AOI based selector and stack writer.
       Delegates to tkt.pt5_inference.tilepairs.main(argv).
 
+  tilepairs-advanced
+      Advanced selector that also handles inference and cleanup.
+      Delegates to tkt.pt5_inference.tilepairs_advanced.main(argv).
+
   tilepairs-tilelist
       Tile list based selector using SOS/EOS and progressive cloud constraints.
       Delegates to tkt.pt5_inference.tilepairs_tilelist.main(argv).
@@ -38,7 +42,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="Subcommands for Step 5.",
     )
 
-    # tilepairs (AOI based stacks)
+    # tilepairs (AOI based stacks, selection + 8 band stacks only)
     p_pairs = subparsers.add_parser(
         "tilepairs",
         help=(
@@ -48,12 +52,24 @@ def build_parser() -> argparse.ArgumentParser:
     )
     p_pairs.set_defaults(command="tilepairs")
 
+    # tilepairs-advanced (selection + inference + cleanup)
+    p_pairs_adv = subparsers.add_parser(
+        "tilepairs-advanced",
+        help=(
+            "Advanced Sentinel-2 scene pairing that can also run inference and "
+            "cleanup temporary stacks "
+            "(delegates to tkt.pt5_inference.tilepairs_advanced)."
+        ),
+    )
+    p_pairs_adv.set_defaults(command="tilepairs-advanced")
+
     # tilepairs-tilelist (tile list + SOS/EOS)
     p_pairs_tile = subparsers.add_parser(
         "tilepairs-tilelist",
         help=(
             "Tile list based Sentinel-2 scene pairing using SOS/EOS derived "
-            "date windows (delegates to tkt.pt5_inference.tilepairs_tilelist)."
+            "date windows "
+            "(delegates to tkt.pt5_inference.tilepairs_tilelist)."
         ),
     )
     p_pairs_tile.set_defaults(command="tilepairs-tilelist")
@@ -72,7 +88,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_batch = subparsers.add_parser(
         "batch-infer",
         help=(
-            "Batch inference utility (delegates to tkt.pt5_inference.batchinference)."
+            "Batch inference utility "
+            "(delegates to tkt.pt5_inference.batchinference)."
         ),
     )
     p_batch.set_defaults(command="batch-infer")
@@ -96,6 +113,13 @@ def main(argv=None) -> None:
 
         print("[pt5_inference] Running AOI based tilepairs selector and stacker...")
         tilepairs.main(remaining)
+        return
+
+    if args.command == "tilepairs-advanced":
+        from . import tilepairs_advanced
+
+        print("[pt5_inference] Running advanced tilepairs selector and inference...")
+        tilepairs_advanced.main(remaining)
         return
 
     if args.command == "tilepairs-tilelist":
