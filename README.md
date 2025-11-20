@@ -5,9 +5,9 @@
 </p>
 End to end utilities for creating training data, preparing chips and masks, and running inference for field boundary modeling. This repository builds on the Fields of the World repo: https://github.com/fieldsoftheworld
 
-this is the documentation of a WRI technical note that focuses on how to create training data, sample training data, fine, tune, and train models. This documentation of the technical note also has functionality that can serve researchers and others who want to apply their own field boundaries to create custom models. 
+this is the documentation of a WRI technical note that focuses on how to create training data, sample training data, fine tune models, and train models. This documentation of the technical note also has functionality that can serve researchers and others who want to apply their own field boundaries to create custom models. 
 
-This package also has a several inference scripts for making model test testing easier, such as comparing models on multiple Sentinel-2 tile sites and pulling Sentinel-2 imagery for a users study area.
+This package also has a several inference scripts for making model test testing easier, such as comparing models on multiple Sentinel-2 tile sites and pulling Sentinel-2 imagery for a user's study area.
 
 This front page gives you a practical map of Step 1, Step 2, and Step 5 with quick starts and command examples. Step 3 and 4 to come. Step 1 will be built out more with training data sampling strategies.
 
@@ -57,18 +57,52 @@ toolkit-for-traceability/
 
 ---
 
-# Step 1 — Create data windows from grids
+# Step 1 — Create grids and data windows from grids
+
+### 1A Creating Grids from your field boundaries
+
+gridding.py — build or standardize the AOI grid
+
+Generates a grid of square AOIs or standardizes an existing grid so it can be used by Step 1B.
+
+#### What it does
+- Creates a fishnet grid over an input geometry or bbox, or reads an existing grid.
+- Ensures a unique ID column aoi_id exists.
+- Writes a year column using a constant or a field you specify.
+- Saves the grid to your chosen output path.
+
+#### Outputs
+- A spatial file with an aoi_id string, year int, geometry with chosen CRS
+
+#### Run
+
+```bash
+# Example: build a 2.56 km grid (256 px at 10 m) over an AOI and stamp year 2020
+python -m tkt.pt1_createdata.gridding \
+  --aoi "/path/to/aoi_boundary.shp" \
+  --out "/path/to/grids/conab2020_grid.shp" \
+  --grid-size-m 2560 \
+  --crs "EPSG:32721" \
+  --year-constant 2020
+
+# Example: standardize an existing grid in place
+python -m tkt.pt1_createdata.gridding \
+  --grid "/path/to/existing_grid.shp" \
+  --write-inplace \
+  --id-field cellid \
+  --year-field crop_year
+```
+
+### 1B Creating harvest/planting images for every grid
 
 Produce two 4 band chips per AOI: a planting window and a harvest window. Selection uses SOS and EOS rasters to target month ranges and prioritizes low cloud cover at the chip level.
-
-### What you get
 
 - `window_a/<chip>.tif`  B04, B03, B02, B08 at planting
 - `window_b/<chip>.tif`  B04, B03, B02, B08 at harvest
 - `<chip>__stack8.tif`   optional 8 band stack written during the sweep
 - `missing_windows.txt` and `errors.txt` audit logs
 
-### Key features
+#### Key features
 
 - Queries the Microsoft Planetary Computer STAC
 - Chip level cloud fraction using SCL mask
@@ -78,7 +112,7 @@ Produce two 4 band chips per AOI: a planting window and a harvest window. Select
   - Falls back to the repo copy under `seasontifs/`
   - Stores into your input folder under `eossos tifs/`
 
-### Run
+#### Run
 
 Use the CLI wrapper or call the module directly.
 
@@ -93,7 +127,7 @@ If your build registers an entrypoint for Step 1, you can also run:
 tkt-pt1-create plantingharvest ...  # if present in your install
 ```
 
-### Important inputs
+#### Important inputs
 
 - AOI grid shapefile or a folder of shapefiles
 - Year column or a constant year
