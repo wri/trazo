@@ -59,22 +59,22 @@ toolkit-for-traceability/
 
 # Step 1 — Create grids and data windows from grids
 
-### 1A Creating Grids from your field boundaries
+### > 1A Creating Grids from your field boundaries
 
 gridding.py — build or standardize the AOI grid
 
 Generates a grid of square AOIs or standardizes an existing grid so it can be used by Step 1B.
 
-#### What it does
+### What it does
 - Creates a fishnet grid over an input geometry or bbox, or reads an existing grid.
 - Ensures a unique ID column aoi_id exists.
 - Writes a year column using a constant or a field you specify.
 - Saves the grid to your chosen output path.
 
-#### Outputs
+### Outputs
 - A spatial file with an aoi_id string, year int, geometry with chosen CRS
 
-#### Run
+### Run
 
 ```bash
 # Example: build a 2.56 km grid (256 px at 10 m) over an AOI and stamp year 2020
@@ -93,9 +93,9 @@ python -m tkt.pt1_createdata.gridding \
   --year-field crop_year
 ```
 
-After you have these grids, open the grids and your field boundaries in your preferred geometry editing software; ArcPro, QGIS, Collect Earth Online, etc. Fill in ALL fields within each chip. If you do not fill in all fields, you must use presence-only labels, which weights the background (non-fields) and the unlabeled fields with the value '3'. These values are excluded when calculating loss during fine-tuning/training.
+After you have these grids, open the grids and your field boundaries in your preferred geometry editing software; ArcPro, QGIS, Collect Earth Online, etc. Fill in ALL fields within each chip. If you do not fill in all fields, you must use presence-only labels, which weights the background (non-fields) and the unlabeled fields with the value '3'. These values are excluded when calculating loss during fine-tuning/training. Presence-only masking will be added to step-2 later. You can use the output of step 1B as the imagery to label. Be sure that whatever reference year you are choosing matches when the rest of your field boundaries were produced.
 
-### 1B Creating harvest/planting images for every grid
+### > 1B Creating harvest/planting images for every grid
 
 Produce two 4 band chips per AOI: a planting window and a harvest window. Selection uses SOS and EOS rasters to target month ranges and prioritizes low cloud cover at the chip level.
 
