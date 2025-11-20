@@ -104,7 +104,7 @@ Produce two 4 band chips per AOI: a planting window and a harvest window. Select
 - `<chip>__stack8.tif`   optional 8 band stack written during the sweep
 - `missing_windows.txt` and `errors.txt` audit logs
 
-#### Key features
+### Key features
 
 - Queries the Microsoft Planetary Computer STAC
 - Chip level cloud fraction using SCL mask
@@ -114,7 +114,7 @@ Produce two 4 band chips per AOI: a planting window and a harvest window. Select
   - Falls back to the repo copy under `seasontifs/`
   - Stores into your input folder under `eossos tifs/`
 
-#### Run
+### Run
 
 Use the CLI wrapper or call the module directly.
 
@@ -129,7 +129,7 @@ If your build registers an entrypoint for Step 1, you can also run:
 tkt-pt1-create plantingharvest ...  # if present in your install
 ```
 
-#### Important inputs
+### Important inputs
 
 - AOI grid shapefile or a folder of shapefiles
 - Year column or a constant year
