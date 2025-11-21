@@ -57,7 +57,7 @@ toolkit-for-traceability/
 
 ---
 
-# Step 1 — Create grids and data windows from grids
+# Step 1: Create grids and data windows from grids
 
 ### > 1A Creating Grids from your field boundaries
 
@@ -141,7 +141,7 @@ tkt-pt1-create plantingharvest ...  # if present in your install
 
 ---
 
-# Step 2 — Data preparation
+# Step 2: Data preparation
 
 These tools convert the raw outputs of Step 1 into standardized chips, masks, and a one row per chip GeoParquet.
 
@@ -201,7 +201,7 @@ Notes
 
 ---
 
-# Step 5 — Select per tile pairs and run inference
+# Step 5: Select per tile pairs and run inference
 
 Step 5 contains utilities to choose the best two Sentinel 2 scenes per tile, write 8 band stacks for those pairs, and run inference with one or many checkpoints.
 
