@@ -409,7 +409,7 @@ def process_one_tif(
 
 
 def resize_folder_to_256(
-    folder: Path,
+    base-folder: Path,
     bands_required: int = 8,
     crop_width: int = 256,
     crop_height: int = 256,
@@ -425,11 +425,11 @@ def resize_folder_to_256(
 
     Outputs are written into "<folder>/sized256".
     """
-    if not folder.exists() or not folder.is_dir():
-        print(f"[WARN] Missing or not a directory: {folder}")
+    if not base-folder.exists() or not base-folder.is_dir():
+        print(f"[WARN] Missing or not a directory: {base-folder}")
         return
 
-    out_dir = folder / "sized256"
+    out_dir = base-folder / "sized256"
     safe_mkdir(out_dir)
 
     seen = 0
@@ -442,7 +442,7 @@ def resize_folder_to_256(
     skipped_bands = 0
     skipped_exists = 0
 
-    for entry in sorted(folder.iterdir()):
+    for entry in sorted(base-folder.iterdir()):
         if not entry.is_file():
             continue
         if entry.suffix.lower() not in (".tif", ".tiff"):
@@ -482,7 +482,7 @@ def resize_folder_to_256(
         except Exception as e:
             print(f"[ERROR] {entry} -> {e}")
 
-    print(f"\n=== {folder} ===")
+    print(f"\n=== {base-folder} ===")
     print(
         f"Seen TIFF files: {seen}\n"
         f"Processed: {processed} | Kept: {kept} | Fill only: {filled} | "
@@ -497,15 +497,15 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description=(
             "Standardize 8 band TIFF stacks to 256x256 chips. "
-            "Writes outputs into <folder>/sized256."
+            "Writes outputs into <base-folder>/sized256."
         )
     )
 
     parser.add_argument(
-        "--folder",
+        "--base-folder",
         action="append",
         required=True,
-        help="Folder containing 8 band stacks (can be provided multiple times).",
+        help="Base Folder containing 8 band stacks (can be provided multiple times).",
     )
     parser.add_argument(
         "--bands-required",
@@ -569,7 +569,7 @@ def main(argv: Optional[List[str]] = None) -> None:
 
     for folder in folders:
         resize_folder_to_256(
-            folder=folder,
+            folder=base-folder,
             bands_required=args.bands_required,
             crop_width=args.crop_width,
             crop_height=args.crop_height,
@@ -586,3 +586,4 @@ def main(argv: Optional[List[str]] = None) -> None:
 
 if __name__ == "__main__":
     main()
+
