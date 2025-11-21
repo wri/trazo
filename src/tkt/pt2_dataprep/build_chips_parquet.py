@@ -221,13 +221,21 @@ def process_one_base(
             lsuffix="_field",
             rsuffix="_chip"
         )
-        aoi_col = "aoi_id"
-        if aoi_col not in joined.columns:
-            # Older geopandas may suffix differently
-            for c in ["aoi_id_right", "aoi_id_chip"]:
-                if c in joined.columns:
-                    aoi_col = c
-                    break
+        # Determine which aoi_id column to use (from bbox/chip, not fields)
+        aoi_col = None
+        # Check for chip/right suffix first (this is what we want - the chip aoi_id)
+        # Note: geopandas uses double underscores for suffixes
+        for c in ["aoi_id__chip", "aoi_id_chip", "aoi_id_right", "index_right", "index__chip"]:
+            if c in joined.columns:
+                aoi_col = c
+                break
+        # If no suffix found, check if plain aoi_id exists (only if fields don't have it)
+        if aoi_col is None and "aoi_id" in joined.columns:
+            # Check if fields also has aoi_id - if so, we need the chip one
+            if "aoi_id__field" in joined.columns or "aoi_id_field" in joined.columns:
+                # Both exist, prefer the chip one (should have been suffixed)
+                print("  [WARN] Both field and chip aoi_id found, but chip suffix not detected. Using plain aoi_id.")
+            aoi_col = "aoi_id"
     except TypeError:
         # Fallback API without lsuffix/rsuffix in older versions
         joined = gpd.sjoin(
@@ -236,10 +244,16 @@ def process_one_base(
             how="inner",
             predicate="intersects"
         )
-        aoi_col = "aoi_id"
+        # In older geopandas, if both have aoi_id, it might be index_right or aoi_id_right
+        aoi_col = None
+        for c in ["aoi_id_right", "index_right", "aoi_id"]:
+            if c in joined.columns:
+                aoi_col = c
+                break
 
-    if aoi_col not in joined.columns:
-        print("  [ERROR] Could not determine aoi_id column after spatial join.")
+    if aoi_col is None or aoi_col not in joined.columns:
+        print(f"  [ERROR] Could not determine aoi_id column after spatial join.")
+        print(f"  Available columns: {list(joined.columns)}")
         return
 
     # Group field geometries by chip id

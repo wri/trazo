@@ -67,35 +67,34 @@ Generates a grid of square AOIs or standardizes an existing grid so it can be us
 
 ### What it does
 - Creates a fishnet grid over an input geometry or bbox, or reads an existing grid.
-- Ensures a unique ID column aoi_id exists.
-- Writes a year column using a constant or a field you specify.
-- Saves the grid to your chosen output path.
+- Ensures a unique ID column `cell_id` exists (renamed to `aoi_id` if needed).
+- Filters cells to those with >10% coverage of input boundaries.
+- Saves the grid to your chosen output directory.
 
 ### Outputs
-- A spatial file with an aoi_id string, year int, geometry with chosen CRS
+- A spatial file with `cell_id` (integer), `cell_area`, `covered_area`, `coverage_pct`, and geometry with chosen CRS
+- Output filename is automatically generated as `{input_basename}_grid.shp`
 
 ### Run
 
 ```bash
-# Example: build a 2.56 km grid (256 px at 10 m) over an AOI and stamp year 2020
+# Example: build a 2.56 km grid (256 px at 10 m) over an AOI
 python -m tkt.pt1_createdata.gridding \
-  --aoi "/path/to/aoi_boundary.shp" \
-  --out "/path/to/grids/conab2020_grid.shp" \
-  --grid-size-m 2560 \
-  --crs "EPSG:32721" \
-  --year-constant 2020
+  --input "/path/to/aoi_boundary.shp" \
+  --output-dir "/path/to/grids" \
+  --cell-size-meters 2560 \
+  --target-projected-epsg 32721
 
-# Example: standardize an existing grid in place
-python -m tkt.pt1_createdata.gridding \
-  --grid "/path/to/existing_grid.shp" \
-  --write-inplace \
-  --id-field cellid \
-  --year-field crop_year
+# Note: The output filename is automatically generated as {input_basename}_grid.shp
+# in the output directory. The script does not add a year column - you'll need to
+# add that manually or in your labeling workflow.
 ```
 
 After you have these grids, open the grids and your field boundaries in your preferred geometry editing software; ArcPro, QGIS, Collect Earth Online, etc. Fill in ALL fields within each chip. If you do not fill in all fields, you must use presence-only labels, which weights the background (non-fields) and the unlabeled fields with the value '3'. These values are excluded when calculating loss during fine-tuning/training. Presence-only masking will be added to step-2 later. You can use the output of step 1B as the imagery to label. Be sure that whatever reference year you are choosing matches when the rest of your field boundaries were produced.
 
 ### > 1B Creating harvest/planting images for every grid
+
+**Important**: Use the **grid shapefile** (output from Step 1A), not the original field boundaries, as input to this step.
 
 Produce two 4 band chips per AOI: a planting window and a harvest window. Selection uses SOS and EOS rasters to target month ranges and prioritizes low cloud cover at the chip level.
 
@@ -119,25 +118,39 @@ Produce two 4 band chips per AOI: a planting window and a harvest window. Select
 Use the CLI wrapper or call the module directly.
 
 ```bash
-# CLI form
-python -m tkt.pt1_createdata.plantingharvest   --input-shps  "/path/to/your/grid_or_folder"   --year        2020   --span-months-planting 2   --span-months-harvest  2   --scene-cloud-threshold 90   --patch-cloud-threshold 0.08   --target-cloud-max      0.01   --preferred-cloud-max   0.02   --chip-size 256   --batch-size 10   --overwrite
+# CLI form - use the GRID file from Step 1A, not the original boundaries
+python -m tkt.pt1_createdata.plantingharvest \
+  --input "/path/to/your/grid.shp" \
+  --year-constant 2020 \
+  --planting-span-months 2 \
+  --harvest-span-months 2 \
+  --scene-cloud-threshold-pct 90 \
+  --patch-cloud-threshold-frac 0.08 \
+  --target-cloud-max-frac 0.01 \
+  --preferred-cloud-max-frac 0.02 \
+  --chip-size 256 \
+  --batch-size 10 \
+  --output-dir "/path/to/output" \
+  --season-tifs-dir "/path/to/seasontifs"  # optional, defaults to {input_dir}/eossos tifs/
 ```
 
 If your build registers an entrypoint for Step 1, you can also run:
 
 ```bash
-tkt-pt1-create plantingharvest ...  # if present in your install
+tkt-pt1-create-grid ...  # for gridding
+# Note: plantingharvest is typically called as a module, not via entrypoint
 ```
 
 ### Important inputs
 
-- AOI grid shapefile or a folder of shapefiles
-- Year column or a constant year
+- **AOI grid shapefile** (from Step 1A) - use the grid file, not the original field boundaries
+- Year column or a constant year (via `--year-constant`)
 - Bands of interest are B04, B03, B02, B08
 - SOS/EOS rasters
-  - If missing, the script will download them into your input folder
+  - If missing, the script will try to download them into `{input_dir}/eossos tifs/`
   - Primary source: research_products repo
   - Fallback: `seasontifs/` inside this repo
+  - If downloads fail, manually copy the files or use `--season-tifs-dir` to point to existing files
 
 ---
 
@@ -174,30 +187,62 @@ Subcommands:
 ### Quick start
 
 ```bash
-# 1. Pair
-tkt-pt2-dataprep pair-stacks   --window-a /data/region/window_a   --window-b /data/region/window_b   --out-dir  /data/region   --overwrite
+# 1. Pair window_a and window_b into 8 band stacks
+python -m tkt.pt2_dataprep.cli pair-stacks \
+  --window-a-dir /data/region/window_a \
+  --window-b-dir /data/region/window_b \
+  --out-dir /data/region \
+  --overwrite
 
-# 2. Normalize to 256
-tkt-pt2-dataprep resize-256   --folders /data/region
+# 2. Normalize to 256x256
+python -m tkt.pt2_dataprep.cli resize-256 \
+  --folder /data/region \
+  --overwrite \
+  --use-compression
 
-# 3. BBoxes
-tkt-pt2-dataprep chips-bboxes   --folders /data/region
+# 3. Create chip bounding boxes (must run before chips-parquet)
+python -m tkt.pt2_dataprep.chips_to_bboxes \
+  --folder /data/region \
+  --require-256
 
-# 4. Masks and split
-tkt-pt2-dataprep make-masks   --folders /data/region   --boundary-px 1
+# 4. Make masks and split back to window_a/window_b
+python -m tkt.pt2_dataprep.cli make-masks \
+  --base-folder /data/region \
+  --fields-shp /path/to/fields.shp \
+  --boundary-px 1 \
+  --overwrite
 
-# 5. Parquet
-tkt-pt2-dataprep chips-parquet   --folders /data/region   --train-ratio 0.85 --val-ratio 0.15 --test-ratio 0.0
+# 5. Build per chip GeoParquet
+python -m tkt.pt2_dataprep.build_chips_parquet \
+  --base-folder /data/region \
+  --fields-shp /path/to/fields.shp \
+  --split-train 0.85 \
+  --split-val 0.15 \
+  --split-test 0.0 \
+  --output-epsg EPSG:4326 \
+  --overwrite
 
-# 6. Scale to uint16
-tkt-pt2-dataprep scale-u16   --folders /data/region
+# 6. Scale to uint16 (optional, can run before or after masks)
+python -m tkt.pt2_dataprep.scale_uint16 \
+  --base-folder /data/region \
+  --write-mode suffix \
+  --out-suffix _u16 \
+  --overwrite
 ```
+
+**Note on command formats:**
+- Some commands work via the CLI: `python -m tkt.pt2_dataprep.cli <subcommand>`
+- Others must be called directly: `python -m tkt.pt2_dataprep.<module_name>`
+- Use `--help` on any command to see all available options
 
 Notes
 
 - `make-masks` selects features that intersect each chip without clipping, which avoids fake edges along chip borders
 - 3 class masks write boundary as a thin ribbon that overwrites interior where they overlap
 - `chips-parquet` writes exactly one row per chip and embeds a MultiPolygon of intersecting fields for the chip extent
+- `chips-parquet` requires the bounding box GeoJSON created by `chips-bboxes` - run that first!
+- `chips-parquet` defaults to EPSG:4326 for the output CRS. Use `--output-epsg` to specify a different CRS (e.g., `--output-epsg EPSG:32636` to keep UTM)
+- If both your fields and bbox have an `aoi_id` column, the script will handle the column name conflicts automatically
 
 ---
 
@@ -274,5 +319,8 @@ If you start with a grid of AOIs and a field polygon layer:
 ## Notes
 
 - The repo includes SOS and EOS GeoTIFFs under `seasontifs/` as a fallback. The Step 1 script tries to download the upstream set first and falls back to the bundled copies when needed.
+  - If downloads fail (e.g., SSL certificate issues), you can manually copy `seasontifs/S2_SOS_WGS84.tif` and `seasontifs/S2_EOS_WGS84.tif` to `{input_dir}/eossos tifs/`
+  - Or use `--season-tifs-dir` to point to an existing directory with these files
 - The repo includes a Sentinel 2 tile index at `spatial/sentinel_2_index_shapefile.geojson` for building tile lists from an AOI.
 - All scripts accept `--help` to see the full argument list and defaults.
+- **Important**: If you encounter PROJ database version conflicts (common when mixing conda and venv), the virtual environment activation script has been configured to use the correct PROJ database automatically.

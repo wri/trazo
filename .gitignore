@@ -10,3 +10,4 @@ __pycache__/
 
 # Virtual envs
 .venv/
+/data/
