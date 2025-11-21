@@ -16,12 +16,18 @@ dependencies = [
     "pyarrow",
 ]
 
+[project.optional-dependencies]
+pt1 = ["pystac-client>=0.8", "odc-stac>=0.3", "planetary-computer>=1.0"]
+pt2 = ["rasterio", "geopandas", "shapely", "pyproj", "rtree", "pyarrow"]
+pt5 = ["ftw-cli"]  # whatever package provides `ftw`
+all = ["tkt[pt1,pt2,pt5]"]
+
 [project.scripts]
-tkt-pt1-create-grid = "tkt.pt1_createdata.gridding:main"
-tkt-pt2-prep-data   = "tkt.pt2_dataprep.cli:main"
+tkt-pt1-create = "tkt.pt1_createdata.cli:main"
+tkt-pt2-dataprep = "tkt.pt2_dataprep.cli:main"
 tkt-pt3-finetune    = "tkt.pt3_finetune.cli:main"
 tkt-pt4-train       = "tkt.pt4_train.cli:main"
-tkt-pt5-infer       = "tkt.pt5_inference.cli:main"
+tkt-pt5-infer = "tkt.pt5_inference.cli:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
