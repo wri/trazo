@@ -11,6 +11,7 @@ Subcommands:
   make-masks    Create window_a/b and instance and semantic masks
   chips-parquet Build per chip GeoParquet metadata
   scale-u16     Scale chips to uint16 in [0,10000]
+  export-hkl    Export FTW-style .hkl files from windows and masks
 """
 
 import argparse
@@ -30,6 +31,7 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser("make-masks", help="Create window_a/b and instance and semantic masks.")
     subparsers.add_parser("chips-parquet", help="Build per chip GeoParquet metadata.")
     subparsers.add_parser("scale-u16", help="Scale chips to uint16 in [0,10000].")
+    subparsers.add_parser("export-hkl", help="Export FTW-style .hkl files from windows and masks.")
 
     return parser
 
@@ -75,6 +77,12 @@ def main(argv=None) -> None:
         mod.main(remaining)
         return
 
+    if args.command == "export-hkl":
+        from . import export_hkl as mod
+        mod.main(remaining)
+        return
+
 
 if __name__ == "__main__":
     main()
+
