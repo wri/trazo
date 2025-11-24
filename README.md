@@ -50,7 +50,7 @@ toolkit-for-traceability/
       label_masks/instance/
       label_masks/semantic_2class/
       label_masks/semantic_3class/
-      hkl                             #hickle version of window_a, window_b, label_masks: these combined
+      hkl                             #  hickle version of window_a, window_b, label_masks: these combined
       region_boundingbox256.geojson
       chips_region.parquet
       S2_best_pairs_summary.csv       # Step 5 selection summary
