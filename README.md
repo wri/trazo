@@ -3,7 +3,7 @@
 <p align="center">
   <img src="assets/fieldscropped2.gif" alt="Field Boundaries" />
 </p>
-End to end utilities for creating training data, preparing chips and masks, and running inference for field boundary modeling. This repository builds on the Fields of the World repo: https://github.com/fieldsoftheworld
+End to end utilities for creating training data, preparing chips and masks, and running inference for field boundary modeling. This repository builds on the Fields of the World repo: https://github.com/fieldsoftheworld for documenting efforts to scale FTW to new geographies.
 
 This is the documentation of a WRI technical note that focuses on how to create training data, sample training data, fine tune models, and train models. This documentation of the technical note also has functionality that can serve researchers and others who want to apply their own field boundaries to create custom models. 
 
@@ -42,14 +42,15 @@ toolkit-for-traceability/
   data/
     conab2020/
       conab2020_grid.shp              # user grid
-      window_a/                       # 4 band chips from Step 1 (planting)
-      window_b/                       # 4 band chips from Step 1 (harvest)
+      window_a/                       # 4 band chips from Step 1 (planting), FTW style
+      window_b/                       # 4 band chips from Step 1 (harvest), FTW style
       sized256/                       # optional normalized 8 band chips
-      s2_images/window_a/             # split out of 8 band chips
+      s2_images/window_a/             # split out of 8 band chips, FTW style
       s2_images/window_b/
       label_masks/instance/
       label_masks/semantic_2class/
       label_masks/semantic_3class/
+      hkl                             #hickle version of window_a, window_b, label_masks: these combined
       region_boundingbox256.geojson
       chips_region.parquet
       S2_best_pairs_summary.csv       # Step 5 selection summary
