@@ -93,7 +93,7 @@ import yaml
 import os
 from lightning.pytorch.cli import LightningCLI
 from torchgeo.trainers import BaseTask
-from src.tkt.pt4_train import FTWDataModule
+from src.tkt.pt4_train.datamodules import FTWDataModule
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Step 4: Model training.")
@@ -156,3 +156,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
