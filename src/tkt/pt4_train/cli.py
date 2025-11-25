@@ -95,6 +95,14 @@ from lightning.pytorch.cli import LightningCLI
 from torchgeo.trainers import BaseTask
 from src.tkt.pt4_train.datamodules import FTWDataModule
 
+# def parse_args():
+#     parser = argparse.ArgumentParser(description="Step 4: Model training.")
+#     parser.add_argument("--config", default=None)
+#     parser.add_argument("--data-dir", default=None)
+#     parser.add_argument("--output-dir", default=None)
+#     parser.add_argument("--ckpt", default=None)
+#     return parser.parse_args()
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Step 4: Model training.")
     parser.add_argument("--config", default=None)
@@ -103,6 +111,36 @@ def parse_args():
     parser.add_argument("--ckpt", default=None)
     return parser.parse_args()
 
+if __name__ == "__main__":
+    args = parse_args()
+
+    # Load YAML config
+    with open(args.config, "r") as f:
+        config = yaml.safe_load(f)
+
+    # Override paths if provided
+    if args.data_dir:
+        config["data"]["dict_kwargs"]["root"] = args.data_dir
+    if args.output_dir:
+        config["trainer"]["default_root_dir"] = args.output_dir
+        # Also update checkpoint/logger dirs if needed
+        if "callbacks" in config["trainer"]:
+            for cb in config["trainer"]["callbacks"]:
+                if cb.get("class_path") == "lightning.pytorch.callbacks.ModelCheckpoint":
+                    cb["init_args"]["dirpath"] = f"{args.output_dir}/checkpoints"
+        if "logger" in config["trainer"]:
+            for lg in config["trainer"]["logger"]:
+                if lg.get("class_path") == "lightning.pytorch.loggers.CSVLogger":
+                    lg["init_args"]["save_dir"] = f"{args.output_dir}/metrics"
+
+    # Launch LightningCLI
+    LightningCLI(
+        model_class=CustomSemanticSegmentationTask,
+        datamodule_class=FTWDataModule,
+        config=config,
+        seed_everything_default=7,
+        run=True,
+    )
 def fit(config_path, ckpt_path=None, data_dir=None, output_dir=None):
     """Command to fit the model."""
     print("Running fit command")
@@ -158,6 +196,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
