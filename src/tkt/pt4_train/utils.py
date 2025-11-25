@@ -123,3 +123,35 @@ def batch_corner_consensus_from_model(
             )
         )
     return scores
+
+
+def validate_checksums(checksum_file: str, root_directory: str) -> bool:
+    """Validate checksums stored in a checksum file.
+
+    Args:
+        checksum_file: Path to the checksum file.
+        root_directory: Root directory for resolving relative file paths.
+
+    Returns:
+        True if all checksums match, False otherwise.
+    """
+    if not os.path.isfile(checksum_file):
+        print(f"Checksum file not found: {checksum_file}")
+        return False
+
+    with open(checksum_file, "r") as f:
+        lines = f.readlines()
+
+    for line in lines:
+        parts = line.strip().split()
+        if len(parts) != 2:
+            continue
+
+        stored_checksum, file_path = parts
+        file_path = os.path.join(root_directory, file_path)
+        current_checksum = compute_md5(file_path)
+
+        if current_checksum != stored_checksum:
+            print("Checksum mismatch: {file_path}")
+            return False
+    return True
