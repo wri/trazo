@@ -206,7 +206,7 @@ from lightning.pytorch.cli import LightningCLI
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import your model + datamodule
-from src.tkt.pt4_train.trainers import CustomSemanticSegmentationTask
+# from src.tkt.pt4_train.trainers import CustomSemanticSegmentationTask
 from src.tkt.pt4_train.datamodules import FTWDataModule
 
 
@@ -244,12 +244,13 @@ if __name__ == "__main__":
 
     # Run training
     LightningCLI(
-        model_class=CustomSemanticSegmentationTask,
+        model_class=BaseTask,
         datamodule_class=FTWDataModule,
         config=config,
         run=True,
         seed_everything_default=7,
     )
+
 
 
 
