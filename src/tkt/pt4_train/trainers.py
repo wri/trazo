@@ -26,7 +26,7 @@ from torchmetrics.classification import (
 )
 from torchvision.models._api import WeightsEnum
 
-from ..inference.models import FCSiamAvg
+from .models import FCSiamAvg
 from .losses import (
     CombinedLoss,
     FtnmtLoss,
