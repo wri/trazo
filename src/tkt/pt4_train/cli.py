@@ -136,8 +136,7 @@ def fit(config_path, ckpt_path=None, data_dir=None, output_dir=None):
         subclass_mode_model=True,
         subclass_mode_data=True,
         save_config_kwargs={"overwrite": True},
-        args=cli_args,  # pass datamodule args this way
-        run=False
+        run=False,  # prevents immediate training
     )
 
     # Optionally resume from checkpoint
@@ -159,5 +158,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
