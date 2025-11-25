@@ -202,6 +202,7 @@ import argparse
 import yaml
 from lightning.pytorch.cli import LightningCLI
 from torchgeo.trainers import BaseTask
+import tempfile
 
 # Make sure src/ is importable
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -244,14 +245,28 @@ if __name__ == "__main__":
             if lg.get("class_path") == "lightning.pytorch.loggers.CSVLogger":
                 lg["init_args"]["save_dir"] = f"{args.output_dir}/metrics"
 
-    # Run training
+    # # Run training
+    # LightningCLI(
+    #     model_class=BaseTask,
+    #     datamodule_class=FTWDataModule,
+    #     # config=config,
+    #     run=True,
+    #     seed_everything_default=7,
+    # )
+    # Save modified config to a temporary YAML
+    with tempfile.NamedTemporaryFile("w", suffix=".yaml", delete=False) as tmpfile:
+        yaml.dump(config, tmpfile)
+        tmp_config_path = tmpfile.name
+    
+    # Run LightningCLI with the subcommand
     LightningCLI(
-        model_class=BaseTask,
+        model_class=BaseTask,  # or CustomSemanticSegmentationTask
         datamodule_class=FTWDataModule,
-        # config=config,
         run=True,
         seed_everything_default=7,
+        args=[args.subcommand, f"--config={tmp_config_path}"]
     )
+
 
 
 
