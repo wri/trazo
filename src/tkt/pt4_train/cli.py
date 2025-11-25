@@ -301,7 +301,7 @@ if __name__ == "__main__":
 
     # Override paths in config if provided
     if args.data_dir:
-        config["data"]["dict_kwargs"]["root"] = args.data_dir
+        config["data"]["root"] = args.data_dir
 
     if args.output_dir:
         config["trainer"]["default_root_dir"] = args.output_dir
@@ -332,6 +332,7 @@ if __name__ == "__main__":
         seed_everything_default=7,
         args=cli_args
     )
+
 
 
 
