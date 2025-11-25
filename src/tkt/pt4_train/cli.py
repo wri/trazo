@@ -247,10 +247,11 @@ if __name__ == "__main__":
     LightningCLI(
         model_class=BaseTask,
         datamodule_class=FTWDataModule,
-        config=config,
+        # config=config,
         run=True,
         seed_everything_default=7,
     )
+
 
 
 
