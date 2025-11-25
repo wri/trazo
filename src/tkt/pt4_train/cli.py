@@ -121,6 +121,12 @@ def fit(config_path, ckpt_path=None, data_dir=None, output_dir=None):
         "VSI_CURL_CACHE_SIZE": "200000000",
     }
     os.environ.update(rasterio_best_practices)
+    
+    cli_args = ["fit", f"--config={config_path}"]
+    if data_dir:
+        cli_args += [f"--datamodule.data_dir={data_dir}"]
+    if output_dir:
+        cli_args += [f"--datamodule.output_dir={output_dir}"]
 
     # Let LightningCLI handle all CLI setup automatically
     cli = LightningCLI(
@@ -130,11 +136,8 @@ def fit(config_path, ckpt_path=None, data_dir=None, output_dir=None):
         subclass_mode_model=True,
         subclass_mode_data=True,
         save_config_kwargs={"overwrite": True},
-        datamodule_defaults={
-            "data_dir": data_dir,
-            "output_dir": output_dir,
-        },
-        run=False  # prevents immediate training, allows checkpoint to be loaded manually
+        args=cli_args,  # pass datamodule args this way
+        run=False
     )
 
     # Optionally resume from checkpoint
@@ -156,4 +159,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
