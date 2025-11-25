@@ -201,6 +201,7 @@ import os
 import argparse
 import yaml
 from lightning.pytorch.cli import LightningCLI
+from torchgeo.trainers import BaseTask
 
 # Make sure src/ is importable
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -250,6 +251,7 @@ if __name__ == "__main__":
         run=True,
         seed_everything_default=7,
     )
+
 
 
 
