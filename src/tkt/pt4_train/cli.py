@@ -217,6 +217,7 @@ def parse_args():
     parser.add_argument("--data-dir", default=None)
     parser.add_argument("--output-dir", default=None)
     parser.add_argument("--ckpt", default=None)
+    parser.add_argument("subcommand", choices=["fit", "validate", "test", "predict"])
     return parser.parse_args()
 
 
@@ -251,6 +252,7 @@ if __name__ == "__main__":
         run=True,
         seed_everything_default=7,
     )
+
 
 
 
