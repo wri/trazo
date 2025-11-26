@@ -520,7 +520,7 @@ class FTW_finaltraining(FTW):
                     os.path.join(country_root, "hkl", f"{idx}.hkl")
                 )
                 if not hkl_path.exists():
-					continue
+                    continue
 				all_filenames.append({"hkl": str(hkl_path)})
                     # raise ValueError(f"Missing hkl file: {hkl_path}")
 
