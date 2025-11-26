@@ -521,9 +521,9 @@ class FTW_finaltraining(FTW):
                 )
                 if not hkl_path.exists():
 					continue
+				all_filenames.append({"hkl": str(hkl_path)})
                     # raise ValueError(f"Missing hkl file: {hkl_path}")
 
-                all_filenames.append({"hkl": str(hkl_path)})
                 
 
                 # if self.load_edges and not edge_fn.exists():
