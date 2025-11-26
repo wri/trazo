@@ -26,6 +26,8 @@ ALL_COUNTRIES = [
     "acre",
     "altoparana_training",
     "altoparana_validation",
+    "araucaria_training",
+    "araucaria_validation",
     "austria",
     "belgium",
     "brazil",
@@ -43,6 +45,8 @@ ALL_COUNTRIES = [
     "latvia",
     "lithuania",
     "luxembourg",
+    "maparaguay_training",
+    "maparaguay_validation",
     "netherlands",
     "pampas",
     "peruvianamazon_training",
@@ -54,6 +58,8 @@ ALL_COUNTRIES = [
     "south_africa",
     "spain",
     "sweden",
+    "uruguayansavannah_training",
+    "uruguayansavannah_validation",
     "vietnam",
 ]
 
