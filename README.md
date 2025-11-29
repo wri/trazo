@@ -1,12 +1,13 @@
-# TkT Package (name pending)
+# Trazo
 
 <p align="center">
   <img src="assets/fieldscropped2.gif" alt="Field Boundaries" />
 </p>
-End to end utilities for creating training data, preparing chips and masks, and running inference for field boundary modeling. This repository builds on the Fields of the World repo: https://github.com/fieldsoftheworld for documenting efforts to scale FTW to new geographies.
+<b>Trazo</b> means a deliberate line or stroke in Spanish. The mark that oulines a shape, defines a boundary or sketches a design. Powerful training data starts with tracing fields by hand; hand-drawn fields annotated over satellite imagery. Each sketched field in our dataset adds knowledge about the wide diversity of agricultural systems in South America. These lines teach models where food is grown and how landscapes differ. Trazo echos the English word "trace": to follow path, uncover origins and make hidden connections legible. Trazo is both about creating powerful, diverse training data through hand annotation and the aim of of tracing commodities through the supply chain, so that agriculture can be monitored for deforestation.
 
-This is the documentation of a WRI technical note that focuses on how to create training data, sample training data, fine tune models, and train models. This documentation of the technical note also has functionality that can serve researchers and others who want to apply their own field boundaries to create custom models. 
+This is the documentation of a WRI technical note that focuses on how to create training data, sample training data, fine tune models, and train models. This documentation of the technical note also has functionality that can serve researchers and others who want to apply their own field boundaries to create custom models. We hope these tools can help those in the agricultural and food sectors make better land use and sourcing decisions.
 
+Trazo includes end to end utilities for creating training data, preparing chips and masks, and running inference for field boundary modeling. This repository builds on the Fields of the World repo: https://github.com/fieldsoftheworld for documenting efforts to scale FTW to new geographies.
 This package also has a several inference scripts for making model test testing easier, such as comparing models on multiple Sentinel-2 tile sites and pulling Sentinel-2 imagery for a user's study area.
 
 This front page gives you a practical map of Step 1, Step 2, and Step 5 with quick starts and command examples. Step 3 and 4 to come. Step 1 will be built out more with training data sampling strategies.
