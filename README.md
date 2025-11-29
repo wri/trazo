@@ -3,7 +3,7 @@
 <p align="center">
   <img src="assets/fieldscropped2.gif" alt="Field Boundaries" />
 </p>
-<b><u>Trazo</u></b> is a deliberate line or stroke (Spanish). The mark that oulines a shape, defines a boundary or sketches a design. By tracing fields by hand, annotating fields in satellite imagery, we can choose the most powerful samples for creating robust, generalizable field boundary detection models. Each sketched field in our dataset adds knowledge about the wide diversity of agricultural systems in South America. These sketches teach models where food is grown and how landscapes differ. Trazo echos the English word "trace": to follow path, uncover origins and make hidden connections legible. Trazo is both about creating powerful, diverse training data and the aim of of tracing commodities through the supply chain, so that agriculture can be monitored for deforestation.
+<b><u>Trazo</u></b> is a deliberate, precise brush stroke (Spanish). It is a mark that oulines a shape, defines a boundary or sketches a design. By tracing fields by hand in satellite imagery, we can choose the most powerful samples for creating robust, generalizable field boundary detection models. Each sketched field in our dataset adds knowledge about the wide diversity of agricultural systems in South America. These sketches teach models the culture of agriculture and how landscapes differ. Trazo echos the English word "trace": to follow path, uncover origins and make hidden connections legible. Trazo is both about creating powerful, diverse training data and the aim of of tracing commodities through the supply chain, so that agriculture can be monitored for deforestation.
 
 <p></p>
 
