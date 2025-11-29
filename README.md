@@ -5,6 +5,7 @@
 </p>
 <b>Trazo</b> is a deliberate line or stroke (Spanish). The mark that oulines a shape, defines a boundary or sketches a design. By tracing fields by hand, annotating fields in satellite imagery, we can choose the most powerful samples for creating robust, generalizable field boundary detection models. Each sketched field in our dataset adds knowledge about the wide diversity of agricultural systems in South America. These sketches teach models where food is grown and how landscapes differ. Trazo echos the English word "trace": to follow path, uncover origins and make hidden connections legible. Trazo is both about creating powerful, diverse training data and the aim of of tracing commodities through the supply chain, so that agriculture can be monitored for deforestation.
 
+
 This is the documentation of a WRI technical note that focuses on how to create training data, sample training data, fine tune models, and train models. This documentation of the technical note also has functionality that can serve researchers and others who want to apply their own field boundaries to create custom models. We hope these tools can help those in the agricultural and food sectors make better land use and sourcing decisions.
 
 Trazo includes end to end utilities for creating training data, preparing chips and masks, and running inference for field boundary modeling. This repository builds on the Fields of the World repo: https://github.com/fieldsoftheworld for documenting efforts to scale FTW to new geographies.
