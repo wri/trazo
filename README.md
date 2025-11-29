@@ -63,7 +63,7 @@ toolkit-for-traceability/
 
 # Step 1: Create grids and data windows from grids
 
-### > 1A Creating Grids from your field boundaries
+### > 1.1 Creating Grids from your field boundaries
 
 gridding.py — build or standardize the AOI grid
 
@@ -99,7 +99,7 @@ python -m tkt.pt1_createdata.gridding \
 
 After you have these grids, open the grids and your field boundaries in your preferred geometry editing software; ArcPro, QGIS, Collect Earth Online, etc. Fill in ALL fields within each chip. If you do not fill in all fields, you must use presence-only labels, which weights the background (non-fields) and the unlabeled fields with the value '3'. These values are excluded when calculating loss during fine-tuning/training. Presence-only masking will be added to step-2 later. You can use the output of step 1B as the imagery to label. Be sure that whatever reference year you are choosing matches when the rest of your field boundaries were produced.
 
-### > 1B Creating harvest/planting images for every grid
+### > 1.2 Creating harvest/planting images for every grid
 
 Produce two 4 band chips per AOI: a planting window and a harvest window. Selection uses SOS and EOS rasters to target month ranges and prioritizes low cloud cover at the chip level.
 
@@ -225,7 +225,7 @@ Subcommands:
 | `multi-infer`          | Run multiple checkpoints across a folder of TIFF stacks                | `multimodelinference.main()`        |
 | `batch-infer`          | General batch inference utility                                        | `batchinference.main()`             |
 
-### 5.1 AOI based tile pairs
+### > 5.1 AOI based tile pairs
 
 Finds the best two dates per tile over your AOI and year. Groups items by `s2:mgrs_tile`, tries cloud thresholds in order, and chooses the pair that minimizes total cloud cover, then prefers longer gaps, then earlier first date. Writes an 8 band stack per pair and a summary CSV.
 
@@ -233,7 +233,7 @@ Finds the best two dates per tile over your AOI and year. Groups items by `s2:mg
 tkt-pt5-infer tilepairs   --aoi-shp /data/aois/merged.shp   --year 2022   --output-dir /data/stacks   --min-month-gap 4   --cloud-thresholds 5 7 9 10   --bands B04 B03 B02 B08   --full-tile   --write-dtype uint16
 ```
 
-### 5.2 Tile list with SOS/EOS windows
+### > 5.2 Tile list with SOS/EOS windows
 
 If you have a list of MGRS tiles, you can drive selection by SOS and EOS windows per tile. The script can also build that tile list by intersecting your AOI with the built in index:
 
@@ -245,7 +245,7 @@ tkt-pt5-infer tilepairs-tilelist   --tile-shp /path/to/sentinel_2_tile_index.shp
 
 Outputs a CSV with columns: `Tile,Window A,Window B,Nodata % A,Nodata % B`.
 
-### 5.3 Multi checkpoint inference
+### > 5.3 Multi checkpoint inference
 
 Runs the FTW model inference on every stack in a folder for each checkpoint in a folder. Creates an output subfolder per checkpoint.
 
