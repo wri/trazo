@@ -9,11 +9,19 @@
 
 This is the documentation of a WRI technical note that focuses on how to create training data, sample training data, fine tune models, and train models. This documentation of the technical note also has functionality that can serve researchers and others who want to apply their own field boundaries to create custom models. We hope these tools can help those in the agricultural and food sectors make better land use and sourcing decisions.
 
+<p></p>
+
 Trazo includes end to end utilities for creating training data, preparing chips and masks, and running inference for field boundary modeling. This repository builds on the Fields of the World repo: https://github.com/fieldsoftheworld for documenting efforts to scale FTW to new geographies.
 This package also has a several inference scripts for making model test testing easier, such as comparing models on multiple Sentinel-2 tile sites and pulling Sentinel-2 imagery for a user's study area.
 
+<p></p>
+
 This front page gives you a practical map of Step 1, Step 2, and Step 5 with quick starts and command examples. Step 3 and 4 to come. Step 1 will be built out more with training data sampling strategies.
 
+
+<p></p>
+
+Trazo was created a joint effort between World Resources Institute and the Kerner Lab at Arizona State University, funded by the Walmart Foundation. Significant support was provided by Land and Carbon Lab at WRI.
 ---
 
 ## Install
@@ -280,3 +288,7 @@ If you start with a grid of AOIs and a field polygon layer:
 - The repo includes SOS and EOS GeoTIFFs under `seasontifs/` as a fallback. The Step 1 script tries to download the upstream set first and falls back to the bundled copies when needed.
 - The repo includes a Sentinel 2 tile index at `spatial/sentinel_2_index_shapefile.geojson` for building tile lists from an AOI.
 - All scripts accept `--help` to see the full argument list and defaults.
+
+## Acknowledgements and Funding
+
+
