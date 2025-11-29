@@ -18,10 +18,9 @@ This package also has a several inference scripts for making model test testing 
 
 This front page gives you a practical map of Step 1, Step 2, and Step 5 with quick starts and command examples. Step 3 and 4 to come. Step 1 will be built out more with training data sampling strategies.
 
-
+Trazo was created a joint effort between World Resources Institute and the Kerner Lab at Arizona State University, funded by the Walmart Foundation. Significant support was provided by Land and Carbon Lab at WRI.
 <p></p>
 
-Trazo was created a joint effort between World Resources Institute and the Kerner Lab at Arizona State University, funded by the Walmart Foundation. Significant support was provided by Land and Carbon Lab at WRI.
 ---
 
 ## Install
