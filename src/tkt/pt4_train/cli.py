@@ -94,20 +94,18 @@ import os
 import argparse
 import yaml
 import tempfile
-from pathlib import Path
 from torchgeo.trainers import BaseTask
 from lightning.pytorch.cli import LightningCLI
-from src.tkt.pt4_train.datamodules import FTWDataModule
 
-# Make sure src/ is importable
+# Ensure src/ is importable
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="TkT model training CLI")
-    parser.add_argument("--config", required=True, help="Path to YAML config file")
-    parser.add_argument("--data-dir", default=None, help="Override data root dir")
-    parser.add_argument("--output-dir", default=None, help="Override output dir")
-    parser.add_argument("--ckpt", default=None, help="Path to checkpoint to resume from")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--config", required=True)
+    parser.add_argument("--data-dir", default=None)
+    parser.add_argument("--output-dir", default=None)
+    parser.add_argument("--ckpt", default=None)
     parser.add_argument("subcommand", choices=["fit", "validate", "test", "predict"])
     return parser.parse_args()
 
@@ -121,16 +119,11 @@ if __name__ == "__main__":
     # Override paths if provided
     if args.data_dir:
         config["data"]["root"] = args.data_dir
-
     if args.output_dir:
         config["trainer"]["default_root_dir"] = args.output_dir
-
-        # Update checkpoint dir in callbacks
         for cb in config["trainer"].get("callbacks", []):
             if cb.get("class_path") == "lightning.pytorch.callbacks.ModelCheckpoint":
                 cb["init_args"]["dirpath"] = f"{args.output_dir}/checkpoints"
-
-        # Update CSVLogger save_dir
         for lg in config["trainer"].get("logger", []):
             if lg.get("class_path") == "lightning.pytorch.loggers.CSVLogger":
                 lg["init_args"]["save_dir"] = f"{args.output_dir}/metrics"
@@ -140,31 +133,17 @@ if __name__ == "__main__":
         yaml.dump(config, tmpfile)
         tmp_config_path = tmpfile.name
 
-    # Construct CLI arguments for LightningCLI
+    # Build CLI args (just pass subcommand + config path)
     cli_args = [args.subcommand, f"--config={tmp_config_path}"]
     if args.ckpt:
-        cli_args += [f"--ckpt_path={args.ckpt}"]
+        cli_args.append(f"--ckpt_path={args.ckpt}")
 
-    # Best practices for Rasterio environment variables
-    rasterio_best_practices = {
-        "GDAL_DISABLE_READDIR_ON_OPEN": "EMPTY_DIR",
-        "AWS_NO_SIGN_REQUEST": "YES",
-        "GDAL_MAX_RAW_BLOCK_CACHE_SIZE": "200000000",
-        "GDAL_SWATH_SIZE": "200000000",
-        "VSI_CURL_CACHE_SIZE": "200000000",
-    }
-    os.environ.update(rasterio_best_practices)
-
-    # Run LightningCLI — this will automatically:
-    # 1. Instantiate the model subclass from your config
-    # 2. Instantiate the datamodule
-    # 3. Run the trainer with the specified subcommand
+    # Run LightningCLI with ONLY the Python-side args
     LightningCLI(
-        model_class=BaseTask,  # same as your old working CLI
-        datamodule_class=FTWDataModule,
-        seed_everything_default=7,
+        model_class=BaseTask,
         subclass_mode_model=True,
         subclass_mode_data=True,
         save_config_kwargs={"overwrite": True},
-        args=cli_args,
+        seed_everything_default=7,
+        args=cli_args,  # <-- do NOT pass sys.argv
     )
