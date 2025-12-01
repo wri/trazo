@@ -61,13 +61,21 @@ if __name__ == "__main__":
     if args.ckpt:
         cli_args += [f"--ckpt_path={args.ckpt}"]
 
+    # LightningCLI(
+    #     model_class=CustomSemanticSegmentationTask,
+    #     datamodule_class=FTWDataModule,
+    #     run=True,
+    #     seed_everything_default=7,
+    #     args=cli_args
+    # )
     LightningCLI(
-        model_class=CustomSemanticSegmentationTask,
-        datamodule_class=FTWDataModule,
-        run=True,
-        seed_everything_default=7,
-        args=cli_args
+    model_class=BaseTask,  # keep base class
+    seed_everything_default=0,
+    subclass_mode_model=True,
+    subclass_mode_data=True,
+    args=cli_args
     )
+
 
 
 
