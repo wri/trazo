@@ -1,7 +1,40 @@
 import click
 import yaml
 
-from ftw_tools.training.eval import fit as original_fit
+def fit(config, ckpt_path, cli_args):
+    """Command to fit the model."""
+    print("Running fit command")
+
+    # Construct the arguments for PyTorch Lightning CLI
+    cli_args = ["fit", f"--config={config}"] + list(cli_args)
+
+    # If a checkpoint path is provided, append it to the CLI arguments
+    if ckpt_path:
+        cli_args += [f"--ckpt_path={ckpt_path}"]
+
+    print(f"CLI arguments: {cli_args}")
+
+    # Best practices for Rasterio environment variables
+    rasterio_best_practices = {
+        "GDAL_DISABLE_READDIR_ON_OPEN": "EMPTY_DIR",
+        "AWS_NO_SIGN_REQUEST": "YES",
+        "GDAL_MAX_RAW_BLOCK_CACHE_SIZE": "200000000",
+        "GDAL_SWATH_SIZE": "200000000",
+        "VSI_CURL_CACHE_SIZE": "200000000",
+    }
+    os.environ.update(rasterio_best_practices)
+
+    # Run the LightningCLI with the constructed arguments
+    cli = LightningCLI(
+        model_class=BaseTask,
+        seed_everything_default=0,
+        subclass_mode_model=True,
+        subclass_mode_data=True,
+        save_config_kwargs={"overwrite": True},
+        args=cli_args,  # Pass the constructed cli_args
+    )
+
+    print("Finished")
 
 @click.group()
 def model():
@@ -64,7 +97,7 @@ def model_fit(config, data_dir, output_dir, ckpt_path, cli_args):
     cfg["output_dir"] = output_dir
 
     # Run the original training function
-    original_fit(cfg, ckpt_path, cli_args)
+    fit(cfg, ckpt_path, cli_args)
 
 
 #
@@ -108,3 +141,4 @@ def model_test(**kwargs):
 
 if __name__ == "__main__":
     model()
+
