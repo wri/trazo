@@ -86,33 +86,39 @@
 #     --data-dir "data path" \
 #     --output-dir "path to save files to"
 
+# src/tkt/pt4_train/cli.py
+
 import sys
 import os
 import argparse
 import yaml
 from pathlib import Path
-from src.tkt.pt4_train.trainers import CustomSemanticSegmentationTask
-from src.tkt.pt4_train.datamodules import FTWDataModule
-from torchgeo.trainers import BaseTask
-from lightning.pytorch.cli import LightningCLI
+from lightning.pytorch import Trainer
+from lightning.pytorch.callbacks import ModelCheckpoint
+from lightning.pytorch.loggers import CSVLogger
 
 # Make sure src/ is importable
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Rasterio best practices
-RASTERIO_ENV = {
+from src.tkt.pt4_train.trainers import CustomSemanticSegmentationTask
+from src.tkt.pt4_train.datamodules import FTWDataModule
+
+
+# Rasterio best practices (from old fit)
+RASTER_ENV = {
     "GDAL_DISABLE_READDIR_ON_OPEN": "EMPTY_DIR",
     "AWS_NO_SIGN_REQUEST": "YES",
     "GDAL_MAX_RAW_BLOCK_CACHE_SIZE": "200000000",
     "GDAL_SWATH_SIZE": "200000000",
     "VSI_CURL_CACHE_SIZE": "200000000",
 }
-os.environ.update(RASTERIO_ENV)
+os.environ.update(RASTER_ENV)
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Step 4: Model training.")
     parser.add_argument("--config", required=True)
+    parser.add_argument("--data-dir", default=None)
     parser.add_argument("--output-dir", default=None)
     parser.add_argument("--ckpt", default=None)
     parser.add_argument("subcommand", choices=["fit", "validate", "test", "predict"])
@@ -122,13 +128,14 @@ def parse_args():
 def main():
     args = parse_args()
 
-    print("Running fit command" if args.subcommand == "fit" else f"Running {args.subcommand} command")
-
     # Load YAML config
     with open(args.config, "r") as f:
         config = yaml.safe_load(f)
 
-    # Override output directory if provided
+    # Override paths if provided
+    if args.data_dir:
+        config["data"]["init_args"]["root"] = args.data_dir
+
     if args.output_dir:
         config["trainer"]["default_root_dir"] = args.output_dir
         for cb in config["trainer"].get("callbacks", []):
@@ -138,26 +145,39 @@ def main():
             if lg.get("class_path") == "lightning.pytorch.loggers.CSVLogger":
                 lg["init_args"]["save_dir"] = f"{args.output_dir}/metrics"
 
-    # Construct CLI arguments
-    cli_args = [args.subcommand, f"--config={args.config}"]
-    if args.ckpt:
-        cli_args += [f"--ckpt_path={args.ckpt}"]
+    # Instantiate model
+    model = CustomSemanticSegmentationTask(**config["model"]["init_args"])
 
-    print(f"CLI arguments: {cli_args}")
+    # Instantiate datamodule
+    datamodule = FTWDataModule(**config["data"]["init_args"])
 
-    # Run LightningCLI in "BaseTask mode" to avoid extra prints
-    cli = LightningCLI(
-        model_class=BaseTask,
-        datamodule_class=FTWDataModule,
-        seed_everything_default=0,
-        subclass_mode_model=True,
-        subclass_mode_data=True,
-        save_config_kwargs={"overwrite": True},
-        args=cli_args,
-        run=True  # automatically runs fit/validate/test/predict
-    )
+    # Callbacks
+    callbacks = []
+    for cb_cfg in config["trainer"].get("callbacks", []):
+        if cb_cfg["class_path"] == "lightning.pytorch.callbacks.ModelCheckpoint":
+            callbacks.append(ModelCheckpoint(**cb_cfg["init_args"]))
 
-    print("Finished")
+    # Loggers
+    loggers = []
+    for lg_cfg in config["trainer"].get("logger", []):
+        if lg_cfg["class_path"] == "lightning.pytorch.loggers.CSVLogger":
+            loggers.append(CSVLogger(**lg_cfg["init_args"]))
+
+    # Trainer arguments
+    trainer_args = config["trainer"].copy()
+    trainer_args.pop("callbacks", None)
+    trainer_args.pop("logger", None)
+    trainer = Trainer(**trainer_args, callbacks=callbacks, logger=loggers)
+
+    # Run the requested subcommand
+    if args.subcommand == "fit":
+        trainer.fit(model, datamodule)
+    elif args.subcommand == "validate":
+        trainer.validate(model, datamodule)
+    elif args.subcommand == "test":
+        trainer.test(model, datamodule)
+    elif args.subcommand == "predict":
+        trainer.predict(model, datamodule)
 
 
 if __name__ == "__main__":
