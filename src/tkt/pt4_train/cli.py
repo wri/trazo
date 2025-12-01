@@ -96,16 +96,17 @@ def model_fit(config, data_dir, output_dir, ckpt_path, cli_args):
     - Injects data_dir + output_dir into config before calling fit()
     """
 
-    # Load YAML
-    with open(config, "r") as f:
-        cfg = yaml.safe_load(f)
+    # # Load YAML
+    # with open(config, "r") as f:
+    #     cfg = yaml.safe_load(f)
 
-    # Insert CLI args into config (preserves original behavior)
-    cfg["data_dir"] = data_dir
-    cfg["output_dir"] = output_dir
+    # # Insert CLI args into config (preserves original behavior)
+    # cfg["data_dir"] = data_dir
+    # cfg["output_dir"] = output_dir
 
-    # Run the original training function
-    fit(cfg, ckpt_path, cli_args)
+    # # Run the original training function
+    # fit(cfg, ckpt_path, cli_args)
+    fit(config, ckpt_path, cli_args)
 
 
 #
@@ -149,6 +150,7 @@ def model_test(**kwargs):
 
 if __name__ == "__main__":
     model()
+
 
 
 
