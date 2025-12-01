@@ -8,7 +8,6 @@ import os
 import argparse
 import yaml
 import tempfile
-from torchgeo.trainers import BaseTask
 from lightning.pytorch.cli import LightningCLI
 
 # Make sure src/ is importable
@@ -62,20 +61,27 @@ if __name__ == "__main__":
     if args.ckpt:
         cli_args += [f"--ckpt_path={args.ckpt}"]
 
-    # LightningCLI(
-    #     model_class=CustomSemanticSegmentationTask,
-    #     datamodule_class=FTWDataModule,
-    #     run=True,
-    #     seed_everything_default=7,
-    #     args=cli_args
-    # )
     LightningCLI(
-        model_class=BaseTask,  
+        model_class=CustomSemanticSegmentationTask,
         datamodule_class=FTWDataModule,
-        seed_everything_default=0,
-        subclass_mode_model=True,
-        subclass_mode_data=True,
-        save_config_kwargs={"overwrite": True},
+        run=True,
+        seed_everything_default=7,
         args=cli_args
     )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    )
+
 
