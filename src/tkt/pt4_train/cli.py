@@ -70,11 +70,13 @@ if __name__ == "__main__":
     # )
     LightningCLI(
         model_class=CustomSemanticSegmentationTask,  # keep base class
+        datamodule_class=FTWDataModule,
         seed_everything_default=0,
         subclass_mode_model=True,
         subclass_mode_data=True,
         args=cli_args
     )
+
 
 
 
