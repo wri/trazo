@@ -69,12 +69,13 @@ if __name__ == "__main__":
     #     args=cli_args
     # )
     LightningCLI(
-    model_class=BaseTask,  # keep base class
-    seed_everything_default=0,
-    subclass_mode_model=True,
-    subclass_mode_data=True,
-    args=cli_args
+        model_class=CustomSemanticSegmentationTask,  # keep base class
+        seed_everything_default=0,
+        subclass_mode_model=True,
+        subclass_mode_data=True,
+        args=cli_args
     )
+
 
 
 
