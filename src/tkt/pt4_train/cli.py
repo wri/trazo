@@ -1,5 +1,10 @@
 import click
 import yaml
+from src.tkt.pt4_train.settings import ALL_COUNTRIES
+COUNTRIES_CHOICE = ALL_COUNTRIES.copy()
+COUNTRIES_CHOICE.append("all")
+COUNTRIES_CHOICE.append("full_data")
+
 
 def fit(config, ckpt_path, cli_args):
     """Command to fit the model."""
@@ -141,4 +146,5 @@ def model_test(**kwargs):
 
 if __name__ == "__main__":
     model()
+
 
