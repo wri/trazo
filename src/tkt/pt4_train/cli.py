@@ -1,5 +1,6 @@
 import click
 import yaml
+import os
 from src.tkt.pt4_train.settings import ALL_COUNTRIES
 COUNTRIES_CHOICE = ALL_COUNTRIES.copy()
 COUNTRIES_CHOICE.append("all")
@@ -146,5 +147,6 @@ def model_test(**kwargs):
 
 if __name__ == "__main__":
     model()
+
 
 
