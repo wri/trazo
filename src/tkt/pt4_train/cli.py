@@ -1,5 +1,6 @@
 import click
 import yaml
+from lightning.pytorch.cli import LightningCLI
 import os
 from src.tkt.pt4_train.settings import ALL_COUNTRIES
 COUNTRIES_CHOICE = ALL_COUNTRIES.copy()
@@ -147,6 +148,7 @@ def model_test(**kwargs):
 
 if __name__ == "__main__":
     model()
+
 
 
 
