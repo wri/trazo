@@ -12,6 +12,7 @@ Subcommands:
   chips-parquet Build per chip GeoParquet metadata
   scale-u16     Scale chips to uint16 in [0,10000]
   export-hkl    Export FTW-style .hkl files from windows and masks
+  export-zarr   Export FTW-style Zarr files from windows and masks
 """
 
 import argparse
@@ -32,6 +33,7 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser("chips-parquet", help="Build per chip GeoParquet metadata.")
     subparsers.add_parser("scale-u16", help="Scale chips to uint16 in [0,10000].")
     subparsers.add_parser("export-hkl", help="Export FTW-style .hkl files from windows and masks.")
+    subparsers.add_parser("export-zarr", help="Export FTW-style Zarr files from windows and masks.")
 
     return parser
 
@@ -82,7 +84,14 @@ def main(argv=None) -> None:
         mod.main(remaining)
         return
 
+    if args.command == "export-zarr":
+        from . import create_zarr as mod
+        mod.main(remaining)
+        return
+
 
 if __name__ == "__main__":
     main()
+
+
 
