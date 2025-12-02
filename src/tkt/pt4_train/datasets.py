@@ -1,6 +1,7 @@
 """FTW dataset."""
-import hickle as hkl
+# import hickle as hkl
 import os
+import zarr
 import random
 from pathlib import Path
 from typing import Any, Callable, Optional, Sequence
@@ -516,13 +517,13 @@ class FTW_finaltraining(FTW):
                 if (country, idx) in bad_samples:
                     continue
                 #### MODIFY THIS CODE TO ONLY RETURN PATH TO the HKL file
-                hkl_path = Path(
-                    os.path.join(country_root, "hkl", f"{idx}.hkl")
+                zarr_path = Path(
+                    os.path.join(country_root, "zarr", f"{idx}.zarr")
                 )
-                if not hkl_path.exists():
+                if not zarr_path.exists():
                     continue
-                all_filenames.append({"hkl": str(hkl_path)})
-                    # raise ValueError(f"Missing hkl file: {hkl_path}")
+                all_filenames.append({"zarr": str(zarr_path)})
+                    # raise ValueError(f"Missing zarr file: {zarr_path}")
 
                 
 
@@ -555,17 +556,17 @@ class FTW_finaltraining(FTW):
 
 
     def _check_integrity(self) -> bool:
-        """Check that HKL files exist for the selected countries."""
+        """Check that Zarr files exist for the selected countries."""
         for country in self.countries:
             country_root = os.path.join(self.root, country)
-            hkl_dir = os.path.join(country_root, "hkl")
-            if not os.path.exists(hkl_dir):
-                print(f"Country {country} is missing hkl directory: {hkl_dir}")
+            zarr_dir = os.path.join(country_root, "zarr")
+            if not os.path.exists(zarr_dir):
+                print(f"Country {country} is missing zarr directory: {zarr_dir}")
                 return False
 
-            hkl_files = list(Path(hkl_dir).glob("*.hkl"))
-            if len(hkl_files) == 0:
-                print(f"No hkl files found in {hkl_dir}")
+            zarr_files = list(Path(zarr_dir).glob("*.zarr"))
+            if len(zarr_files) == 0:
+                print(f"No zarr files found in {zarr_dir}")
                 return False
 
         return True
@@ -580,12 +581,12 @@ class FTW_finaltraining(FTW):
             dictionary containing "image" and "mask" PyTorch tensors
         """
         file_name = self.filenames[index]
-        hkl_path = file_name["hkl"]
+        zarr_path = file_name["zarr"]
 
-        sample = hkl.load(hkl_path)   # ← returns dict: {"image": ..., "mask": ...}
-        # Convert image and mask to PyTorch tensors
-        sample["image"] = torch.from_numpy(sample["image"]).float()   # keep image as float
-        sample["mask"] = torch.from_numpy(sample["mask"]).long()      # mask must be long for CrossEntropyLoss
+		sample = zarr.open(zarr_path, mode="r")
+		# Convert image and mask to PyTorch tensors
+		sample["image"] = torch.from_numpy(sample["image"][:]).float()  # get full array
+		sample["mask"] = torch.from_numpy(sample["mask"][:]).long()     # mask must be long for CrossEntropyLoss
 
         if self.transforms is not None:
             sample = self.transforms(sample)
