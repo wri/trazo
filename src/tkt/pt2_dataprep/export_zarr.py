@@ -145,14 +145,14 @@ def create_zarr_for_country(
         root_group.create_array(
             name="image",
             chunks=True,
-            dtype="float32",
+            # dtype="float32",
             overwrite=True,
             data=image,   # can still provide initial data
         )
         root_group.create_array(
             name="mask",
             chunks=True,
-            dtype=mask.dtype,
+            # dtype=mask.dtype,
             overwrite=True,
             data=mask,
         )
@@ -234,6 +234,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
