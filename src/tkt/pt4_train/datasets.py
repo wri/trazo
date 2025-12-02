@@ -134,50 +134,13 @@ class FTW(NonGeoDataset):
                 if (country, idx) in bad_samples:
                     continue
 
-                window_b_fn = Path(
-                    os.path.join(country_root, "s2_images/window_b", f"{idx}.tif")
-                )
-                window_a_fn = Path(
-                    os.path.join(country_root, "s2_images/window_a", f"{idx}.tif")
-                )
-                masks_2c_fn = Path(
-                    os.path.join(
-                        country_root, "label_masks/semantic_2class", f"{idx}.tif"
-                    )
-                )
-                masks_3c_fn = Path(
-                    os.path.join(
-                        country_root, "label_masks/semantic_3class", f"{idx}.tif"
-                    )
-                )
-                edge_fn = Path(
-                    os.path.join(country_root, "label_masks/edges", f"{idx}.tif")
-                )
+				hkl_path = Path(os.path.join(country_root, "hkl", f"{idx}.hkl"))
+				
+				if not hkl_path.exists():
+				    continue
+				
+				file_record = {"hkl": str(hkl_path)}
 
-                # Skip the image AOI's which does not have all four corresponding files
-                if not (
-                    window_b_fn.exists()
-                    and window_a_fn.exists()
-                    and masks_2c_fn.exists()
-                    and masks_3c_fn.exists()
-                ):
-                    continue
-
-                if self.load_edges and not edge_fn.exists():
-                    raise ValueError(
-                        "ERROR: Missing edge files! Run ./scripts/add_edges_to_dataset.py"
-                    )
-
-                if self.load_boundaries:
-                    mask_fn = masks_3c_fn
-                else:
-                    mask_fn = masks_2c_fn
-
-                file_record = {
-                    "window_b": str(window_b_fn),
-                    "window_a": str(window_a_fn),
-                    "mask": str(mask_fn),
-                }
                 if self.load_edges:
                     file_record["edge"] = str(edge_fn)
                 all_filenames.append(file_record)
@@ -271,69 +234,88 @@ class FTW(NonGeoDataset):
         """
         return len(self.filenames)
 
-    def __getitem__(self, index: int) -> dict[str, Tensor]:
-        """Return an index within the dataset.
+	def __getitem__(self, index: int) -> dict[str, Tensor]:
+	    hkl_path = self.filenames[index]["hkl"]
+	
+	    sample = hkl.load(hkl_path)
+	
+	    image = torch.from_numpy(sample["image"])       # [C,H,W] float32
+	    mask  = torch.from_numpy(sample["mask"]).long() # [H,W]
+	
+	    out = {
+	        "image": image,
+	        "mask": mask,
+	        "meta": sample["meta"],
+	    }
+	
+	    if self.transforms:
+	        out = self.transforms(out)
+	
+	    return out
 
-        Args:
-            index: index to return
+    # def __getitem__(self, index: int) -> dict[str, Tensor]:
+    #     """Return an index within the dataset.
 
-        Returns:
-            dictionary containing "image" and "mask" PyTorch tensors
-        """
-        filenames = self.filenames[index]
+    #     Args:
+    #         index: index to return
 
-        images = []
-        if self.temporal_options in ("stacked", "median", "windowB", "rgb"):
-            with rasterio.open(filenames["window_b"]) as f:
-                window_b_img = f.read()
-                if self.temporal_options == "rgb":  # select 3 channels only
-                    window_b_img = window_b_img[:3]
-                images.append(window_b_img)
+    #     Returns:
+    #         dictionary containing "image" and "mask" PyTorch tensors
+    #     """
+    #     filenames = self.filenames[index]
 
-        if self.temporal_options in ("stacked", "median", "windowA", "rgb"):
-            with rasterio.open(filenames["window_a"]) as f:
-                window_a_img = f.read()
-                if self.temporal_options == "rgb":  # select 3 channels only
-                    window_a_img = window_a_img[:3]
-                images.append(window_a_img)
+    #     images = []
+    #     if self.temporal_options in ("stacked", "median", "windowB", "rgb"):
+    #         with rasterio.open(filenames["window_b"]) as f:
+    #             window_b_img = f.read()
+    #             if self.temporal_options == "rgb":  # select 3 channels only
+    #                 window_b_img = window_b_img[:3]
+    #             images.append(window_b_img)
 
-        if self.temporal_options == "random_window":
-            if random.random() < 0.5:
-                with rasterio.open(filenames["window_a"]) as f:
-                    window_a_img = f.read()
-                images.append(window_a_img)
-            else:
-                with rasterio.open(filenames["window_b"]) as f:
-                    window_b_img = f.read()
-                images.append(window_b_img)
+    #     if self.temporal_options in ("stacked", "median", "windowA", "rgb"):
+    #         with rasterio.open(filenames["window_a"]) as f:
+    #             window_a_img = f.read()
+    #             if self.temporal_options == "rgb":  # select 3 channels only
+    #                 window_a_img = window_a_img[:3]
+    #             images.append(window_a_img)
 
-        if self.swap_order and len(images) == 2:
-            images = [images[1], images[0]]
+    #     if self.temporal_options == "random_window":
+    #         if random.random() < 0.5:
+    #             with rasterio.open(filenames["window_a"]) as f:
+    #                 window_a_img = f.read()
+    #             images.append(window_a_img)
+    #         else:
+    #             with rasterio.open(filenames["window_b"]) as f:
+    #                 window_b_img = f.read()
+    #             images.append(window_b_img)
 
-        if self.temporal_options == "median":
-            images = np.array(images).astype(np.int32)
-            image = np.median(images, axis=0).astype(np.int32)
-        else:
-            image = np.concatenate(images, axis=0).astype(np.int32)
+    #     if self.swap_order and len(images) == 2:
+    #         images = [images[1], images[0]]
 
-        image = torch.from_numpy(image).float()
+    #     if self.temporal_options == "median":
+    #         images = np.array(images).astype(np.int32)
+    #         image = np.median(images, axis=0).astype(np.int32)
+    #     else:
+    #         image = np.concatenate(images, axis=0).astype(np.int32)
 
-        with rasterio.open(filenames["mask"]) as f:
-            mask = f.read(1)
-        mask = torch.from_numpy(mask).long()
+    #     image = torch.from_numpy(image).float()
 
-        sample = {"image": image, "mask": mask}
+    #     with rasterio.open(filenames["mask"]) as f:
+    #         mask = f.read(1)
+    #     mask = torch.from_numpy(mask).long()
 
-        if self.load_edges:
-            with rasterio.open(filenames["edge"]) as f:
-                edge = f.read(1)
-            edge = torch.from_numpy(edge).long()
-            sample["edge"] = edge
+    #     sample = {"image": image, "mask": mask}
 
-        if self.transforms is not None:
-            sample = self.transforms(sample)
+    #     if self.load_edges:
+    #         with rasterio.open(filenames["edge"]) as f:
+    #             edge = f.read(1)
+    #         edge = torch.from_numpy(edge).long()
+    #         sample["edge"] = edge
 
-        return sample
+    #     if self.transforms is not None:
+    #         sample = self.transforms(sample)
+
+    #     return sample
 
     def plot(self, sample: dict[str, Tensor], suptitle: Optional[str] = None) -> Figure:
         """Plot a sample from the dataset.
