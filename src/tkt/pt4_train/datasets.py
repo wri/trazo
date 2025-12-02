@@ -404,7 +404,7 @@ class FTW(NonGeoDataset):
 # indexes your tensors instead of your list -> tiff -> numpy -> tensor
 
 class FTW_finaltraining(FTW):
-	# self.filenames = # point to your new directory with the te4nsors
+    # self.filenames = # point to your new directory with the te4nsors
 
     def __init__(
         self,
@@ -583,10 +583,10 @@ class FTW_finaltraining(FTW):
         file_name = self.filenames[index]
         zarr_path = file_name["zarr"]
 
-		sample = zarr.open(zarr_path, mode="r")
-		# Convert image and mask to PyTorch tensors
-		sample["image"] = torch.from_numpy(sample["image"][:]).float()  # get full array
-		sample["mask"] = torch.from_numpy(sample["mask"][:]).long()     # mask must be long for CrossEntropyLoss
+        sample = zarr.open(zarr_path, mode="r")
+        # Convert image and mask to PyTorch tensors
+        sample["image"] = torch.from_numpy(sample["image"][:]).float()  # get full array
+        sample["mask"] = torch.from_numpy(sample["mask"][:]).long()     # mask must be long for CrossEntropyLoss
 
         if self.transforms is not None:
             sample = self.transforms(sample)
