@@ -142,19 +142,23 @@ def create_zarr_for_country(
         # root_group = zarr.group(store=store, overwrite=overwrite)
 
         # Create datasets. chunks=True lets Zarr pick a reasonable chunking
-        root_group.create_dataset(
-            "image",
-            data=image,
+        root_group.create_array(
+            name="image",
+            shape=image.shape,
             chunks=True,
             dtype="float32",
             overwrite=True,
+            data=image,   # can still provide initial data
         )
-        root_group.create_dataset(
-            "mask",
-            data=mask,
+        root_group.create_array(
+            name="mask",
+            shape=mask.shape,
             chunks=True,
+            dtype=mask.dtype,
             overwrite=True,
+            data=mask,
         )
+        
 
         # Attach meta data as attributes on the group
         root_group.attrs.update(meta)
@@ -232,6 +236,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
