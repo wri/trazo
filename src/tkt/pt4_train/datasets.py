@@ -585,8 +585,8 @@ class FTW_finaltraining(FTW):
 
         sample = zarr.open(zarr_path, mode="r")
         # Convert image and mask to PyTorch tensors
-        sample["image"] = torch.from_numpy(np.array(sample["image"][:])).float() # sample["image"] = torch.from_numpy(sample["image"][:]).float()  # get full array
-        sample["mask"] = torch.from_numpy(np.array(sample["mask"][:])).long()  # sample["mask"] = torch.from_numpy(sample["mask"][:]).long()     # mask must be long for CrossEntropyLoss
+        sample["image"] = torch.tensor(np.asarray(sample["image"])).float() # sample["image"] = torch.from_numpy(sample["image"][:]).float()  # get full array
+        sample["mask"] = torch.tensor(np.asarray(sample["mask"])).long()  # sample["mask"] = torch.from_numpy(sample["mask"][:]).long()     # mask must be long for CrossEntropyLoss
 
         if self.transforms is not None:
             sample = self.transforms(sample)
