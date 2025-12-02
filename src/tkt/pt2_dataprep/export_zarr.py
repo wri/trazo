@@ -7,7 +7,6 @@ import hickle as hkl  # kept, in case you still want it around, but unused here
 import numpy as np
 import rasterio
 import zarr
-import zarr.storage
 
 
 def find_countries(root: str) -> list[str]:
@@ -137,7 +136,8 @@ def create_zarr_for_country(
 
         # Create Zarr directory store
         # store = zarr.DirectoryStore(str(out_path))
-        store = zarr.storage.DirectoryStore(str(out_path))
+        store = zarr.storage.FSStore(str(out_path))
+
         # overwrite flag here clears existing store if overwrite=True
         root_group = zarr.group(store=store, overwrite=overwrite)
 
@@ -232,4 +232,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
