@@ -144,7 +144,6 @@ def create_zarr_for_country(
         # Create datasets. chunks=True lets Zarr pick a reasonable chunking
         root_group.create_array(
             name="image",
-            shape=image.shape,
             chunks=True,
             dtype="float32",
             overwrite=True,
@@ -152,7 +151,6 @@ def create_zarr_for_country(
         )
         root_group.create_array(
             name="mask",
-            shape=mask.shape,
             chunks=True,
             dtype=mask.dtype,
             overwrite=True,
@@ -236,6 +234,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
