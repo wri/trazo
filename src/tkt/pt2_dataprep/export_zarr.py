@@ -142,19 +142,20 @@ def create_zarr_for_country(
         # root_group = zarr.group(store=store, overwrite=overwrite)
 
         # Create datasets. chunks=True lets Zarr pick a reasonable chunking
+        # For image: shape = [2*C, H, W]
         root_group.create_array(
             name="image",
-            chunks=True,
-            # dtype="float32",
+            data=image,
+            chunks=(image.shape[0], 512, 512),  # channels, height, width
             overwrite=True,
-            data=image,   # can still provide initial data
         )
+        
+        # For mask: shape = [H, W]
         root_group.create_array(
             name="mask",
-            chunks=True,
-            # dtype=mask.dtype,
-            overwrite=True,
             data=mask,
+            chunks=(512, 512),  # height, width
+            overwrite=True,
         )
         
 
@@ -234,6 +235,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
