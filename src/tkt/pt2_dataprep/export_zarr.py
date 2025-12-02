@@ -136,10 +136,10 @@ def create_zarr_for_country(
 
         # Create Zarr directory store
         # store = zarr.DirectoryStore(str(out_path))
-        store = zarr.storage.FSStore(str(out_path))
 
         # overwrite flag here clears existing store if overwrite=True
-        root_group = zarr.group(store=store, overwrite=overwrite)
+        root_group = zarr.open(str(out_path), mode='w')
+        # root_group = zarr.group(store=store, overwrite=overwrite)
 
         # Create datasets. chunks=True lets Zarr pick a reasonable chunking
         root_group.create_dataset(
@@ -232,5 +232,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
