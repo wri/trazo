@@ -1,232 +1,111 @@
-#!/usr/bin/env python
+"""
+Export FTW_finaltraining dataset into a SINGLE Zarr store per split.
+Optimal for training speed: (N, C, H, W) chunked as (1, C, H, W).
+
+- Overwrites old Zarr stores automatically.
+- Uses blosc zstd compression (fastest).
+"""
+
 import argparse
 from pathlib import Path
+import shutil
 
-import geopandas as gpd
-import hickle as hkl  # kept, in case you still want it around, but unused here
-import numpy as np
-import rasterio
+import torch
 import zarr
+import numpy as np
+from tqdm import tqdm
+
+from src.tkt.pt4_train.datasets import FTW_finaltraining
 
 
-def find_countries(root: str) -> list[str]:
-    """Automatically find country folders: any subfolder containing chips_*.parquet."""
-    countries: list[str] = []
-    root_path = Path(root)
-    if not root_path.exists():
-        raise RuntimeError(f"Root directory {root} does not exist")
-
-    for sub in root_path.iterdir():
-        if not sub.is_dir():
-            continue
-        chips_files = list(sub.glob("chips_*.parquet"))
-        if len(chips_files) == 1:
-            countries.append(sub.name)
-    return sorted(countries)
-
-
-def build_paths(country_root: Path, chip_id: str, mask_type: str) -> tuple[Path, Path, Path]:
-    """Return paths for window_a, window_b, and mask files."""
-    window_b_path = country_root / "s2_images" / "window_b" / f"{chip_id}.tif"
-    window_a_path = country_root / "s2_images" / "window_a" / f"{chip_id}.tif"
-    mask_path = country_root / "label_masks" / mask_type / f"{chip_id}.tif"
-    return window_a_path, window_b_path, mask_path
-
-
-def check_paths(window_a: Path, window_b: Path, mask: Path) -> bool:
-    """Check that all required raster files exist."""
-    return window_a.exists() and window_b.exists() and mask.exists()
-
-
-def create_zarr_for_country(
+def export_dataset_to_zarr(
     root: str,
-    country: str,
-    mask_type: str,
-    overwrite: bool = False,
-    verbose: bool = True,
+    countries: list[str],
+    split: str = "train",
+    output_dir: str = "data/ftw/zarr",
+    temporal_options: str = "stacked",
+    load_boundaries: bool = False,
+    num_samples: int = -1,
+    ignore_sample_fn: str | None = None,
 ) -> None:
-    """Write Zarr files for every chip in a given country folder.
 
-    For each chip, create a directory store:
-      <country_root>/zarr/<chip_id>.zarr
-
-    Structure inside each .zarr:
-      - dataset "image": [2 * C, H, W], float32
-      - dataset "mask":  [H, W]
-      - group attrs: "country", "chip_id", "mask_type", "chips_file",
-                     "window_b_path", "window_a_path", "mask_path"
-    """
-    country_root = Path(root) / country
-
-    # Find chips_*.parquet
-    chips_files = list(country_root.glob("chips_*.parquet"))
-    if len(chips_files) == 0:
-        raise RuntimeError(f"No chips_*.parquet file found for country {country}")
-    if len(chips_files) > 1 and verbose:
-        print(f"Multiple chips_*.parquet found for {country}, using: {chips_files[0]}")
-    chips_fn = chips_files[0]
-
-    if verbose:
-        print(f"\nProcessing country: {country}")
-        print(f"  Using chips file: {chips_fn}")
-        print(f"  Mask type: {mask_type}")
-
-    df = gpd.read_parquet(chips_fn)
-
-    if "aoi_id" not in df.columns:
-        raise RuntimeError(f"chips file for {country} does not contain 'aoi_id' column")
-
-    # Use all AOIs, no split filtering
-    chip_ids = df["aoi_id"].astype(str).tolist()
-
-    if verbose:
-        print(f"  Number of chips (all rows): {len(chip_ids)}")
-
-    zarr_dir = country_root / "zarr"
-    zarr_dir.mkdir(parents=True, exist_ok=True)
-    if verbose:
-        print(f"  Writing .zarr folders to: {zarr_dir}")
-
-    num_written = 0
-    num_skipped_existing = 0
-    num_missing = 0
-
-    for chip_id in chip_ids:
-        window_a_path, window_b_path, mask_path = build_paths(country_root, chip_id, mask_type)
-
-        if not check_paths(window_a_path, window_b_path, mask_path):
-            num_missing += 1
-            if verbose:
-                print(
-                    f"    Skipping {chip_id}: missing one of "
-                    f"{window_a_path}, {window_b_path}, {mask_path}"
-                )
-            continue
-
-        out_path = zarr_dir / f"{chip_id}.zarr"
-
-        if out_path.exists() and not overwrite:
-            num_skipped_existing += 1
-            continue
-
-        # Read window_b and window_a as [C, H, W]
-        with rasterio.open(window_b_path) as f_b:
-            window_b_img = f_b.read()
-        with rasterio.open(window_a_path) as f_a:
-            window_a_img = f_a.read()
-
-        # Stack along channel axis, same as temporal_options="stacked"
-        # Result: [2 * C, H, W]
-        image = np.concatenate([window_b_img, window_a_img], axis=0).astype(np.float32)
-
-        # Read mask as [H, W]
-        with rasterio.open(mask_path) as f_m:
-            mask = f_m.read(1)
-
-        # Build meta dict similar to HKL sample["meta"]
-        meta = {
-            "country": country,
-            "chip_id": chip_id,
-            "mask_type": mask_type,
-            "chips_file": str(chips_fn),
-            "window_b_path": str(window_b_path),
-            "window_a_path": str(window_a_path),
-            "mask_path": str(mask_path),
-        }
-
-        # Create Zarr directory store
-        store = zarr.DirectoryStore(str(out_path))
-        # overwrite flag here clears existing store if overwrite=True
-        root_group = zarr.group(store=store, overwrite=overwrite)
-
-        # Create datasets. chunks=True lets Zarr pick a reasonable chunking
-        root_group.create_dataset(
-            "image",
-            data=image,
-            chunks=True,
-            dtype="float32",
-            overwrite=True,
-        )
-        root_group.create_dataset(
-            "mask",
-            data=mask,
-            chunks=True,
-            overwrite=True,
-        )
-
-        # Attach meta data as attributes on the group
-        root_group.attrs.update(meta)
-
-        num_written += 1
-        if verbose and num_written % 100 == 0:
-            print(f"    Written {num_written} .zarr files so far")
-
-    if verbose:
-        print(f"  Done country: {country}")
-        print(f"    Written:          {num_written}")
-        print(f"    Skipped existing: {num_skipped_existing}")
-        print(f"    Missing files:    {num_missing}")
-
-
-def main():
-    parser = argparse.ArgumentParser(
-        description="Create Zarr files combining window_a, window_b, and a mask type (no splits)."
-    )
-    parser.add_argument(
-        "--root",
-        type=str,
-        required=True,
-        help="Root directory of FTW dataset (contains country folders)",
-    )
-    parser.add_argument(
-        "--countries",
-        type=str,
-        nargs="+",
-        default=None,
-        help="List of country folder names under root. If omitted, auto-detect.",
-    )
-    parser.add_argument(
-        "--mask-type",
-        type=str,
-        default="semantic_3class",
-        help="Mask folder under label_masks (semantic_2class, semantic_3class, instance, ...)",
-    )
-    parser.add_argument(
-        "--overwrite",
-        action="store_true",
-        help="Overwrite existing .zarr files if they already exist",
-    )
-    parser.add_argument(
-        "--quiet",
-        action="store_true",
-        help="Reduce console output",
+    dataset = FTW_finaltraining(
+        root=root,
+        countries=countries,
+        split=split,
+        temporal_options=temporal_options,
+        load_boundaries=load_boundaries,
+        num_samples=num_samples,
+        ignore_sample_fn=ignore_sample_fn,
     )
 
-    args = parser.parse_args()
-    root = args.root
-    mask_type = args.mask_type
-    overwrite = args.overwrite
-    verbose = not args.quiet
+    out_path = Path(output_dir) / f"{split}.zarr"
 
-    if args.countries is None:
-        countries = find_countries(root)
-        if verbose:
-            print("Discovered countries:", countries)
-    else:
-        countries = args.countries
+    # Delete old zarr store if it exists
+    if out_path.exists():
+        shutil.rmtree(out_path)
 
-    if len(countries) == 0:
-        raise RuntimeError("No countries found to process")
+    print(f"Exporting {len(dataset)} samples to {out_path} ...")
 
-    for country in countries:
-        create_zarr_for_country(
-            root=root,
-            country=country,
-            mask_type=mask_type,
-            overwrite=overwrite,
-            verbose=verbose,
-        )
+    # Load 1 sample to infer shapes
+    sample0 = dataset[0]
+    img0 = sample0["image"].numpy()
+    mask0 = sample0["mask"].numpy()
+
+    N = len(dataset)
+    C, H, W = img0.shape
+
+    # Create Zarr store
+    store = zarr.open(str(out_path), mode="w")
+
+    # Optimal chunk = 1 sample at a time
+    img_ds = store.create_dataset(
+        "images",
+        shape=(N, C, H, W),
+        chunks=(1, C, H, W),
+        dtype=img0.dtype,
+        compressor=zarr.Blosc(cname="zstd", clevel=3),
+    )
+
+    mask_ds = store.create_dataset(
+        "masks",
+        shape=(N, H, W),
+        chunks=(1, H, W),
+        dtype=mask0.dtype,
+        compressor=zarr.Blosc(cname="zstd", clevel=3),
+    )
+
+    # Fill in data
+    for idx in tqdm(range(N)):
+        sample = dataset[idx]
+        img = sample["image"].numpy()
+        mask = sample["mask"].numpy()
+
+        img_ds[idx] = img
+        mask_ds[idx] = mask
+
+    print(f"✅ Export completed for split '{split}' → {out_path}")
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--root", type=str, required=True)
+    parser.add_argument("--countries", nargs="+", required=True)
+    parser.add_argument("--split", type=str, default="train")
+    parser.add_argument("--output_dir", type=str, default="data/ftw/zarr")
+    parser.add_argument("--temporal_options", type=str, default="stacked")
+    parser.add_argument("--load_boundaries", action="store_true")
+    parser.add_argument("--num_samples", type=int, default=-1)
+    parser.add_argument("--ignore_sample_fn", type=str, default=None)
+    args = parser.parse_args()
+
+    export_dataset_to_zarr(
+        root=args.root,
+        countries=args.countries,
+        split=args.split,
+        output_dir=args.output_dir,
+        temporal_options=args.temporal_options,
+        load_boundaries=args.load_boundaries,
+        num_samples=args.num_samples,
+        ignore_sample_fn=args.ignore_sample_fn,
+    )
