@@ -84,22 +84,25 @@ def export_country_to_zarr(
 
     # Create Zarr store (v3)
     store = zarr.group(store=str(out_path), overwrite=True)
-    compressor = numcodecs.Blosc(cname="zstd", clevel=3)
-    # images array
+    compressor = numcodecs.Blosc(cname="zstd", clevel=3, shuffle=numcodecs.Blosc.SHUFFLE)
+
+    # Use zarr creation API correctly
     store.create_array(
         name="images",
         shape=(len(chip_ids), C, H, W),
         chunks=(1, C, H, W),
         dtype=np.float32,
-        compressors=[compressor],
+        fill_value=0,
+        compressor=compressor
     )
-    # masks array
+
     store.create_array(
         name="masks",
         shape=(len(chip_ids), *mask.shape),
         chunks=(1, *mask.shape),
         dtype=np.uint8,
-        compressors=[compressor],
+        fill_value=0,
+        compressor=compressor
     )
 
     num_written = 0
