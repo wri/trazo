@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Export FTW dataset to Zarr v3 stores (fully compatible).
+FTW Zarr v3 exporter (works in Zarr 3.x, Python 3.12)
 """
 
 import argparse
@@ -11,19 +11,12 @@ import geopandas as gpd
 import numpy as np
 import rasterio
 import zarr
-import numcodecs
 from tqdm import tqdm
 
 
-def find_countries(root: str) -> list[str]:
+def find_countries(root: str):
     root_path = Path(root)
-    countries = []
-    for sub in root_path.iterdir():
-        if not sub.is_dir():
-            continue
-        if any(sub.glob("chips_*.parquet")):
-            countries.append(sub.name)
-    return sorted(countries)
+    return sorted([sub.name for sub in root_path.iterdir() if (sub / "chips_*.parquet").exists()])
 
 
 def build_paths(country_root: Path, chip_id: str, mask_type: str):
@@ -52,22 +45,12 @@ def export_country_to_zarr(
         raise RuntimeError(f"No chips_*.parquet found for {country}")
     chips_fn = chips_files[0]
     df = gpd.read_parquet(chips_fn)
-    if "aoi_id" not in df.columns:
-        raise RuntimeError(f"'aoi_id' column missing in {chips_fn}")
-
     chip_ids = df["aoi_id"].astype(str).tolist()
+
     if verbose:
         print(f"Processing {country}: {len(chip_ids)} chips")
 
-    # Output path
-    out_path = Path(output_dir) / f"{country}.zarr"
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    if out_path.exists() and overwrite:
-        shutil.rmtree(out_path)
-    if verbose:
-        print(f"Writing Zarr store to {out_path}")
-
-    # Find first valid chip to infer shape
+    # Determine shape from first valid chip
     for chip_id in chip_ids:
         wa_path, wb_path, mask_path = build_paths(country_root, chip_id, mask_type)
         if check_paths(wa_path, wb_path, mask_path):
@@ -82,28 +65,19 @@ def export_country_to_zarr(
     else:
         raise RuntimeError(f"No valid chips found for {country}")
 
-    # Create Zarr store (v3)
+    out_path = Path(output_dir) / f"{country}.zarr"
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    if out_path.exists() and overwrite:
+        shutil.rmtree(out_path)
+
+    if verbose:
+        print(f"Writing Zarr store to {out_path}")
+
     store = zarr.group(store=str(out_path), overwrite=True)
-    compressor = numcodecs.Blosc(cname="zstd", clevel=3, shuffle=numcodecs.Blosc.SHUFFLE)
 
-    # Use zarr creation API correctly
-    store.create_array(
-        name="images",
-        shape=(len(chip_ids), C, H, W),
-        chunks=(1, C, H, W),
-        dtype=np.float32,
-        fill_value=0,
-        compressor=compressor
-    )
-
-    store.create_array(
-        name="masks",
-        shape=(len(chip_ids), *mask.shape),
-        chunks=(1, *mask.shape),
-        dtype=np.uint8,
-        fill_value=0,
-        compressor=compressor
-    )
+    # Create arrays **without specifying compressor** (fully compatible)
+    store.create_array("images", shape=(len(chip_ids), C, H, W), chunks=(1, C, H, W), dtype=np.float32)
+    store.create_array("masks", shape=(len(chip_ids), *mask.shape), chunks=(1, *mask.shape), dtype=np.uint8)
 
     num_written = 0
     num_missing = 0
@@ -141,6 +115,7 @@ def main():
     countries = args.countries or find_countries(args.root)
     if verbose:
         print("Countries:", countries)
+
     for country in countries:
         export_country_to_zarr(
             root=args.root,
