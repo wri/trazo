@@ -12,7 +12,7 @@ from torch import Tensor
 from torch.utils.data import DataLoader, Subset
 
 #from ftw_tools.training.datasets import FTW
-from src.tkt.pt4_train.datasets import FTW
+# from src.tkt.pt4_train.datasets import FTW
 
 # from ftw_tools.training.datasets import FTW_finaltraining
 from src.tkt.pt4_train.datasets import FTW_finaltraining
