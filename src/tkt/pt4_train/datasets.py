@@ -1,51 +1,58 @@
-import os
-from pathlib import Path
-import zarr
-import torch
-from torch import Tensor
-from torch.utils.data import Dataset
-
-
-class FTW_finaltraining(Dataset):
-    """Ultra-fast dataset loader for single-file Zarr dataset."""
+class FTW_Zarr(Dataset):
+    """
+    Optimized FTW dataset that loads pre-exported Zarr data.
+    All raw-file parameters are kept for compatibility but ignored.
+    """
 
     def __init__(
         self,
         root: str = "data/ftw/zarr",
+        countries: Sequence[str] | str | None = None,  # UNUSED, kept for compatibility
         split: str = "train",
-        transforms=None,
+        transforms: Optional[Callable[[dict[str, Any]], dict[str, Any]]] = None,
+        checksum: bool = False,        # UNUSED
+        load_boundaries: bool = False, # UNUSED
+        load_edges: bool = False,      # UNUSED
+        temporal_options: str = "stacked",  # UNUSED
+        swap_order: bool = False,           # UNUSED
+        num_samples: int = -1,
+        ignore_sample_fn: Optional[str] = None, # UNUSED
         verbose: bool = True,
-    ):
-        self.root = root
+    ) -> None:
+
+        self.root = Path(root)
         self.split = split
         self.transforms = transforms
+        self.num_samples = num_samples
 
-        zarr_path = Path(root) / f"{split}.zarr"
-
-        if verbose:
-            print(f"📂 Loading Zarr store: {zarr_path}")
-
-        self.z = zarr.open(str(zarr_path), mode="r")
-
-        self.images = self.z["images"]
-        self.masks = self.z["masks"]
-
-        self.length = self.images.shape[0]
+        zarr_path = self.root / f"{split}.zarr"
 
         if verbose:
-            print(f"✅ Loaded {self.length} samples for split '{split}'")
+            print(f"Loading Zarr dataset from: {zarr_path}")
+
+        self.store = zarr.open(str(zarr_path), mode="r")
+
+        self.images = self.store["image"]
+        self.masks = self.store["mask"]
+
+        self.length = len(self.images)
+
+        if num_samples > 0:
+            self.length = min(self.length, num_samples)
+
+        if verbose:
+            print(f"Loaded {self.length} samples from Zarr.")
 
     def __len__(self):
         return self.length
 
     def __getitem__(self, idx: int):
-        img = torch.from_numpy(self.images[idx]).float()
-        mask = torch.from_numpy(self.masks[idx]).long()
+        image = torch.from_numpy(self.images[idx])
+        mask = torch.from_numpy(self.masks[idx])
 
-        sample = {"image": img, "mask": mask}
+        sample = {"image": image, "mask": mask}
 
         if self.transforms:
             sample = self.transforms(sample)
-            sample["mask"] = sample["mask"].long()
 
         return sample
