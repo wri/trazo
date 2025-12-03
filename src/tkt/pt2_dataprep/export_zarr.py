@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 import zarr
 from torch.utils.data import Dataset
-from torchgeo.datasets import NonGeoDataset
+# from torchgeo.datasets import NonGeoDataset
 import torch
 
 
@@ -80,3 +80,4 @@ def export_unsplit(full_dataset, out_root, train_fraction=0.8):
 
     export_to_zarr(train_subset, out_root, "train")
     export_to_zarr(val_subset, out_root, "val")
+
