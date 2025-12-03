@@ -18,47 +18,76 @@ from tqdm import tqdm
 from src.tkt.pt4_train.datasets import FTW_finaltraining
 
 
-def export_dataset_to_zarr(
-    root: str,
-    countries: list[str],
-    split: str = "train",
-    output_dir: str = "data/ftw/zarr",
-    temporal_options: str = "stacked",
-    load_boundaries: bool = False,
-    num_samples: int = -1,
-    ignore_sample_fn: str | None = None,
-) -> None:
+"""
+Export all FTW_finaltraining regions into single Zarr stores per split.
+- Creates: train.zarr, val.zarr, test.zarr
+- Optimized for training speed: (N, C, H, W) chunked as (1, C, H, W)
+- Overwrites old Zarr stores automatically.
+- Uses blosc zstd compression (fastest).
+"""
 
-    dataset = FTW_finaltraining(
-        root=root,
-        countries=countries,
-        split=split,
-        temporal_options=temporal_options,
-        load_boundaries=load_boundaries,
-        num_samples=num_samples,
-        ignore_sample_fn=ignore_sample_fn,
-    )
+import shutil
+from pathlib import Path
+from tqdm import tqdm
 
-    out_path = Path(output_dir) / f"{split}.zarr"
+import torch
+import zarr
+from src.tkt.pt4_train.datasets import FTW_finaltraining
 
-    # Delete old zarr store if it exists
-    if out_path.exists():
-        shutil.rmtree(out_path)
+# -----------------------
+# CONFIGURATION
+# -----------------------
+root_dir = "/content/drive/MyDrive/TkT Test Sets/ftw-baselines/ftw-training-data"
+output_dir = "/content/drive/MyDrive/TkT Test Sets/ftw-baselines/ftw-zarr"
+splits = ["train", "val", "test"]
 
-    print(f"Exporting {len(dataset)} samples to {out_path} ...")
+# List all regions for each split (update if needed)
+regions_by_split = {
+    "train": [
+        "acre_training", "altoparana_training", "amapa_training", "araucaria_training",
+        "caatinga_training", "cerrado_training", "chaco_training",
+        "humidchaco_training", "maparaguay_training", "matogrosso_10lowestbandpartial",
+        "peruvianamazon_training", "pantanal_training", "rondonia_training",
+        "uruguayansavannah_training",
+    ],
+    "val": [
+        "acre_validation", "altoparana_validation", "amapa_validation", "araucaria_validation",
+        "caatinga_validation", "cerrado_validation", "chaco_validation",
+        "humidchaco_validation", "maparaguay_validation", "peruvianamazon_validation",
+        "pantanal_validation", "rondonia_validation", "uruguayansavannah_validation",
+    ],
+    "test": [
+        "cerradotraining", "rondonia_testing", "southamericasoy", "soy", "tocantins"
+    ],
+}
 
-    # Load 1 sample to infer shapes
-    sample0 = dataset[0]
+# -----------------------
+# FUNCTION TO EXPORT
+# -----------------------
+def export_split_to_zarr(split: str):
+    print(f"\n🚀 Exporting {split} split ...")
+    # Collect all samples from all regions
+    combined_dataset = []
+    for region in regions_by_split[split]:
+        print(f"Loading region: {region}")
+        ds = FTW_finaltraining(root=root_dir, countries=[region], split=split)
+        combined_dataset.extend(ds)
+
+    N = len(combined_dataset)
+    print(f"Total samples in {split}: {N}")
+
+    # Infer shape from first sample
+    sample0 = combined_dataset[0]
     img0 = sample0["image"].numpy()
     mask0 = sample0["mask"].numpy()
-
-    N = len(dataset)
     C, H, W = img0.shape
 
     # Create Zarr store
+    out_path = Path(output_dir) / f"{split}.zarr"
+    if out_path.exists():
+        shutil.rmtree(out_path)
     store = zarr.open(str(out_path), mode="w")
 
-    # Optimal chunk = 1 sample at a time
     img_ds = store.create_dataset(
         "images",
         shape=(N, C, H, W),
@@ -66,7 +95,6 @@ def export_dataset_to_zarr(
         dtype=img0.dtype,
         compressor=zarr.Blosc(cname="zstd", clevel=3),
     )
-
     mask_ds = store.create_dataset(
         "masks",
         shape=(N, H, W),
@@ -76,36 +104,18 @@ def export_dataset_to_zarr(
     )
 
     # Fill in data
-    for idx in tqdm(range(N)):
-        sample = dataset[idx]
-        img = sample["image"].numpy()
-        mask = sample["mask"].numpy()
+    for idx, sample in enumerate(tqdm(combined_dataset)):
+        img_ds[idx] = sample["image"].numpy()
+        mask_ds[idx] = sample["mask"].numpy()
 
-        img_ds[idx] = img
-        mask_ds[idx] = mask
-
-    print(f"✅ Export completed for split '{split}' → {out_path}")
+    print(f"✅ {split}.zarr created at {out_path}")
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--root", type=str, required=True)
-    parser.add_argument("--countries", nargs="+", required=True)
-    parser.add_argument("--split", type=str, default="train")
-    parser.add_argument("--output_dir", type=str, default="data/ftw/zarr")
-    parser.add_argument("--temporal_options", type=str, default="stacked")
-    parser.add_argument("--load_boundaries", action="store_true")
-    parser.add_argument("--num_samples", type=int, default=-1)
-    parser.add_argument("--ignore_sample_fn", type=str, default=None)
-    args = parser.parse_args()
+# -----------------------
+# EXPORT ALL SPLITS
+# -----------------------
+Path(output_dir).mkdir(parents=True, exist_ok=True)
+for split in splits:
+    export_split_to_zarr(split)
 
-    export_dataset_to_zarr(
-        root=args.root,
-        countries=args.countries,
-        split=args.split,
-        output_dir=args.output_dir,
-        temporal_options=args.temporal_options,
-        load_boundaries=args.load_boundaries,
-        num_samples=args.num_samples,
-        ignore_sample_fn=args.ignore_sample_fn,
-    )
+print("\n All splits exported successfully!")
