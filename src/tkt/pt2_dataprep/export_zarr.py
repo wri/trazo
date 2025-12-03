@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Export FTW dataset to Zarr stores (Zarr v3 compatible)
+Export FTW dataset to Zarr v3 stores (fully compatible).
 """
 
 import argparse
@@ -16,8 +16,8 @@ from tqdm import tqdm
 
 
 def find_countries(root: str) -> list[str]:
-    countries: list[str] = []
     root_path = Path(root)
+    countries = []
     for sub in root_path.iterdir():
         if not sub.is_dir():
             continue
@@ -47,11 +47,9 @@ def export_country_to_zarr(
     verbose=True,
 ):
     country_root = Path(root) / country
-
-    # Load chips parquet
     chips_files = list(country_root.glob("chips_*.parquet"))
     if not chips_files:
-        raise RuntimeError(f"No chips_*.parquet file found for {country}")
+        raise RuntimeError(f"No chips_*.parquet found for {country}")
     chips_fn = chips_files[0]
     df = gpd.read_parquet(chips_fn)
     if "aoi_id" not in df.columns:
@@ -61,7 +59,7 @@ def export_country_to_zarr(
     if verbose:
         print(f"Processing {country}: {len(chip_ids)} chips")
 
-    # Output Zarr
+    # Output path
     out_path = Path(output_dir) / f"{country}.zarr"
     out_path.parent.mkdir(parents=True, exist_ok=True)
     if out_path.exists() and overwrite:
@@ -69,13 +67,13 @@ def export_country_to_zarr(
     if verbose:
         print(f"Writing Zarr store to {out_path}")
 
-    # Read first valid chip to infer shapes
+    # Find first valid chip to infer shape
     for chip_id in chip_ids:
-        window_a_path, window_b_path, mask_path = build_paths(country_root, chip_id, mask_type)
-        if check_paths(window_a_path, window_b_path, mask_path):
-            with rasterio.open(window_a_path) as f_a:
+        wa_path, wb_path, mask_path = build_paths(country_root, chip_id, mask_type)
+        if check_paths(wa_path, wb_path, mask_path):
+            with rasterio.open(wa_path) as f_a:
                 wa = f_a.read()
-            with rasterio.open(window_b_path) as f_b:
+            with rasterio.open(wb_path) as f_b:
                 wb = f_b.read()
             with rasterio.open(mask_path) as f_m:
                 mask = f_m.read(1)
@@ -84,41 +82,42 @@ def export_country_to_zarr(
     else:
         raise RuntimeError(f"No valid chips found for {country}")
 
-    # Zarr store with modern API
+    # Create Zarr store (v3)
     store = zarr.group(store=str(out_path), overwrite=True)
     compressor = numcodecs.Blosc(cname="zstd", clevel=3)
-    img_ds = store.create_dataset(
+    # images array
+    store.create_array(
         name="images",
         shape=(len(chip_ids), C, H, W),
         chunks=(1, C, H, W),
         dtype=np.float32,
-        compressor=compressor,
+        compressors=[compressor],
     )
-    mask_ds = store.create_dataset(
+    # masks array
+    store.create_array(
         name="masks",
         shape=(len(chip_ids), *mask.shape),
         chunks=(1, *mask.shape),
         dtype=np.uint8,
-        compressor=compressor,
+        compressors=[compressor],
     )
 
     num_written = 0
     num_missing = 0
     for i, chip_id in enumerate(tqdm(chip_ids)):
-        window_a_path, window_b_path, mask_path = build_paths(country_root, chip_id, mask_type)
-        if not check_paths(window_a_path, window_b_path, mask_path):
+        wa_path, wb_path, mask_path = build_paths(country_root, chip_id, mask_type)
+        if not check_paths(wa_path, wb_path, mask_path):
             num_missing += 1
             continue
-
-        with rasterio.open(window_a_path) as f_a:
+        with rasterio.open(wa_path) as f_a:
             wa = f_a.read()
-        with rasterio.open(window_b_path) as f_b:
+        with rasterio.open(wb_path) as f_b:
             wb = f_b.read()
         with rasterio.open(mask_path) as f_m:
             mask = f_m.read(1)
 
-        img_ds[i] = np.concatenate([wb, wa], axis=0).astype(np.float32)
-        mask_ds[i] = mask
+        store["images"][i] = np.concatenate([wb, wa], axis=0).astype(np.float32)
+        store["masks"][i] = mask
         num_written += 1
 
     if verbose:
@@ -126,7 +125,7 @@ def export_country_to_zarr(
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Export FTW to Zarr (v3)")
+    parser = argparse.ArgumentParser(description="Export FTW to Zarr v3")
     parser.add_argument("--root", type=str, required=True)
     parser.add_argument("--countries", nargs="+", default=None)
     parser.add_argument("--mask-type", type=str, default="semantic_3class")
