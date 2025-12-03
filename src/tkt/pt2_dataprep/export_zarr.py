@@ -1,16 +1,11 @@
 #!/usr/bin/env python
 """
-Export FTW dataset to Zarr stores.
-- Reads window_a and window_b images and a mask for each chip.
-- Stacks images along the channel axis (temporal_options="stacked").
-- Writes one Zarr store per country.
-- Efficient chunking: (1, C, H, W) for images, (1, H, W) for masks.
-- Uses Blosc zstd compression.
+Export FTW dataset to Zarr stores (Zarr v3 compatible)
 """
 
 import argparse
 from pathlib import Path
-import random
+import shutil
 
 import geopandas as gpd
 import numpy as np
@@ -19,93 +14,92 @@ import zarr
 import numcodecs
 from tqdm import tqdm
 
+
 def find_countries(root: str) -> list[str]:
-    """Automatically find country folders: any subfolder containing chips_*.parquet."""
     countries: list[str] = []
     root_path = Path(root)
-    if not root_path.exists():
-        raise RuntimeError(f"Root directory {root} does not exist")
-
     for sub in root_path.iterdir():
         if not sub.is_dir():
             continue
-        chips_files = list(sub.glob("chips_*.parquet"))
-        if chips_files:
+        if any(sub.glob("chips_*.parquet")):
             countries.append(sub.name)
     return sorted(countries)
 
+
 def build_paths(country_root: Path, chip_id: str, mask_type: str):
-    window_b_path = country_root / "s2_images" / "window_b" / f"{chip_id}.tif"
-    window_a_path = country_root / "s2_images" / "window_a" / f"{chip_id}.tif"
-    mask_path = country_root / "label_masks" / mask_type / f"{chip_id}.tif"
-    return window_a_path, window_b_path, mask_path
+    return (
+        country_root / "s2_images" / "window_a" / f"{chip_id}.tif",
+        country_root / "s2_images" / "window_b" / f"{chip_id}.tif",
+        country_root / "label_masks" / mask_type / f"{chip_id}.tif",
+    )
+
 
 def check_paths(window_a, window_b, mask):
     return window_a.exists() and window_b.exists() and mask.exists()
 
-def export_country_to_zarr(root: str, country: str, mask_type="semantic_3class",
-                           output_dir="data/ftw/zarr", overwrite=False, verbose=True):
+
+def export_country_to_zarr(
+    root: str,
+    country: str,
+    mask_type="semantic_3class",
+    output_dir="data/ftw/zarr",
+    overwrite=False,
+    verbose=True,
+):
     country_root = Path(root) / country
 
+    # Load chips parquet
     chips_files = list(country_root.glob("chips_*.parquet"))
     if not chips_files:
-        raise RuntimeError(f"No chips_*.parquet file found for country {country}")
+        raise RuntimeError(f"No chips_*.parquet file found for {country}")
     chips_fn = chips_files[0]
-
-    if verbose:
-        print(f"\nProcessing country: {country}")
-        print(f"  Using chips file: {chips_fn}")
-        print(f"  Mask type: {mask_type}")
-
     df = gpd.read_parquet(chips_fn)
     if "aoi_id" not in df.columns:
-        raise RuntimeError(f"chips file for {country} does not contain 'aoi_id' column")
+        raise RuntimeError(f"'aoi_id' column missing in {chips_fn}")
 
     chip_ids = df["aoi_id"].astype(str).tolist()
     if verbose:
-        print(f"  Number of chips: {len(chip_ids)}")
+        print(f"Processing {country}: {len(chip_ids)} chips")
 
+    # Output Zarr
     out_path = Path(output_dir) / f"{country}.zarr"
     out_path.parent.mkdir(parents=True, exist_ok=True)
     if out_path.exists() and overwrite:
-        if verbose:
-            print(f"  Removing existing Zarr store: {out_path}")
-        import shutil
         shutil.rmtree(out_path)
     if verbose:
-        print(f"  Writing Zarr store to: {out_path}")
+        print(f"Writing Zarr store to {out_path}")
 
-    # Read first chip to infer shapes
+    # Read first valid chip to infer shapes
     for chip_id in chip_ids:
         window_a_path, window_b_path, mask_path = build_paths(country_root, chip_id, mask_type)
         if check_paths(window_a_path, window_b_path, mask_path):
-            with rasterio.open(window_b_path) as f_b:
-                window_b_img = f_b.read()
             with rasterio.open(window_a_path) as f_a:
-                window_a_img = f_a.read()
+                wa = f_a.read()
+            with rasterio.open(window_b_path) as f_b:
+                wb = f_b.read()
             with rasterio.open(mask_path) as f_m:
                 mask = f_m.read(1)
-            C, H, W = np.concatenate([window_b_img, window_a_img], axis=0).shape
-            mask_shape = mask.shape
+            C, H, W = np.concatenate([wb, wa], axis=0).shape
             break
     else:
-        raise RuntimeError(f"No valid chips found for country {country}")
+        raise RuntimeError(f"No valid chips found for {country}")
 
-    # Create Zarr store
-    store = zarr.open(str(out_path), mode="w")
+    # Zarr store with modern API
+    store = zarr.group(store=str(out_path), overwrite=True)
+    compressor = numcodecs.Blosc(cname="zstd", clevel=3)
     img_ds = store.create_dataset(
-        "images",
+        name="images",
         shape=(len(chip_ids), C, H, W),
         chunks=(1, C, H, W),
         dtype=np.float32,
-        compressor=numcodecs.Blosc(cname="zstd", clevel=3),
+        compressor=compressor,
     )
     mask_ds = store.create_dataset(
-        "masks",
-        shape=(len(chip_ids), *mask_shape),
-        chunks=(1, *mask_shape),
+        name="masks",
+        shape=(len(chip_ids), *mask.shape),
+        chunks=(1, *mask.shape),
         dtype=np.uint8,
-        compressor=numcodecs.Blosc(cname="zstd", clevel=3),
+        compressor=compressor,
     )
 
     num_written = 0
@@ -116,28 +110,25 @@ def export_country_to_zarr(root: str, country: str, mask_type="semantic_3class",
             num_missing += 1
             continue
 
-        with rasterio.open(window_b_path) as f_b:
-            window_b_img = f_b.read()
         with rasterio.open(window_a_path) as f_a:
-            window_a_img = f_a.read()
+            wa = f_a.read()
+        with rasterio.open(window_b_path) as f_b:
+            wb = f_b.read()
         with rasterio.open(mask_path) as f_m:
             mask = f_m.read(1)
 
-        image = np.concatenate([window_b_img, window_a_img], axis=0).astype(np.float32)
-
-        img_ds[i] = image
+        img_ds[i] = np.concatenate([wb, wa], axis=0).astype(np.float32)
         mask_ds[i] = mask
         num_written += 1
 
     if verbose:
-        print(f"✅ Done: {country}")
-        print(f"  Written: {num_written}")
-        print(f"  Missing: {num_missing}")
+        print(f"✅ {country}: written {num_written}, missing {num_missing}")
+
 
 def main():
-    parser = argparse.ArgumentParser(description="Export FTW dataset to Zarr stores")
-    parser.add_argument("--root", type=str, required=True, help="Root FTW directory")
-    parser.add_argument("--countries", nargs="+", default=None, help="List of countries")
+    parser = argparse.ArgumentParser(description="Export FTW to Zarr (v3)")
+    parser.add_argument("--root", type=str, required=True)
+    parser.add_argument("--countries", nargs="+", default=None)
     parser.add_argument("--mask-type", type=str, default="semantic_3class")
     parser.add_argument("--output-dir", type=str, default="data/ftw/zarr")
     parser.add_argument("--overwrite", action="store_true")
@@ -145,13 +136,9 @@ def main():
     args = parser.parse_args()
 
     verbose = not args.quiet
-    if args.countries is None:
-        countries = find_countries(args.root)
-        if verbose:
-            print("Discovered countries:", countries)
-    else:
-        countries = args.countries
-
+    countries = args.countries or find_countries(args.root)
+    if verbose:
+        print("Countries:", countries)
     for country in countries:
         export_country_to_zarr(
             root=args.root,
@@ -161,6 +148,7 @@ def main():
             overwrite=args.overwrite,
             verbose=verbose,
         )
+
 
 if __name__ == "__main__":
     main()
