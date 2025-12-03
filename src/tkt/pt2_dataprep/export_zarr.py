@@ -1,148 +1,130 @@
+#!/usr/bin/env python
 import argparse
+import sys
 from pathlib import Path
-import shutil
+
+import geopandas as gpd
 import numpy as np
-import torch
+import rasterio
 import zarr
-from torch.utils.data import Dataset, Subset
-
-# ---------------------
-# Utility
-# ---------------------
-
-def clear_if_exists(path: Path, overwrite: bool):
-    if path.exists():
-        if overwrite:
-            print(f"[INFO] Removing existing {path}")
-            shutil.rmtree(path)
-        else:
-            raise RuntimeError(f"{path} exists. Use --overwrite to replace.")
+from numcodecs import Blosc
 
 
-# ---------------------
-# Zarr Export Function
-# ---------------------
+def find_countries(root: str) -> list[str]:
+    """Auto-detect country folders containing chips_*.parquet."""
+    root_path = Path(root)
+    countries = []
+    for p in root_path.iterdir():
+        if p.is_dir() and len(list(p.glob("chips_*.parquet"))) == 1:
+            countries.append(p.name)
+    return sorted(countries)
 
-def export_to_zarr(dataset: Dataset, out_root: Path, split: str, overwrite: bool):
-    out_root.mkdir(parents=True, exist_ok=True)
 
-    zarr_path = out_root / f"{split}.zarr"
-    clear_if_exists(zarr_path, overwrite)
+def load_image(path: Path) -> np.ndarray:
+    with rasterio.open(path) as f:
+        return f.read().astype(np.float32)
 
-    print(f"[INFO] Creating Zarr store for '{split}' at: {zarr_path}")
 
-    store = zarr.open(str(zarr_path), mode="w")
+def load_mask(path: Path) -> np.ndarray:
+    with rasterio.open(path) as f:
+        return f.read(1).astype(np.int16)
 
-    # Probe first item
-    sample0 = dataset[0]
-    C, H, W = sample0["image"].shape
-    MH, MW = sample0["mask"].shape
 
-    img_arr = store.create(
+def write_split_zarr(split_name: str, samples: list[dict], out_root: Path):
+    """Write one split into a Zarr store."""
+    zroot = out_root / f"{split_name}.zarr"
+    if zroot.exists():
+        print(f"[INFO] Overwriting {zroot}")
+        for child in zroot.iterdir():
+            if child.is_file():
+                child.unlink()
+            else:
+                import shutil
+                shutil.rmtree(child)
+
+    compressor = Blosc(cname="zstd", clevel=3)
+    z = zarr.open(str(zroot), mode="w")
+
+    n = len(samples)
+    c, h, w = samples[0]["image"].shape
+
+    z.create_dataset(
         "images",
-        shape=(len(dataset), C, H, W),
-        chunks=(1, C, H, W),
-        dtype=np.float32,
+        shape=(n, c, h, w),
+        chunks=(1, c, h, w),
+        dtype="float32",
+        compressor=compressor,
     )
-
-    mask_arr = store.create(
+    z.create_dataset(
         "masks",
-        shape=(len(dataset), MH, MW),
-        chunks=(1, MH, MW),
-        dtype=np.int64,
+        shape=(n, h, w),
+        chunks=(1, h, w),
+        dtype="int16",
+        compressor=compressor,
     )
 
-    for i in range(len(dataset)):
-        s = dataset[i]
-        img_arr[i] = s["image"].numpy()
-        mask_arr[i] = s["mask"].numpy()
+    for i, s in enumerate(samples):
+        z["images"][i] = s["image"]
+        z["masks"][i] = s["mask"]
 
-        if i % 100 == 0:
-            print(f"[INFO]   {i}/{len(dataset)} saved...")
-
-    print(f"[INFO] Finished '{split}' Zarr export.")
-    return zarr_path
+    print(f"[INFO] Wrote {n} samples to {zroot}")
 
 
-# ---------------------
-# Split Handling
-# ---------------------
+def process_country(country_root: Path, mask_type: str) -> list[dict]:
+    """Load all chips for a single country."""
+    chips_file = list(country_root.glob("chips_*.parquet"))[0]
+    df = gpd.read_parquet(chips_file)
 
-def export_unsplit(full_dataset, out_root, overwrite):
-    print("[INFO] Exporting unsplit dataset (automatic 80/20 split)")
+    chip_ids = df["aoi_id"].astype(str).tolist()
+    samples = []
 
-    n = len(full_dataset)
-    train_n = int(n * 0.8)
+    for chip in chip_ids:
+        a = country_root / "s2_images" / "window_a" / f"{chip}.tif"
+        b = country_root / "s2_images" / "window_b" / f"{chip}.tif"
+        m = country_root / "label_masks" / mask_type / f"{chip}.tif"
 
-    idx = torch.randperm(n)
-    train_ds = Subset(full_dataset, idx[:train_n])
-    val_ds   = Subset(full_dataset, idx[train_n:])
+        if not (a.exists() and b.exists() and m.exists()):
+            continue
 
-    export_to_zarr(train_ds, out_root, "train", overwrite)
-    export_to_zarr(val_ds, out_root, "val", overwrite)
+        img_a = load_image(a)
+        img_b = load_image(b)
+        image = np.concatenate([img_b, img_a], axis=0)
+        mask = load_mask(m)
 
+        samples.append({"image": image, "mask": mask})
 
-def export_presplit(train_ds, val_ds, out_root, overwrite):
-    print("[INFO] Exporting presplit dataset")
-
-    export_to_zarr(train_ds, out_root, "train", overwrite)
-    export_to_zarr(val_ds, out_root, "val", overwrite)
-
-
-# ---------------------
-# CLI + MAIN
-# ---------------------
-
-def parse_args():
-    parser = argparse.ArgumentParser()
-
-    parser.add_argument("--root", type=str, required=True)
-    parser.add_argument("--countries", nargs="+", default=None)
-    parser.add_argument("--mask-type", type=str, default="semantic_3class")
-    parser.add_argument("--overwrite", action="store_true")
-
-    return parser.parse_args()
+    return samples
 
 
 def main():
-    args = parse_args()
+    p = argparse.ArgumentParser(description="Export FTW dataset to unified Zarr format.")
+    p.add_argument("--root", required=True, type=str)
+    p.add_argument("--countries", nargs="+", default=None)
+    p.add_argument("--mask-type", default="semantic_3class")
+    p.add_argument("--overwrite", action="store_true")
+    args = p.parse_args()
+
     root = Path(args.root)
+    out_root = root
 
-    print(f"[INFO] Loading dataset root: {root}")
-    print(f"[INFO] Countries: {args.countries}")
-    print(f"[INFO] Mask type: {args.mask_type}")
-
-    # -----------------------------
-    # Load your FTW_raw dataset here
-    # (this part depends on your original FTW dataset loader)
-    # -----------------------------
-
-    from tkt.pt2_dataprep.datasets import FTW  # your original dataset
-
-    print("[INFO] Initializing FTW dataset...")
-
-    ds = FTW(
-        root=str(root),
-        countries=args.countries,
-        mask_type=args.mask_type,
-        split="all",      # load everything
-        load_boundaries=False,
-        load_edges=False,
-    )
-
-    print(f"[INFO] Dataset contains {len(ds)} total samples.")
-
-    # -----------------------------
-    # If dataset is already presplit
-    # -----------------------------
-    if hasattr(ds, "train") and hasattr(ds, "val"):
-        export_presplit(ds.train, ds.val, Path("data/ftw/zarr"), args.overwrite)
+    if args.countries is None:
+        countries = find_countries(root)
     else:
-        # cerrrado2, etc.
-        export_unsplit(ds, Path("data/ftw/zarr"), args.overwrite)
+        countries = args.countries
+
+    print("[INFO] Countries:", countries)
+
+    all_samples = []
+    for c in countries:
+        print(f"[INFO] Processing {c}")
+        country_root = root / c
+        samples = process_country(country_root, args.mask_type)
+        print(f"[INFO] {c}: Loaded {len(samples)} samples")
+        all_samples.extend(samples)
+
+    # if dataset has no official splits → everything is train
+    write_split_zarr("train", all_samples, out_root)
 
 
 if __name__ == "__main__":
     main()
-
-
