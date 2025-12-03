@@ -48,8 +48,8 @@ class FTW_finaltraining(Dataset):
 
         self.store = zarr.open(str(zarr_path), mode="r")
 
-        self.images = self.store["image"]
-        self.masks = self.store["mask"]
+        self.images = self.store["images"]
+        self.masks = self.store["masks"]
 
         self.length = len(self.images)
 
