@@ -14,6 +14,7 @@ from matplotlib.figure import Figure
 from torch import Tensor
 from torchgeo.datasets import NonGeoDataset
 from torch.utils.data import Dataset
+import zarr
 class FTW_Zarr(Dataset):
     """
     Optimized FTW dataset that loads pre-exported Zarr data.
