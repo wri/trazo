@@ -1,23 +1,19 @@
 #!/usr/bin/env python
 import argparse
-import sys
 from pathlib import Path
 
 import geopandas as gpd
 import numpy as np
 import rasterio
 import zarr
-from numcodecs import Blosc
 
 
 def find_countries(root: str) -> list[str]:
-    """Auto-detect country folders containing chips_*.parquet."""
     root_path = Path(root)
-    countries = []
-    for p in root_path.iterdir():
-        if p.is_dir() and len(list(p.glob("chips_*.parquet"))) == 1:
-            countries.append(p.name)
-    return sorted(countries)
+    return [
+        p.name for p in root_path.iterdir()
+        if p.is_dir() and len(list(p.glob("chips_*.parquet"))) == 1
+    ]
 
 
 def load_image(path: Path) -> np.ndarray:
@@ -30,88 +26,79 @@ def load_mask(path: Path) -> np.ndarray:
         return f.read(1).astype(np.int16)
 
 
-def write_split_zarr(split_name: str, samples: list[dict], out_root: Path):
-    """Write one split into a Zarr store."""
-    zroot = out_root / f"{split_name}.zarr"
-    if zroot.exists():
-        print(f"[INFO] Overwriting {zroot}")
-        for child in zroot.iterdir():
-            if child.is_file():
-                child.unlink()
-            else:
-                import shutil
-                shutil.rmtree(child)
+def write_split_zarr(split: str, samples: list[dict], out_root: Path):
+    zpath = out_root / f"{split}.zarr"
 
-    compressor = Blosc(cname="zstd", clevel=3)
-    z = zarr.open(str(zroot), mode="w")
+    if zpath.exists():
+        import shutil
+        shutil.rmtree(zpath)
 
     n = len(samples)
     c, h, w = samples[0]["image"].shape
 
-    z.create_dataset(
+    print(f"[INFO] Creating {zpath} with {n} samples")
+
+    # Open group in v3 mode
+    root = zarr.open_group(str(zpath), mode="w", zarr_format=3)
+
+    # Zarr v3 compressors use dict configs
+    compressor = {"id": "zstd", "level": 3}
+
+    root.create_array(
         "images",
         shape=(n, c, h, w),
         chunks=(1, c, h, w),
         dtype="float32",
-        compressor=compressor,
+        compressors=[compressor],
     )
-    z.create_dataset(
+    root.create_array(
         "masks",
         shape=(n, h, w),
         chunks=(1, h, w),
         dtype="int16",
-        compressor=compressor,
+        compressors=[compressor],
     )
 
     for i, s in enumerate(samples):
-        z["images"][i] = s["image"]
-        z["masks"][i] = s["mask"]
+        root["images"][i] = s["image"]
+        root["masks"][i] = s["mask"]
 
-    print(f"[INFO] Wrote {n} samples to {zroot}")
+    print(f"[INFO] Finished writing {split}.zarr")
 
 
 def process_country(country_root: Path, mask_type: str) -> list[dict]:
-    """Load all chips for a single country."""
     chips_file = list(country_root.glob("chips_*.parquet"))[0]
     df = gpd.read_parquet(chips_file)
-
-    chip_ids = df["aoi_id"].astype(str).tolist()
     samples = []
 
-    for chip in chip_ids:
-        a = country_root / "s2_images" / "window_a" / f"{chip}.tif"
-        b = country_root / "s2_images" / "window_b" / f"{chip}.tif"
-        m = country_root / "label_masks" / mask_type / f"{chip}.tif"
+    for chip_id in df["aoi_id"].astype(str):
+        a = country_root / "s2_images" / "window_a" / f"{chip_id}.tif"
+        b = country_root / "s2_images" / "window_b" / f"{chip_id}.tif"
+        m = country_root / "label_masks" / mask_type / f"{chip_id}.tif"
 
         if not (a.exists() and b.exists() and m.exists()):
             continue
 
         img_a = load_image(a)
         img_b = load_image(b)
-        image = np.concatenate([img_b, img_a], axis=0)
+        img = np.concatenate([img_b, img_a], axis=0)
         mask = load_mask(m)
 
-        samples.append({"image": image, "mask": mask})
+        samples.append({"image": img, "mask": mask})
 
     return samples
 
 
 def main():
-    p = argparse.ArgumentParser(description="Export FTW dataset to unified Zarr format.")
-    p.add_argument("--root", required=True, type=str)
-    p.add_argument("--countries", nargs="+", default=None)
-    p.add_argument("--mask-type", default="semantic_3class")
-    p.add_argument("--overwrite", action="store_true")
-    args = p.parse_args()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--root", required=True)
+    parser.add_argument("--countries", nargs="+", default=None)
+    parser.add_argument("--mask-type", default="semantic_3class")
+    args = parser.parse_args()
 
     root = Path(args.root)
-    out_root = root
 
-    if args.countries is None:
-        countries = find_countries(root)
-    else:
-        countries = args.countries
-
+    countries = args.countries or find_countries(str(root))
     print("[INFO] Countries:", countries)
 
     all_samples = []
@@ -122,9 +109,9 @@ def main():
         print(f"[INFO] {c}: Loaded {len(samples)} samples")
         all_samples.extend(samples)
 
-    # if dataset has no official splits → everything is train
-    write_split_zarr("train", all_samples, out_root)
+    write_split_zarr("train", all_samples, root)
 
 
 if __name__ == "__main__":
     main()
+
