@@ -1,33 +1,39 @@
-"""
-Export any FTW dataset (presplit or not) to Zarr format.
-"""
-
-import os
+import argparse
 from pathlib import Path
+import shutil
 import numpy as np
-import zarr
-from torch.utils.data import Dataset
-# from torchgeo.datasets import NonGeoDataset
 import torch
+import zarr
+from torch.utils.data import Dataset, Subset
+
+# ---------------------
+# Utility
+# ---------------------
+
+def clear_if_exists(path: Path, overwrite: bool):
+    if path.exists():
+        if overwrite:
+            print(f"[INFO] Removing existing {path}")
+            shutil.rmtree(path)
+        else:
+            raise RuntimeError(f"{path} exists. Use --overwrite to replace.")
 
 
-def export_to_zarr(dataset: Dataset, out_root: str, split: str):
-    """
-    Writes image/mask pairs into Zarr store.
-    """
-    out_root = Path(out_root)
+# ---------------------
+# Zarr Export Function
+# ---------------------
+
+def export_to_zarr(dataset: Dataset, out_root: Path, split: str, overwrite: bool):
     out_root.mkdir(parents=True, exist_ok=True)
 
     zarr_path = out_root / f"{split}.zarr"
-    if zarr_path.exists():
-        print(f"Removing previous Zarr store at {zarr_path}")
-        import shutil
-        shutil.rmtree(zarr_path)
+    clear_if_exists(zarr_path, overwrite)
 
-    print(f"Creating Zarr store at: {zarr_path}")
+    print(f"[INFO] Creating Zarr store for '{split}' at: {zarr_path}")
+
     store = zarr.open(str(zarr_path), mode="w")
 
-    # Probe first sample for shapes
+    # Probe first item
     sample0 = dataset[0]
     C, H, W = sample0["image"].shape
     MH, MW = sample0["mask"].shape
@@ -51,33 +57,92 @@ def export_to_zarr(dataset: Dataset, out_root: str, split: str):
         img_arr[i] = s["image"].numpy()
         mask_arr[i] = s["mask"].numpy()
 
-        if i % 500 == 0:
-            print(f"  Saved {i}/{len(dataset)} samples ...")
+        if i % 100 == 0:
+            print(f"[INFO]   {i}/{len(dataset)} saved...")
 
-    print(f"Finished writing split '{split}' to {zarr_path}")
+    print(f"[INFO] Finished '{split}' Zarr export.")
     return zarr_path
 
 
-def export_presplit(train_ds, val_ds, out_root):
-    print("Exporting presplit dataset...")
+# ---------------------
+# Split Handling
+# ---------------------
 
-    export_to_zarr(train_ds, out_root, "train")
-    export_to_zarr(val_ds, out_root, "val")
-
-
-def export_unsplit(full_dataset, out_root, train_fraction=0.8):
-    print("Exporting unsplit dataset...")
+def export_unsplit(full_dataset, out_root, overwrite):
+    print("[INFO] Exporting unsplit dataset (automatic 80/20 split)")
 
     n = len(full_dataset)
-    train_n = int(n * train_fraction)
+    train_n = int(n * 0.8)
 
-    indices = torch.randperm(n)
-    train_idx = indices[:train_n]
-    val_idx = indices[train_n:]
+    idx = torch.randperm(n)
+    train_ds = Subset(full_dataset, idx[:train_n])
+    val_ds   = Subset(full_dataset, idx[train_n:])
 
-    train_subset = torch.utils.data.Subset(full_dataset, train_idx)
-    val_subset = torch.utils.data.Subset(full_dataset, val_idx)
+    export_to_zarr(train_ds, out_root, "train", overwrite)
+    export_to_zarr(val_ds, out_root, "val", overwrite)
 
-    export_to_zarr(train_subset, out_root, "train")
-    export_to_zarr(val_subset, out_root, "val")
+
+def export_presplit(train_ds, val_ds, out_root, overwrite):
+    print("[INFO] Exporting presplit dataset")
+
+    export_to_zarr(train_ds, out_root, "train", overwrite)
+    export_to_zarr(val_ds, out_root, "val", overwrite)
+
+
+# ---------------------
+# CLI + MAIN
+# ---------------------
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("--root", type=str, required=True)
+    parser.add_argument("--countries", nargs="+", default=None)
+    parser.add_argument("--mask-type", type=str, default="semantic_3class")
+    parser.add_argument("--overwrite", action="store_true")
+
+    return parser.parse_args()
+
+
+def main():
+    args = parse_args()
+    root = Path(args.root)
+
+    print(f"[INFO] Loading dataset root: {root}")
+    print(f"[INFO] Countries: {args.countries}")
+    print(f"[INFO] Mask type: {args.mask_type}")
+
+    # -----------------------------
+    # Load your FTW_raw dataset here
+    # (this part depends on your original FTW dataset loader)
+    # -----------------------------
+
+    from tkt.pt2_dataprep.datasets import FTW  # your original dataset
+
+    print("[INFO] Initializing FTW dataset...")
+
+    ds = FTW(
+        root=str(root),
+        countries=args.countries,
+        mask_type=args.mask_type,
+        split="all",      # load everything
+        load_boundaries=False,
+        load_edges=False,
+    )
+
+    print(f"[INFO] Dataset contains {len(ds)} total samples.")
+
+    # -----------------------------
+    # If dataset is already presplit
+    # -----------------------------
+    if hasattr(ds, "train") and hasattr(ds, "val"):
+        export_presplit(ds.train, ds.val, Path("data/ftw/zarr"), args.overwrite)
+    else:
+        # cerrrado2, etc.
+        export_unsplit(ds, Path("data/ftw/zarr"), args.overwrite)
+
+
+if __name__ == "__main__":
+    main()
+
 
