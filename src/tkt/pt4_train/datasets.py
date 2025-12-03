@@ -1,5 +1,4 @@
 """FTW dataset."""
-import hickle as hkl
 import os
 import random
 from pathlib import Path
