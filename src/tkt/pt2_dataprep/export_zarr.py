@@ -1,206 +1,171 @@
-"""
-Export FTW_finaltraining dataset into a SINGLE Zarr store per split.
-Optimal for training speed: (N, C, H, W) chunked as (1, C, H, W).
-
-- Overwrites old Zarr stores automatically.
-- Uses blosc zstd compression (fastest).
-"""
-
+#!/usr/bin/env python
 import argparse
 from pathlib import Path
+import random
 import shutil
 
-import torch
-import zarr
+import geopandas as gpd
+import rasterio
 import numpy as np
-from tqdm import tqdm
-
-from src.tkt.pt4_train.datasets import FTW_finaltraining
-
-
-"""
-Export all FTW_finaltraining regions into single Zarr stores per split.
-- Creates: train.zarr, val.zarr, test.zarr
-- Optimized for training speed: (N, C, H, W) chunked as (1, C, H, W)
-- Overwrites old Zarr stores automatically.
-- Uses blosc zstd compression (fastest).
-"""
-
-import shutil
-from pathlib import Path
-from tqdm import tqdm
-
-import torch
-import zarr
-from src.tkt.pt4_train.datasets import FTW_finaltraining
-
-"""
-Export FTW_finaltraining dataset into Zarr stores.
-- Automatically splits datasets that are not presplit (train/val/test fractions).
-- Uses blosc zstd compression (fastest).
-"""
-
-import argparse
-from pathlib import Path
-import shutil
-import random
-
-import torch
 import zarr
 from tqdm import tqdm
-from src.tkt.pt4_train.datasets import FTW_finaltraining
 
-"""
-Export FTW_finaltraining datasets into consolidated Zarr stores per split.
-- Handles presplit datasets (e.g., *_training/_validation/_testing) automatically.
-- Randomly splits non-presplit datasets according to train/val/test fractions.
-- Output: train.zarr, val.zarr, test.zarr in output_dir.
-- Optimized for training speed: (N, C, H, W) chunked as (1, C, H, W)
-- Uses Blosc ZSTD compression (fast).
-"""
+def find_countries(root: str) -> list[str]:
+    """Automatically find country folders: any subfolder containing chips_*.parquet."""
+    countries: list[str] = []
+    root_path = Path(root)
+    if not root_path.exists():
+        raise RuntimeError(f"Root directory {root} does not exist")
 
-import argparse
-from pathlib import Path
-import shutil
-import random
+    for sub in root_path.iterdir():
+        if not sub.is_dir():
+            continue
+        chips_files = list(sub.glob("chips_*.parquet"))
+        if len(chips_files) >= 1:
+            countries.append(sub.name)
+    return sorted(countries)
 
-import torch
-import zarr
-from tqdm import tqdm
-from src.tkt.pt4_train.datasets import FTW_finaltraining
+def build_paths(country_root: Path, chip_id: str, mask_type: str) -> tuple[Path, Path, Path]:
+    """Return paths for window_a, window_b, and mask files."""
+    window_b_path = country_root / "s2_images" / "window_b" / f"{chip_id}.tif"
+    window_a_path = country_root / "s2_images" / "window_a" / f"{chip_id}.tif"
+    mask_path = country_root / "label_masks" / mask_type / f"{chip_id}.tif"
+    return window_a_path, window_b_path, mask_path
 
-def export_all_countries_to_zarr(
+def check_paths(window_a: Path, window_b: Path, mask: Path) -> bool:
+    """Check that all required raster files exist."""
+    return window_a.exists() and window_b.exists() and mask.exists()
+
+def export_country_to_zarr(
     root: str,
-    countries: list[str],
+    country: str,
+    mask_type: str,
     output_dir: str = "data/ftw/zarr",
-    temporal_options: str = "stacked",
-    load_boundaries: bool = False,
-    num_samples: int = -1,
-    train_frac: float = 0.7,
-    val_frac: float = 0.15,
-    test_frac: float = 0.15,
-    seed: int = 42,
-):
-    """
-    Exports multiple countries into consolidated train/val/test Zarr stores.
-    """
+    overwrite: bool = False,
+    verbose: bool = True,
+) -> None:
+    """Export a single country folder to a single Zarr store."""
+    country_root = Path(root) / country
 
+    # Find chips_*.parquet
+    chips_files = list(country_root.glob("chips_*.parquet"))
+    if len(chips_files) == 0:
+        raise RuntimeError(f"No chips_*.parquet file found for country {country}")
+    if len(chips_files) > 1 and verbose:
+        print(f"Multiple chips_*.parquet found for {country}, using: {chips_files[0]}")
+    chips_fn = chips_files[0]
+
+    if verbose:
+        print(f"\nProcessing country: {country}")
+        print(f"  Using chips file: {chips_fn}")
+        print(f"  Mask type: {mask_type}")
+
+    df = gpd.read_parquet(chips_fn)
+    if "aoi_id" not in df.columns:
+        raise RuntimeError(f"chips file for {country} does not contain 'aoi_id' column")
+    chip_ids = df["aoi_id"].astype(str).tolist()
+
+    if verbose:
+        print(f"  Number of chips: {len(chip_ids)}")
+
+    out_path = Path(output_dir) / f"{country}.zarr"
+    if out_path.exists() and overwrite:
+        shutil.rmtree(out_path)
     Path(output_dir).mkdir(parents=True, exist_ok=True)
-    random.seed(seed)
 
-    splits = ["train", "val", "test"]
-    split_indices = {s: [] for s in splits}  # global indices for each split
-    split_samples = {s: [] for s in splits}  # to store samples temporarily
+    if verbose:
+        print(f"  Writing Zarr store to: {out_path}")
 
-    for country in countries:
-        # Determine if presplit
-        presplit = False
-        if country.endswith("_training"):
-            presplit = True
-            country_split_map = {"train": "training"}
-        elif country.endswith("_validation"):
-            presplit = True
-            country_split_map = {"val": "validation"}
-        elif country.endswith("_testing"):
-            presplit = True
-            country_split_map = {"test": "testing"}
-        else:
-            country_split_map = {}
+    # Preload first sample to get shapes
+    for first_chip in chip_ids:
+        win_a, win_b, mask_p = build_paths(country_root, first_chip, mask_type)
+        if check_paths(win_a, win_b, mask_p):
+            with rasterio.open(win_b) as f_b:
+                win_b_img = f_b.read()
+            with rasterio.open(win_a) as f_a:
+                win_a_img = f_a.read()
+            C, H, W = np.concatenate([win_b_img, win_a_img], axis=0).shape
+            with rasterio.open(mask_p) as f_m:
+                mask_shape = f_m.read(1).shape
+            break
+    else:
+        raise RuntimeError(f"No valid chips found for {country}")
 
-        # Load full dataset
-        dataset = FTW_finaltraining(
-            root=root,
-            countries=[country],
-            split=country_split_map.get("train", "all") if not presplit else list(country_split_map.values())[0],
-            temporal_options=temporal_options,
-            load_boundaries=load_boundaries,
-            num_samples=num_samples,
-        )
+    store = zarr.open(str(out_path), mode="w")
+    img_ds = store.create_dataset(
+        "images",
+        shape=(len(chip_ids), C, H, W),
+        chunks=(1, C, H, W),
+        dtype=np.float32,
+        compressor=zarr.Blosc(cname="zstd", clevel=3),
+    )
+    mask_ds = store.create_dataset(
+        "masks",
+        shape=(len(chip_ids), *mask_shape),
+        chunks=(1, *mask_shape),
+        dtype=np.uint8,
+        compressor=zarr.Blosc(cname="zstd", clevel=3),
+    )
 
-        N = len(dataset)
-        indices = list(range(N))
+    num_written = 0
+    num_missing = 0
 
-        if presplit:
-            # Presplit dataset: assign all samples to the corresponding split
-            if "_training" in country:
-                split_samples["train"].extend([dataset[i] for i in indices])
-            elif "_validation" in country:
-                split_samples["val"].extend([dataset[i] for i in indices])
-            elif "_testing" in country:
-                split_samples["test"].extend([dataset[i] for i in indices])
-        else:
-            # Non-presplit dataset: shuffle and split
-            random.shuffle(indices)
-            n_train = int(train_frac * N)
-            n_val = int(val_frac * N)
-            n_test = N - n_train - n_val
-            split_samples["train"].extend([dataset[i] for i in indices[:n_train]])
-            split_samples["val"].extend([dataset[i] for i in indices[n_train:n_train + n_val]])
-            split_samples["test"].extend([dataset[i] for i in indices[n_train + n_val:]])
-
-    # Export to Zarr per split
-    for split in splits:
-        samples = split_samples[split]
-        if not samples:
-            print(f"No samples for split '{split}', skipping.")
+    for i, chip_id in enumerate(tqdm(chip_ids)):
+        win_a, win_b, mask_p = build_paths(country_root, chip_id, mask_type)
+        if not check_paths(win_a, win_b, mask_p):
+            num_missing += 1
             continue
 
-        out_path = Path(output_dir) / f"{split}.zarr"
-        if out_path.exists():
-            shutil.rmtree(out_path)
+        with rasterio.open(win_b) as f_b:
+            win_b_img = f_b.read()
+        with rasterio.open(win_a) as f_a:
+            win_a_img = f_a.read()
+        img_ds[i] = np.concatenate([win_b_img, win_a_img], axis=0).astype(np.float32)
 
-        # Infer shapes from first sample
-        img0 = samples[0]["image"].numpy()
-        mask0 = samples[0]["mask"].numpy()
-        C, H, W = img0.shape
-        N = len(samples)
+        with rasterio.open(mask_p) as f_m:
+            mask_ds[i] = f_m.read(1)
 
-        store = zarr.open(str(out_path), mode="w")
-        img_ds = store.create_dataset(
-            "images",
-            shape=(N, C, H, W),
-            chunks=(1, C, H, W),
-            dtype=img0.dtype,
-            compressor=zarr.Blosc(cname="zstd", clevel=3),
-        )
-        mask_ds = store.create_dataset(
-            "masks",
-            shape=(N, H, W),
-            chunks=(1, H, W),
-            dtype=mask0.dtype,
-            compressor=zarr.Blosc(cname="zstd", clevel=3),
-        )
+        num_written += 1
 
-        print(f"Exporting {N} samples to {out_path} ...")
-        for i, sample in enumerate(tqdm(samples)):
-            img_ds[i] = sample["image"].numpy()
-            mask_ds[i] = sample["mask"].numpy()
-        print(f"✅ Export completed for split '{split}' → {out_path}")
+    if verbose:
+        print(f"  Done country: {country}")
+        print(f"    Written: {num_written}")
+        print(f"    Missing: {num_missing}")
 
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--root", type=str, required=True)
-    parser.add_argument("--countries", nargs="+", required=True)
-    parser.add_argument("--output_dir", type=str, default="data/ftw/zarr")
-    parser.add_argument("--temporal_options", type=str, default="stacked")
-    parser.add_argument("--load_boundaries", action="store_true")
-    parser.add_argument("--num_samples", type=int, default=-1)
-    parser.add_argument("--train_frac", type=float, default=0.7)
-    parser.add_argument("--val_frac", type=float, default=0.15)
-    parser.add_argument("--test_frac", type=float, default=0.15)
-    parser.add_argument("--seed", type=int, default=42)
+def main():
+    parser = argparse.ArgumentParser(
+        description="Export FTW dataset to Zarr (drop-in replacement for HKL export)."
+    )
+    parser.add_argument("--root", type=str, required=True, help="Root FTW directory")
+    parser.add_argument("--countries", nargs="+", type=str, default=None, help="List of country folders")
+    parser.add_argument("--mask-type", type=str, default="semantic_3class")
+    parser.add_argument("--output-dir", type=str, default="data/ftw/zarr")
+    parser.add_argument("--overwrite", action="store_true")
+    parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args()
 
-    export_all_countries_to_zarr(
-        root=args.root,
-        countries=args.countries,
-        output_dir=args.output_dir,
-        temporal_options=args.temporal_options,
-        load_boundaries=args.load_boundaries,
-        num_samples=args.num_samples,
-        train_frac=args.train_frac,
-        val_frac=args.val_frac,
-        test_frac=args.test_frac,
-        seed=args.seed,
-    )
+    verbose = not args.quiet
+
+    if args.countries is None:
+        countries = find_countries(args.root)
+        if verbose:
+            print("Discovered countries:", countries)
+    else:
+        countries = args.countries
+
+    if len(countries) == 0:
+        raise RuntimeError("No countries found to process")
+
+    for country in countries:
+        export_country_to_zarr(
+            root=args.root,
+            country=country,
+            mask_type=args.mask_type,
+            output_dir=args.output_dir,
+            overwrite=args.overwrite,
+            verbose=verbose,
+        )
+
+if __name__ == "__main__":
+    main()
+
