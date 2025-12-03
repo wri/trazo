@@ -1,48 +1,35 @@
-"""FTW dataset."""
-import os
-import random
+"""
+FTW Zarr-based dataset loader
+"""
+
+import torch
+from torch import Tensor
+from torch.utils.data import Dataset
 from pathlib import Path
 from typing import Any, Callable, Optional, Sequence
-
-import geopandas as gpd
-import matplotlib.pyplot as plt
-import numpy as np
-import rasterio
-import torch
-from matplotlib.figure import Figure
-from torch import Tensor
-from torchgeo.datasets import NonGeoDataset
-from torch.utils.data import Dataset
 import zarr
+
+
 class FTW_finaltraining(Dataset):
     """
-    Optimized FTW dataset that loads pre-exported Zarr data.
-    All raw-file parameters are kept for compatibility but ignored.
+    Loads pre-exported Zarr datasets for FTW.
+    Raw-file arguments remain for compatibility but are ignored.
     """
 
     def __init__(
         self,
         root: str = "data/ftw/zarr",
-        countries: Sequence[str] | str | None = None,  # UNUSED, kept for compatibility
         split: str = "train",
         transforms: Optional[Callable[[dict[str, Any]], dict[str, Any]]] = None,
-        checksum: bool = False,        # UNUSED
-        load_boundaries: bool = False, # UNUSED
-        load_edges: bool = False,      # UNUSED
-        temporal_options: str = "stacked",  # UNUSED
-        swap_order: bool = False,           # UNUSED
         num_samples: int = -1,
-        ignore_sample_fn: Optional[str] = None, # UNUSED
         verbose: bool = True,
-    ) -> None:
-
+        **kwargs,  # ignore old parameters
+    ):
         self.root = Path(root)
         self.split = split
         self.transforms = transforms
-        self.num_samples = num_samples
 
         zarr_path = self.root / f"{split}.zarr"
-
         if verbose:
             print(f"Loading Zarr dataset from: {zarr_path}")
 
@@ -52,7 +39,6 @@ class FTW_finaltraining(Dataset):
         self.masks = self.store["masks"]
 
         self.length = len(self.images)
-
         if num_samples > 0:
             self.length = min(self.length, num_samples)
 
