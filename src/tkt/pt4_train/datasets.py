@@ -757,51 +757,28 @@ class FTW_finaltraining(NonGeoDataset):
     #             return False
 
     #     return True
-    def _check_integrity(self):
-        errors = []
-    
-        # 1. Check that dataset length matches parquet length
-        if len(self.zarr_images) != len(self.df):
-            errors.append(
-                f"Length mismatch: zarr has {len(self.zarr_images)} items, "
-                f"parquet has {len(self.df)}"
-            )
-    
-        # 2. Check shapes of every image + mask
-        for idx in range(len(self)):
-            img = self.zarr_images[idx]
-            msk = self.zarr_masks[idx]
-    
-            if img.shape != (self.channels, self.chip_size, self.chip_size):
-                errors.append(f"Image shape incorrect at index {idx}: {img.shape}")
-    
-            if msk.shape != (self.chip_size, self.chip_size):
-                errors.append(f"Mask shape incorrect at index {idx}: {msk.shape}")
-    
-        # 3. Check dtypes
-        if self.zarr_images.dtype not in ("uint16", "float32", "float64"):
-            errors.append(f"Unexpected image dtype: {self.zarr_images.dtype}")
-    
-        if self.zarr_masks.dtype not in ("uint8", "int8"):
-            errors.append(f"Unexpected mask dtype: {self.zarr_masks.dtype}")
-    
-        # 4. Check for invalid mask values
-        unique_vals = np.unique(self.zarr_masks[:])
-        if unique_vals.max() > 2 or unique_vals.min() < 0:
-            errors.append(f"Invalid class values in mask: {unique_vals}")
-    
-        # 5. Check attributes exist
-        required_attrs = ["country", "mask_type", "chip_size", "channels"]
-        for attr in required_attrs:
-            if attr not in self.zarr_root.attrs:
-                errors.append(f"Missing zarr attribute: {attr}")
-    
-        if errors:
-            raise RuntimeError(
-                "Dataset integrity check failed:\n" + "\n".join(errors)
-            )
-        else:
-            print("Integrity check passed ✓")
+	def _check_integrity(self):
+	    errors = []
+	
+	    for country in self.countries:
+	        country_dir = Path(self.root) / country
+	        zarr_path = country_dir / f"{country}.zarr"
+	        if not zarr_path.exists():
+	            errors.append(f"Missing Zarr file: {zarr_path}")
+	            continue
+	
+	        z = zarr.open(zarr_path, mode="r")
+	
+	        # check "meta", "images", "masks" exist
+	        for key in ["images", "masks", "meta"]:
+	            if key not in z:
+	                errors.append(f"Missing key in zarr: {key} in {zarr_path}")
+	
+	    if errors:
+	        raise RuntimeError("Dataset integrity check failed:\n" + "\n".join(errors))
+	    else:
+	        print("Integrity check passed ✓")
+
 
     def __len__(self) -> int:
         return len(self.samples)
