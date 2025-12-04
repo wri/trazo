@@ -123,14 +123,14 @@ def create_zarr_for_country(root, country, mask_type, overwrite=False, verbose=T
     z.create_array(
         name = "images",
         data=images_array,
-        chunks=(32, C, H, W),
+        # chunks=(32, C, H, W),
         # dtype="float32",
     )
 
     z.create_array(
         name = "masks",
         data=masks_array,
-        chunks=(32, H, W),
+        # chunks=(32, H, W),
         # dtype="uint8",
     )
 
@@ -172,6 +172,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
