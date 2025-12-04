@@ -779,8 +779,8 @@ class FTW_finaltraining(NonGeoDataset):
 	    if errors:
 	        raise RuntimeError("Dataset integrity check failed:\n" + "\n".join(errors))
 	    else:
+			return True
 	        print("Integrity check passed ✓")
-            return true
 
     def __len__(self) -> int:
         return len(self.samples)
