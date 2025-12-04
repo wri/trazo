@@ -776,11 +776,13 @@ class FTW_finaltraining(NonGeoDataset):
 	            if key not in z:
 	                errors.append(f"Missing key in zarr: {key} in {zarr_path}")
 	
-	    if errors:
-	        raise RuntimeError("Dataset integrity check failed:\n" + "\n".join(errors))
-	    else:
-			return True
-	        print("Integrity check passed ✓")
+		if errors:
+		    raise RuntimeError(
+		        "Dataset integrity check failed:\n" + "\n".join(errors)
+		    )
+		else:
+		    print("Integrity check passed ✓")
+		    return True
 
     def __len__(self) -> int:
         return len(self.samples)
