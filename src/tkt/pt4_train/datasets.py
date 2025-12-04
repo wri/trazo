@@ -757,7 +757,7 @@ class FTW_finaltraining(NonGeoDataset):
     #             return False
 
     #     return True
-    def check_integrity(self):
+    def _check_integrity(self):
         errors = []
     
         # 1. Check that dataset length matches parquet length
