@@ -232,8 +232,8 @@ class FTW_finaltraining(NonGeoDataset):
         country, array_idx = self.samples[index]
 
         # Load from RAM cache
-        self.images_cache[country] = z["images"]
-        self.masks_cache[country] = z["masks"]
+        img = torch.as_tensor(self.images_cache[country][array_idx], dtype=torch.float32)
+        mask = torch.as_tensor(self.masks_cache[country][array_idx], dtype=torch.long)
 
 
         sample = {"image": img, "mask": mask}
