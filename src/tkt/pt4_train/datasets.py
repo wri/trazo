@@ -174,10 +174,15 @@ class FTW_finaltraining(NonGeoDataset):
             print(f"Loaded {len(self.samples)} samples for split={split}")
 
         # Cache all zarr stores
-        self.zarr_stores = {}
+        # Preload Zarr arrays into RAM for speed
+        self.images_cache = {}
+        self.masks_cache = {}
         for country in self.countries:
             country_dir = Path(self.root) / country
-            self.zarr_stores[country] = zarr.open(country_dir / f"{country}.zarr", mode="r")
+            z = zarr.open(country_dir / f"{country}.zarr", mode="r")
+            self.images_cache[country] = z["images"][:]
+            self.masks_cache[country] = z["masks"][:]
+        
 
     # def _check_integrity(self) -> bool:
     #     """Check that HKL files exist for the selected countries."""
@@ -226,14 +231,10 @@ class FTW_finaltraining(NonGeoDataset):
         """Load a single sample {country, idx} from the .zarr store."""
         country, array_idx = self.samples[index]
 
-        z = self.zarr_stores[country]
+        # Load from RAM cache
+        img = torch.from_numpy(self.images_cache[country][array_idx]).float()
+        mask = torch.from_numpy(self.masks_cache[country][array_idx]).long()
 
-
-        # ----------------------------
-        # Load from Zarr
-        # ----------------------------
-        img = torch.from_numpy(z["images"][array_idx]).float()
-        mask = torch.from_numpy(z["masks"][array_idx]).long()
 
         sample = {"image": img, "mask": mask}
 
