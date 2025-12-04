@@ -143,7 +143,7 @@ def create_zarr_for_country(root, country, mask_type, overwrite=False, verbose=T
     z.create_array(
         name="meta",
         data=meta_json,
-        dtype=zarr.v3.VLenUTF8(),  # <- this is the v3 dtype
+        # dtype=zarr.v3.VLenUTF8(),  # <- this is the v3 dtype
     )
 
 
@@ -182,6 +182,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
