@@ -142,7 +142,7 @@ def create_zarr_for_country(root, country, mask_type, overwrite=False, verbose=T
     z.create_array(
         name="meta",
         data=meta_json,
-        object_codec=zarr.Codec("utf8"),
+        object_codec=zarr.codecs.VLenUTF8(),
     )
 
     if verbose:
@@ -180,6 +180,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
