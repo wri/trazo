@@ -610,43 +610,94 @@ from src.tkt.pt4_train.utils import validate_checksums
 
 
 class FTW_finaltraining(NonGeoDataset):
-    """FTW dataset (Zarr version). Loads images/masks directly from {country}.zarr."""
-
+	# self.filenames = # point to your new directory with the te4nsors
     valid_splits = ["train", "val", "test"]
-
     def __init__(
         self,
         root: str = "data/ftw",
         countries: Sequence[str] | str | None = None,
         split: str = "train",
         transforms: Optional[Callable[[dict[str, Any]], dict[str, Any]]] = None,
+        checksum: bool = False,
+        load_boundaries: bool = False,
+        load_edges: bool = False,
+        temporal_options: str = "stacked",
+        swap_order: bool = False,
         num_samples: int = -1,
+        ignore_sample_fn: Optional[str] = None,
         verbose: bool = True,
-    ):
-        super().__init__()
+    ) -> None:
+        """Initialize a new FTW dataset instance.
 
-        # ------------------------
-        # Input validation
-        # ------------------------
+        Args:
+            root: root directory where dataset can be found, this should contain the
+                country folder
+            countries: the countries to load the dataset from, e.g. "france"
+            split: string specifying what split to load (e.g. "train", "val", "test")
+            transforms: a function/transform that takes input sample and its target as
+                entry and returns a transformed version
+            checksum: if True, check the MD5 of the downloaded files (may be slow)
+            load_boundaries: if True, load the 3 class masks with boundaries
+            load_edges: if True, load the edge masks
+            temporal_options : for ablation study, valid option are (stacked, windowA,
+                windowB, median, rgb, random_window)
+            swap_order: if True, swap the order of temporal data (i.e. use window A first)
+            ignore_sample_fn: path to a filename with a list of samples to ignore
+        Raises:
+            AssertionError: if ``countries`` argument is invalid
+            AssertionError: if ``split`` argument is invalid
+            RuntimeError: if data is not found, or checksums don't match
+        """
+        self.root = root
+
         if countries is None:
-            raise ValueError("Please specify one or more countries")
+            raise ValueError("Please specify the countries to load the dataset from")
+
+        if temporal_options not in TEMPORAL_OPTIONS:
+            raise ValueError(f"Invalid temporal option {temporal_options}")
 
         if isinstance(countries, str):
             countries = [countries]
+        countries = [country.lower() for country in countries]
+        for country in countries:
+            assert country in ALL_COUNTRIES, f"Invalid country {country}"
 
-        countries = [c.lower() for c in countries]
-
-        for c in countries:
-            if c not in ALL_COUNTRIES:
-                raise ValueError(f"Invalid country: {c}")
-
-        assert split in self.valid_splits
-
-        self.root = root
         self.countries = countries
-        self.split = split
+        assert split in self.valid_splits
         self.transforms = transforms
+        self.checksum = checksum
+        self.load_boundaries = load_boundaries
+        self.load_edges = load_edges
+        self.temporal_options = temporal_options
         self.num_samples = num_samples
+
+        if swap_order:
+            if temporal_options not in ("stacked", "rgb"):
+                raise ValueError(
+                    "Can only use swap_order with temporal_options stacked or rgb"
+                )
+        self.swap_order = swap_order
+
+        if verbose:
+            if self.load_boundaries:
+                print("Loading 3 Class Masks, with Boundaries")
+            else:
+                print("Loading 2 Class Masks, without Boundaries")
+            print("Temporal option: ", temporal_options)
+            if swap_order:
+                print("Using window A first, then window B")
+            else:
+                print("Using window B first, then window A")
+            if self.load_edges:
+                print("Loading edge masks")
+
+        if not self._check_integrity():
+            raise RuntimeError(
+                "Dataset not found at root directory or corrupted.  Download dataset with `ftw data download`"
+            )
+
+        if checksum:
+            assert self._checksum(), "Checksum of dataset does not match"
 
         # ------------------------
         # Load split selections
@@ -690,6 +741,68 @@ class FTW_finaltraining(NonGeoDataset):
         if verbose:
             print(f"Loaded {len(self.samples)} samples for split={split}")
 
+
+    # def _check_integrity(self) -> bool:
+    #     """Check that HKL files exist for the selected countries."""
+    #     for country in self.countries:
+    #         country_root = os.path.join(self.root, country)
+    #         hkl_dir = os.path.join(country_root, "hkl")
+    #         if not os.path.exists(hkl_dir):
+    #             print(f"Country {country} is missing hkl directory: {hkl_dir}")
+    #             return False
+
+    #         hkl_files = list(Path(hkl_dir).glob("*.hkl"))
+    #         if len(hkl_files) == 0:
+    #             print(f"No hkl files found in {hkl_dir}")
+    #             return False
+
+    #     return True
+    def check_integrity(self):
+        errors = []
+    
+        # 1. Check that dataset length matches parquet length
+        if len(self.zarr_images) != len(self.df):
+            errors.append(
+                f"Length mismatch: zarr has {len(self.zarr_images)} items, "
+                f"parquet has {len(self.df)}"
+            )
+    
+        # 2. Check shapes of every image + mask
+        for idx in range(len(self)):
+            img = self.zarr_images[idx]
+            msk = self.zarr_masks[idx]
+    
+            if img.shape != (self.channels, self.chip_size, self.chip_size):
+                errors.append(f"Image shape incorrect at index {idx}: {img.shape}")
+    
+            if msk.shape != (self.chip_size, self.chip_size):
+                errors.append(f"Mask shape incorrect at index {idx}: {msk.shape}")
+    
+        # 3. Check dtypes
+        if self.zarr_images.dtype not in ("uint16", "float32", "float64"):
+            errors.append(f"Unexpected image dtype: {self.zarr_images.dtype}")
+    
+        if self.zarr_masks.dtype not in ("uint8", "int8"):
+            errors.append(f"Unexpected mask dtype: {self.zarr_masks.dtype}")
+    
+        # 4. Check for invalid mask values
+        unique_vals = np.unique(self.zarr_masks[:])
+        if unique_vals.max() > 2 or unique_vals.min() < 0:
+            errors.append(f"Invalid class values in mask: {unique_vals}")
+    
+        # 5. Check attributes exist
+        required_attrs = ["country", "mask_type", "chip_size", "channels"]
+        for attr in required_attrs:
+            if attr not in self.zarr_root.attrs:
+                errors.append(f"Missing zarr attribute: {attr}")
+    
+        if errors:
+            raise RuntimeError(
+                "Dataset integrity check failed:\n" + "\n".join(errors)
+            )
+        else:
+            print("Integrity check passed ✓")
+
     def __len__(self) -> int:
         return len(self.samples)
 
@@ -716,3 +829,25 @@ class FTW_finaltraining(NonGeoDataset):
             sample = self.transforms(sample)
 
         return sample
+    # def __getitem__(self, index: int) -> dict[str, Tensor]:
+    #     """Return an index within the dataset.
+
+    #     Args:
+    #         index: index to return
+
+    #     Returns:
+    #         dictionary containing "image" and "mask" PyTorch tensors
+    #     """
+    #     file_name = self.filenames[index]
+    #     hkl_path = file_name["hkl"]
+
+    #     sample = hkl.load(hkl_path)   # ← returns dict: {"image": ..., "mask": ...}
+    #     # Convert image and mask to PyTorch tensors
+    #     sample["image"] = torch.from_numpy(sample["image"]).float()   # keep image as float
+    #     sample["mask"] = torch.from_numpy(sample["mask"]).long()      # mask must be long for CrossEntropyLoss
+
+    #     if self.transforms is not None:
+    #         sample = self.transforms(sample)
+    #         sample["mask"] = sample["mask"].long()
+
+    #     return sample
