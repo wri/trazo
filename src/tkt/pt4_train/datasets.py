@@ -723,8 +723,10 @@ class FTW_finaltraining(NonGeoDataset):
 
             z = zarr.open(zarr_path, mode="r")
 
-            meta = list(z["meta"][:])
-            chip_ids_in_zarr = [m["chip_id"] for m in meta]
+            # meta = list(z["meta"][:])
+            # chip_ids_in_zarr = [m["chip_id"] for m in meta]
+			meta = [json.loads(m) for m in z["meta"][:]]
+			chip_ids_in_zarr = [m["chip_id"] for m in meta]
 
             for chip in aoi_ids:
                 if chip in chip_ids_in_zarr:
