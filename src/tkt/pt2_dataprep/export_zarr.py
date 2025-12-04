@@ -136,14 +136,16 @@ def create_zarr_for_country(root, country, mask_type, overwrite=False, verbose=T
     # meta_json = np.array([str(m) for m in all_meta], dtype='U')  # convert object -> str
     # z.create_array(name="meta", data=meta_json)
     # convert metadata to variable-length strings
+    # convert metadata to variable-length UTF-8 strings
     meta_json = np.array([str(m) for m in all_meta], dtype=object)
     
-    # create Zarr array with variable-length UTF-8 codec
+    # create Zarr array using variable-length UTF-8 dtype
     z.create_array(
         name="meta",
         data=meta_json,
-        object_codec=zarr.codecs.VLenUTF8(),
+        dtype=zarr.v3.VLenUTF8(),  # <- this is the v3 dtype
     )
+
 
     if verbose:
         print(f"  Done {country}.")
@@ -180,6 +182,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
