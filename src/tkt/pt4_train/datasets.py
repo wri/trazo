@@ -180,8 +180,8 @@ class FTW_finaltraining(NonGeoDataset):
         for country in self.countries:
             country_dir = Path(self.root) / country
             z = zarr.open(country_dir / f"{country}.zarr", mode="r")
-            self.images_cache[country] = z["images"][:]
-            self.masks_cache[country] = z["masks"][:]
+            self.images_cache[country] = z["images"]
+            self.masks_cache[country] = z["masks"]
         
 
     # def _check_integrity(self) -> bool:
@@ -232,8 +232,8 @@ class FTW_finaltraining(NonGeoDataset):
         country, array_idx = self.samples[index]
 
         # Load from RAM cache
-        img = torch.from_numpy(self.images_cache[country][array_idx]).float()
-        mask = torch.from_numpy(self.masks_cache[country][array_idx]).long()
+        self.images_cache[country] = z["images"]
+        self.masks_cache[country] = z["masks"]
 
 
         sample = {"image": img, "mask": mask}
