@@ -117,7 +117,7 @@ def create_zarr_for_country(root, country, mask_type, overwrite=False, verbose=T
     masks_array = np.stack(all_masks)
 
     # create zarr group
-    z = zarr.open_group(zarr_dir, mode="w")
+    z = zarr.open(zarr_dir, mode="w")
 
     C, H, W = images_array.shape[1:]
     z.create_dataset(
@@ -172,6 +172,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
