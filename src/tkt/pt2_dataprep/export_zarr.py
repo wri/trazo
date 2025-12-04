@@ -120,14 +120,14 @@ def create_zarr_for_country(root, country, mask_type, overwrite=False, verbose=T
     z = zarr.open(zarr_dir, mode="w")
 
     C, H, W = images_array.shape[1:]
-    z.create_dataset(
+    z.create_array(
         name = "images",
         data=images_array,
         chunks=(32, C, H, W),
         dtype="float32",
     )
 
-    z.create_dataset(
+    z.create_array(
         name = "masks",
         data=masks_array,
         chunks=(32, H, W),
@@ -135,7 +135,7 @@ def create_zarr_for_country(root, country, mask_type, overwrite=False, verbose=T
     )
 
     meta_json = np.array([str(m) for m in all_meta], dtype=object)
-    z.create_dataset(name = "meta", data=meta_json)
+    z.create_array(name = "meta", data=meta_json)
 
     if verbose:
         print(f"  Done {country}.")
@@ -172,6 +172,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
