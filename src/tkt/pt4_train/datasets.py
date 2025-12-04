@@ -757,7 +757,7 @@ class FTW_finaltraining(NonGeoDataset):
     #             return False
 
     #     return True
-	def _check_integrity(self):
+    def _check_integrity(self):
 	    errors = []
 	
 	    for country in self.countries:
