@@ -610,7 +610,7 @@ from src.tkt.pt4_train.utils import validate_checksums
 
 
 class FTW_finaltraining(NonGeoDataset):
-	# self.filenames = # point to your new directory with the te4nsors
+    # self.filenames = # point to your new directory with the te4nsors
     valid_splits = ["train", "val", "test"]
     def __init__(
         self,
@@ -760,29 +760,29 @@ class FTW_finaltraining(NonGeoDataset):
 
     #     return True
     def _check_integrity(self):
-	    errors = []
-	
-	    for country in self.countries:
-	        country_dir = Path(self.root) / country
-	        zarr_path = country_dir / f"{country}.zarr"
-	        if not zarr_path.exists():
-	            errors.append(f"Missing Zarr file: {zarr_path}")
-	            continue
-	
-	        z = zarr.open(zarr_path, mode="r")
-	
-	        # check "meta", "images", "masks" exist
-	        for key in ["images", "masks", "meta"]:
-	            if key not in z:
-	                errors.append(f"Missing key in zarr: {key} in {zarr_path}")
-	
-			if errors:
-			    raise RuntimeError(
-			        "Dataset integrity check failed:\n" + "\n".join(errors)
-			    )
-			else:
-			    print("Integrity check passed ✓")
-			    return True
+        errors = []
+    
+        for country in self.countries:
+            country_dir = Path(self.root) / country
+            zarr_path = country_dir / f"{country}.zarr"
+            if not zarr_path.exists():
+                errors.append(f"Missing Zarr file: {zarr_path}")
+                continue
+    
+            z = zarr.open(zarr_path, mode="r")
+    
+            # check "meta", "images", "masks" exist
+            for key in ["images", "masks", "meta"]:
+                if key not in z:
+                    errors.append(f"Missing key in zarr: {key} in {zarr_path}")
+    
+        if errors:
+            raise RuntimeError(
+                "Dataset integrity check failed:\n" + "\n".join(errors)
+            )
+        else:
+            print("Integrity check passed ✓")
+            return True
 
     def __len__(self) -> int:
         return len(self.samples)
