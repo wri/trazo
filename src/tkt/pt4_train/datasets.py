@@ -232,12 +232,8 @@ class FTW_finaltraining(NonGeoDataset):
         # ----------------------------
         # Load from Zarr
         # ----------------------------
-        img_np: np.ndarray = z["images"][array_idx]  # [C, H, W]
-        mask_np: np.ndarray = z["masks"][array_idx]  # [H, W]
-
-        # Convert to torch
-        img = torch.from_numpy(img_np.copy()).float()
-        mask = torch.from_numpy(mask_np.copy()).long()
+        img = torch.from_numpy(z["images"][array_idx]).float()
+        mask = torch.from_numpy(z["masks"][array_idx]).long()
 
         sample = {"image": img, "mask": mask}
 
