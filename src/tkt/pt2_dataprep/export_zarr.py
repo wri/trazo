@@ -133,9 +133,8 @@ def create_zarr_for_country(root, country, mask_type, overwrite=False, verbose=T
         # chunks=(32, H, W),
         # dtype="uint8",
     )
-
-    meta_json = np.array([str(m) for m in all_meta], dtype=object)
-    z.create_array(name = "meta", data=meta_json)
+    meta_json = np.array([str(m) for m in all_meta], dtype='U')  # convert object -> str
+    z.create_array(name="meta", data=meta_json)
 
     if verbose:
         print(f"  Done {country}.")
@@ -172,6 +171,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
 
