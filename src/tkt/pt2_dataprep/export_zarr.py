@@ -101,10 +101,26 @@ def create_zarr_for_country(
         with rasterio.open(mask_path) as f_m:
             mask = f_m.read(1)
 
-        # Create Zarr group for this chip
+        # Create Zarr group for this chip using modern API
         chip_group = zarr.open_group(out_path, mode="w")
-        chip_group.array("image", data=image, dtype=np.float32, chunks=(image.shape[0], 256, 256))
-        chip_group.array("mask", data=mask, dtype=np.int32, chunks=(256, 256))
+
+        chip_group.create_array(
+            name="image",
+            shape=image.shape,
+            chunks=(1, image.shape[1], image.shape[2]),  # per channel chunking
+            dtype=np.float32,
+            data=image
+        )
+
+        chip_group.create_array(
+            name="mask",
+            shape=mask.shape,
+            chunks=(256, 256),
+            dtype=np.int32,
+            data=mask
+        )
+
+        # Save metadata
         chip_group.attrs["country"] = country
         chip_group.attrs["chip_id"] = chip_id
         chip_group.attrs["mask_type"] = mask_type
@@ -152,5 +168,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
 
 
