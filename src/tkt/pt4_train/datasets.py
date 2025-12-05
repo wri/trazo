@@ -14,24 +14,12 @@ from matplotlib.figure import Figure
 from torch import Tensor
 from torchgeo.datasets import NonGeoDataset
 
-#from ftw_tools.settings import ALL_COUNTRIES, TEMPORAL_OPTIONS
 from src.tkt.pt4_train.settings import ALL_COUNTRIES, TEMPORAL_OPTIONS
 
-# from ftw_tools.utils import validate_checksums
 from src.tkt.pt4_train.utils import validate_checksums
 
-
-
-
 import json
-import os
-from pathlib import Path
-from typing import Any, Callable, Optional, Sequence
 
-import numpy as np
-import torch
-from torch import Tensor
-from torchgeo.datasets import NonGeoDataset
 import zarr
 import geopandas as gpd
 
@@ -40,7 +28,6 @@ from src.tkt.pt4_train.utils import validate_checksums
 
 
 class FTW_finaltraining(NonGeoDataset):
-    # self.filenames = # point to your new directory with the te4nsors
     valid_splits = ["train", "val", "test"]
     def __init__(
         self,
@@ -129,9 +116,7 @@ class FTW_finaltraining(NonGeoDataset):
         if checksum:
             assert self._checksum(), "Checksum of dataset does not match"
 
-        # ------------------------
         # Load split selections
-        # ------------------------
         self.samples = []   # list of (country, idx_in_country)
 
         for country in self.countries:
@@ -153,8 +138,7 @@ class FTW_finaltraining(NonGeoDataset):
 
             z = zarr.open(zarr_path, mode="r")
 
-            # meta = list(z["meta"][:])
-            # chip_ids_in_zarr = [m["chip_id"] for m in meta]
+
             meta = [json.loads(m) for m in z["meta"][:]]
             chip_ids_in_zarr = [m["chip_id"] for m in meta]
 
@@ -173,8 +157,7 @@ class FTW_finaltraining(NonGeoDataset):
         if verbose:
             print(f"Loaded {len(self.samples)} samples for split={split}")
 
-        # Cache all zarr stores
-        # Preload Zarr arrays into RAM for speed
+
         self.images_cache = {}
         self.masks_cache = {}
         for country in self.countries:
@@ -184,21 +167,6 @@ class FTW_finaltraining(NonGeoDataset):
             self.masks_cache[country] = z["masks"]
         
 
-    # def _check_integrity(self) -> bool:
-    #     """Check that HKL files exist for the selected countries."""
-    #     for country in self.countries:
-    #         country_root = os.path.join(self.root, country)
-    #         hkl_dir = os.path.join(country_root, "hkl")
-    #         if not os.path.exists(hkl_dir):
-    #             print(f"Country {country} is missing hkl directory: {hkl_dir}")
-    #             return False
-
-    #         hkl_files = list(Path(hkl_dir).glob("*.hkl"))
-    #         if len(hkl_files) == 0:
-    #             print(f"No hkl files found in {hkl_dir}")
-    #             return False
-
-    #     return True
     def _check_integrity(self):
         errors = []
     
@@ -242,150 +210,4 @@ class FTW_finaltraining(NonGeoDataset):
             sample = self.transforms(sample)
 
         return sample
-    # def __getitem__(self, index: int) -> dict[str, Tensor]:
-    #     """Return an index within the dataset.
 
-    #     Args:
-    #         index: index to return
-
-    #     Returns:
-    #         dictionary containing "image" and "mask" PyTorch tensors
-    #     """
-    #     file_name = self.filenames[index]
-    #     hkl_path = file_name["hkl"]
-
-    #     sample = hkl.load(hkl_path)   # ← returns dict: {"image": ..., "mask": ...}
-    #     # Convert image and mask to PyTorch tensors
-    #     sample["image"] = torch.from_numpy(sample["image"]).float()   # keep image as float
-    #     sample["mask"] = torch.from_numpy(sample["mask"]).long()      # mask must be long for CrossEntropyLoss
-
-    #     if self.transforms is not None:
-    #         sample = self.transforms(sample)
-    #         sample["mask"] = sample["mask"].long()
-
-    #     return sample
-# import json
-# from pathlib import Path
-# from typing import Any, Callable, Optional, Sequence
-
-# import numpy as np
-# import torch
-# from torch import Tensor
-# from torchgeo.datasets import NonGeoDataset
-# import zarr
-# import geopandas as gpd
-
-# from src.tkt.pt4_train.settings import ALL_COUNTRIES, TEMPORAL_OPTIONS
-# from src.tkt.pt4_train.utils import validate_checksums
-
-# class FTW_finaltraining(NonGeoDataset):
-#     valid_splits = ["train", "val", "test"]
-
-#     def __init__(
-#         self,
-#         root: str = "data/ftw",
-#         countries: Sequence[str] | str | None = None,
-#         split: str = "train",
-#         transforms: Optional[Callable[[dict[str, Any]], dict[str, Any]]] = None,
-#         checksum: bool = False,
-#         load_boundaries: bool = False,
-#         load_edges: bool = False,
-#         temporal_options: str = "stacked",
-#         swap_order: bool = False,
-#         num_samples: int = -1,
-#         ignore_sample_fn: Optional[str] = None,
-#         verbose: bool = True,
-#     ) -> None:
-#         super().__init__()
-#         self.root = Path(root)
-
-#         if countries is None:
-#             raise ValueError("Please specify the countries to load the dataset from")
-#         if isinstance(countries, str):
-#             countries = [countries]
-#         countries = [c.lower() for c in countries]
-#         for c in countries:
-#             assert c in ALL_COUNTRIES, f"Invalid country {c}"
-
-#         if temporal_options not in TEMPORAL_OPTIONS:
-#             raise ValueError(f"Invalid temporal option {temporal_options}")
-
-#         self.countries = countries
-#         self.transforms = transforms
-#         self.checksum = checksum
-#         self.load_boundaries = load_boundaries
-#         self.load_edges = load_edges
-#         self.temporal_options = temporal_options
-#         self.swap_order = swap_order
-#         self.num_samples = num_samples
-
-#         if verbose:
-#             print(f"Loading split '{split}' for countries {countries}")
-
-#         # ----------------------------
-#         # Open Zarr files once
-#         # ----------------------------
-#         self.zarr_files = {}
-#         self.samples = []  # list of (country, array_idx)
-
-#         for country in self.countries:
-#             country_dir = self.root / country
-#             zarr_path = country_dir / f"{country}.zarr"
-#             if not zarr_path.exists():
-#                 raise RuntimeError(f"Missing Zarr file: {zarr_path}")
-
-#             z = zarr.open(zarr_path, mode="r")
-#             # Quick integrity check
-#             for key in ["images", "masks", "meta"]:
-#                 if key not in z:
-#                     raise RuntimeError(f"Missing key '{key}' in {zarr_path}")
-
-#             self.zarr_files[country] = z
-
-#             # Load chips split
-#             chips_file = list(country_dir.glob("chips_*.parquet"))
-#             if len(chips_file) != 1:
-#                 raise RuntimeError(f"{country}: missing chips_*.parquet")
-#             df = gpd.read_parquet(chips_file[0])
-#             df_split = df[df["split"] == split]
-#             aoi_ids = df_split["aoi_id"].astype(str).tolist()
-
-#             meta = [json.loads(m) for m in list(z["meta"][:])]
-#             chip_ids_in_zarr = [m["chip_id"] for m in meta]
-
-#             for chip_id in aoi_ids:
-#                 if chip_id in chip_ids_in_zarr:
-#                     array_idx = chip_ids_in_zarr.index(chip_id)
-#                     self.samples.append((country, array_idx))
-
-#         # Sample reduction
-#         if self.num_samples > 0:
-#             import random
-#             self.samples = random.sample(
-#                 self.samples, min(self.num_samples, len(self.samples))
-#             )
-
-#         if verbose:
-#             print(f"Loaded {len(self.samples)} samples for split={split}")
-
-#     def __len__(self) -> int:
-#         return len(self.samples)
-
-#     def __getitem__(self, index: int) -> dict[str, Tensor]:
-#         country, array_idx = self.samples[index]
-#         z = self.zarr_files[country]
-
-#         # Load single sample
-#         img_np: np.ndarray = z["images"][array_idx]  # [C, H, W]
-#         mask_np: np.ndarray = z["masks"][array_idx]  # [H, W]
-
-#         # Convert to torch
-#         img = torch.from_numpy(img_np.copy()).float()
-#         mask = torch.from_numpy(mask_np.copy()).long()
-
-#         sample = {"image": img, "mask": mask}
-
-#         if self.transforms is not None:
-#             sample = self.transforms(sample)
-
-#         return sample
