@@ -121,23 +121,24 @@ def create_zarr_for_country(root, country, mask_type, overwrite=False, verbose=T
     z = zarr.open(zarr_dir, mode="w")
 
     C, H, W = images_array.shape[1:]
-    z.create_array(
-        name = "images",
-        data=images_array,
-        # chunks=(32, C, H, W),
-        # dtype="float32",
-    )
 
     z.create_array(
-        name = "masks",
-        data=masks_array,
-        # chunks=(32, H, W),
-        # dtype="uint8",
+        name="images",
+        data=images_array,
+        chunks=(1, C, H, W),
+        # compressor=zarr.Blosc(cname="zstd", clevel=3, shuffle=2),
     )
-    # meta_json = np.array([str(m) for m in all_meta], dtype='U')  # convert object -> str
-    # z.create_array(name="meta", data=meta_json)
+    
+    z.create_array(
+        name="masks",
+        data=masks_array,
+        chunks=(1, H, W),
+        # compressor=zarr.Blosc(cname="zstd", clevel=3, shuffle=2),
+    )
+    
     meta_json = np.array([json.dumps(m) for m in all_meta], dtype='U')
     z.create_array(name="meta", data=meta_json)
+
     # convert metadata to variable-length strings
     # convert metadata to variable-length UTF-8 strings
     # meta_json = np.array([str(m) for m in all_meta], dtype=object)
@@ -185,20 +186,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
