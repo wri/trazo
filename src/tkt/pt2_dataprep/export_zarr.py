@@ -3,15 +3,14 @@ import argparse
 from pathlib import Path
 
 import geopandas as gpd
-import hickle as hkl  # kept, in case you still want it around, but unused here
+import zarr
+import json
 import numpy as np
 import rasterio
-import zarr
 
 
 def find_countries(root: str) -> list[str]:
-    """Automatically find country folders: any subfolder containing chips_*.parquet."""
-    countries: list[str] = []
+    countries = []
     root_path = Path(root)
     if not root_path.exists():
         raise RuntimeError(f"Root directory {root} does not exist")
@@ -22,48 +21,29 @@ def find_countries(root: str) -> list[str]:
         chips_files = list(sub.glob("chips_*.parquet"))
         if len(chips_files) == 1:
             countries.append(sub.name)
+
     return sorted(countries)
 
 
-def build_paths(country_root: Path, chip_id: str, mask_type: str) -> tuple[Path, Path, Path]:
-    """Return paths for window_a, window_b, and mask files."""
+def build_paths(country_root: Path, chip_id: str, mask_type: str):
     window_b_path = country_root / "s2_images" / "window_b" / f"{chip_id}.tif"
     window_a_path = country_root / "s2_images" / "window_a" / f"{chip_id}.tif"
     mask_path = country_root / "label_masks" / mask_type / f"{chip_id}.tif"
     return window_a_path, window_b_path, mask_path
 
 
-def check_paths(window_a: Path, window_b: Path, mask: Path) -> bool:
-    """Check that all required raster files exist."""
+def check_paths(window_a, window_b, mask) -> bool:
     return window_a.exists() and window_b.exists() and mask.exists()
 
 
-def create_zarr_for_country(
-    root: str,
-    country: str,
-    mask_type: str,
-    overwrite: bool = False,
-    verbose: bool = True,
-) -> None:
-    """Write Zarr files for every chip in a given country folder.
+def create_zarr_for_country(root, country, mask_type, overwrite=False, verbose=True):
 
-    For each chip, create a directory store:
-      <country_root>/zarr/<chip_id>.zarr
-
-    Structure inside each .zarr:
-      - dataset "image": [2 * C, H, W], float32
-      - dataset "mask":  [H, W]
-      - group attrs: "country", "chip_id", "mask_type", "chips_file",
-                     "window_b_path", "window_a_path", "mask_path"
-    """
     country_root = Path(root) / country
-
-    # Find chips_*.parquet
     chips_files = list(country_root.glob("chips_*.parquet"))
+
     if len(chips_files) == 0:
-        raise RuntimeError(f"No chips_*.parquet file found for country {country}")
-    if len(chips_files) > 1 and verbose:
-        print(f"Multiple chips_*.parquet found for {country}, using: {chips_files[0]}")
+        raise RuntimeError(f"No chips_*.parquet file found for {country}")
+
     chips_fn = chips_files[0]
 
     if verbose:
@@ -72,23 +52,29 @@ def create_zarr_for_country(
         print(f"  Mask type: {mask_type}")
 
     df = gpd.read_parquet(chips_fn)
-
     if "aoi_id" not in df.columns:
-        raise RuntimeError(f"chips file for {country} does not contain 'aoi_id' column")
+        raise RuntimeError(f"chips file for {country} does not contain 'aoi_id'")
 
-    # Use all AOIs, no split filtering
     chip_ids = df["aoi_id"].astype(str).tolist()
 
     if verbose:
-        print(f"  Number of chips (all rows): {len(chip_ids)}")
+        print(f"  Number of chips: {len(chip_ids)}")
 
-    zarr_dir = country_root / "zarr"
-    zarr_dir.mkdir(parents=True, exist_ok=True)
+    zarr_dir = country_root / f"{country}.zarr"
+
+    if zarr_dir.exists() and not overwrite:
+        if verbose:
+            print(f"  Zarr already exists for {country}, skipping...")
+        return
+
     if verbose:
-        print(f"  Writing .zarr folders to: {zarr_dir}")
+        print(f"  Writing Zarr to: {zarr_dir}")
 
-    num_written = 0
-    num_skipped_existing = 0
+    # Collect arrays in memory
+    all_images = []
+    all_masks = []
+    all_meta = []
+
     num_missing = 0
 
     for chip_id in chip_ids:
@@ -97,34 +83,23 @@ def create_zarr_for_country(
         if not check_paths(window_a_path, window_b_path, mask_path):
             num_missing += 1
             if verbose:
-                print(
-                    f"    Skipping {chip_id}: missing one of "
-                    f"{window_a_path}, {window_b_path}, {mask_path}"
-                )
+                print(f"    Missing files for chip {chip_id}, skipping.")
             continue
 
-        out_path = zarr_dir / f"{chip_id}.zarr"
-
-        if out_path.exists() and not overwrite:
-            num_skipped_existing += 1
-            continue
-
-        # Read window_b and window_a as [C, H, W]
         with rasterio.open(window_b_path) as f_b:
             window_b_img = f_b.read()
+
         with rasterio.open(window_a_path) as f_a:
             window_a_img = f_a.read()
 
-        # Stack along channel axis, same as temporal_options="stacked"
-        # Result: [2 * C, H, W]
         image = np.concatenate([window_b_img, window_a_img], axis=0).astype(np.float32)
 
-        # Read mask as [H, W]
         with rasterio.open(mask_path) as f_m:
             mask = f_m.read(1)
 
-        # Build meta dict similar to HKL sample["meta"]
-        meta = {
+        all_images.append(image)
+        all_masks.append(mask)
+        all_meta.append({
             "country": country,
             "chip_id": chip_id,
             "mask_type": mask_type,
@@ -132,98 +107,79 @@ def create_zarr_for_country(
             "window_b_path": str(window_b_path),
             "window_a_path": str(window_a_path),
             "mask_path": str(mask_path),
-        }
+        })
 
-        # Create Zarr directory store
-        store = zarr.DirectoryStore(str(out_path))
-        # overwrite flag here clears existing store if overwrite=True
-        root_group = zarr.group(store=store, overwrite=overwrite)
+    if len(all_images) == 0:
+        if verbose:
+            print(f"  No valid chips found for {country}")
+        return
 
-        # Create datasets. chunks=True lets Zarr pick a reasonable chunking
-        root_group.create_dataset(
-            "image",
-            data=image,
-            chunks=True,
-            dtype="float32",
-            overwrite=True,
-        )
-        root_group.create_dataset(
-            "mask",
-            data=mask,
-            chunks=True,
-            overwrite=True,
-        )
+    images_array = np.stack(all_images)
+    masks_array = np.stack(all_masks)
 
-        # Attach meta data as attributes on the group
-        root_group.attrs.update(meta)
+    # create zarr group
+    z = zarr.open(zarr_dir, mode="w")
 
-        num_written += 1
-        if verbose and num_written % 100 == 0:
-            print(f"    Written {num_written} .zarr files so far")
+    C, H, W = images_array.shape[1:]
+
+    z.create_array(
+        name="images",
+        data=images_array,
+        chunks=(1, C, H, W),
+        # compressor=zarr.Blosc(cname="zstd", clevel=3, shuffle=2),
+    )
+    
+    z.create_array(
+        name="masks",
+        data=masks_array,
+        chunks=(1, H, W),
+        # compressor=zarr.Blosc(cname="zstd", clevel=3, shuffle=2),
+    )
+    
+    meta_json = np.array([json.dumps(m) for m in all_meta], dtype='U')
+    z.create_array(name="meta", data=meta_json)
+
+    # convert metadata to variable-length strings
+    # convert metadata to variable-length UTF-8 strings
+    # meta_json = np.array([str(m) for m in all_meta], dtype=object)
+    
+    # # create Zarr array using variable-length UTF-8 dtype
+    # z.create_array(
+    #     name="meta",
+    #     data=meta_json,
+    #     # dtype=zarr.v3.VLenUTF8(),  # <- this is the v3 dtype
+    # )
+
 
     if verbose:
-        print(f"  Done country: {country}")
-        print(f"    Written:          {num_written}")
-        print(f"    Skipped existing: {num_skipped_existing}")
-        print(f"    Missing files:    {num_missing}")
+        print(f"  Done {country}.")
+        print(f"    Missing files: {num_missing}")
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Create Zarr files combining window_a, window_b, and a mask type (no splits)."
-    )
-    parser.add_argument(
-        "--root",
-        type=str,
-        required=True,
-        help="Root directory of FTW dataset (contains country folders)",
-    )
-    parser.add_argument(
-        "--countries",
-        type=str,
-        nargs="+",
-        default=None,
-        help="List of country folder names under root. If omitted, auto-detect.",
-    )
-    parser.add_argument(
-        "--mask-type",
-        type=str,
-        default="semantic_3class",
-        help="Mask folder under label_masks (semantic_2class, semantic_3class, instance, ...)",
-    )
-    parser.add_argument(
-        "--overwrite",
-        action="store_true",
-        help="Overwrite existing .zarr files if they already exist",
-    )
-    parser.add_argument(
-        "--quiet",
-        action="store_true",
-        help="Reduce console output",
-    )
-
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--root", required=True, type=str)
+    parser.add_argument("--countries", nargs="+", default=None)
+    parser.add_argument("--mask-type", type=str, default="semantic_3class")
+    parser.add_argument("--overwrite", action="store_true")
+    parser.add_argument("--quiet", action="store_true")
     args = parser.parse_args()
-    root = args.root
-    mask_type = args.mask_type
-    overwrite = args.overwrite
+
     verbose = not args.quiet
 
     if args.countries is None:
-        countries = find_countries(root)
+        countries = find_countries(args.root)
         if verbose:
             print("Discovered countries:", countries)
     else:
         countries = args.countries
 
-    if len(countries) == 0:
-        raise RuntimeError("No countries found to process")
-
-    for country in countries:
+    for c in countries:
         create_zarr_for_country(
-            root=root,
-            country=country,
-            mask_type=mask_type,
-            overwrite=overwrite,
+            root=args.root,
+            country=c,
+            mask_type=args.mask_type,
+            overwrite=args.overwrite,
             verbose=verbose,
         )
 
