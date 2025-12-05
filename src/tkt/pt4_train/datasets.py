@@ -189,7 +189,7 @@ class FTW_finaltraining(NonGeoDataset):
                 "Dataset integrity check failed:\n" + "\n".join(errors)
             )
         else:
-            print("Integrity check passed ✓")
+            print("Integrity check passed")
             return True
 
     def __len__(self) -> int:
