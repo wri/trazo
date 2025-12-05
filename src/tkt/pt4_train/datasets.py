@@ -4,7 +4,6 @@ import os
 import random
 from pathlib import Path
 from typing import Any, Callable, Optional, Sequence
-
 import geopandas as gpd
 import matplotlib.pyplot as plt
 import numpy as np
