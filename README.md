@@ -42,7 +42,7 @@ Core dependencies used across steps include geopandas, rasterio, rioxarray, odc.
 
 ## Folder conventions
 
-A typical project layout after Step 1 and Step 2:
+A typical project layout after Step 1 and Step 2, following FTW structure:
 
 ```
 toolkit-for-traceability/
