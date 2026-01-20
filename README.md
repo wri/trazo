@@ -215,6 +215,194 @@ Notes
 
 ---
 
+# Step 3: Fine Tuning and Data sampling (Coming soon)
+
+Step 3 provides utilities fine-tuning and for intelligent sampling and subset creation to maximize model performance while minimizing time spent tracing fields. 
+
+### Planned features
+
+- **Active learning** subset selection based on model uncertainty and land cover discrepency
+- **Temporal diversity** sampling across seasons
+- **Window diversity** mosaic and chipped versions
+- **Geographic balancing** to ensure representation across study areas
+
+---
+
+# Step 4: Model training
+
+Step 4 contains the training infrastructure for field boundary segmentation models built on PyTorch Lightning and TorchGeo. Train custom models from scratch or fine-tune pretrained checkpoints on your own field boundaries.
+
+### Architecture support
+
+The training system supports multiple semantic segmentation architectures:
+
+- **U-Net** and **U-Net (reduced)** with configurable encoder backbones
+- **UperNet** for hierarchical feature extraction
+- **FCN** (Fully Convolutional Network)
+- **DeepLabV3+** for atrous spatial pyramid pooling
+- **FCSiamDiff**, **FCSiamConc**, **FCSiamAvg** for bi-temporal change detection
+
+All models support pretrained ImageNet weights for transfer learning.
+
+### Loss functions
+
+Step 4 includes a comprehensive suite of loss functions optimized for field boundary detection:
+
+| Loss                              | Description                                                    |
+|-----------------------------------|----------------------------------------------------------------|
+| `ce`                              | Cross-entropy with optional class weights                      |
+| `pixel_weighted_ce`               | Gaussian-weighted CE emphasizing boundary neighborhoods        |
+| `jaccard`                         | Jaccard/IoU loss for overlap maximization                      |
+| `focal`                           | Focal loss for hard example mining                             |
+| `tversky`                         | Tversky loss with tunable precision/recall tradeoff            |
+| `dice`                            | Dice coefficient loss                                          |
+| `ce+dice`                         | Combined cross-entropy and Dice                                |
+| `logcosh_dice`                    | Log-cosh Dice for smooth gradients                             |
+| `logcosh_dice_ce`                 | Log-cosh Dice combined with CE                                 |
+| `tversky_focal_ce`                | Three-way combination for robust training                      |
+| `ftnmt`                           | Fields of The World FTnMT loss                                 |
+| `locally_weighted_tversky_focal`  | Spatially adaptive Tversky-Focal                               |
+
+Most losses support `ignore_index` to exclude unlabeled or uncertain pixels (e.g., class 3 for presence-only labels).
+
+### Training features
+
+- **Multi-class segmentation**: Background, field interior, field boundary (+ optional unknown class)
+- **Temporal fusion**: Stack two Sentinel-2 dates (planting + harvest)
+- **Data augmentation**: Rotation, flipping, brightness, sharpness, random crops, channel shuffling
+- **Adaptive normalization**: Random divisor augmentation for radiometric robustness
+- **Metrics**: Per-class IoU, precision, recall, object-level F1
+- **Learning rate scheduling**: Cosine annealing with configurable patience
+- **Checkpoint management**: Best model selection, early stopping, resume from checkpoint
+- **Distributed training**: Multi-GPU support via PyTorch Lightning
+
+### Quick start
+
+```bash
+# Example: Fine-tune a U-Net with ResNet-50 backbone on your custom data
+python -m trazo.pt4_train.train \
+  --data-root /data/region \
+  --train-countries region \
+  --val-countries region \
+  --model unet \
+  --backbone resnet50 \
+  --in-channels 8 \
+  --num-classes 4 \
+  --loss tversky_focal_ce \
+  --ignore-index 3 \
+  --batch-size 16 \
+  --lr 1e-4 \
+  --max-epochs 50 \
+  --gpus 1 \
+  --output-dir /models/checkpoints
+```
+
+### Data structure expected
+
+Step 4 expects data prepared by Step 2:
+
+```
+data/region/
+  s2_images/
+    window_a/
+      <chip_id>__stack8.tif  # 4 bands from planting window
+    window_b/
+      <chip_id>__stack8.tif  # 4 bands from harvest window
+  label_masks/
+    instance/
+      <chip_id>__instance.tif
+    semantic_2class/
+      <chip_id>__semantic_2class.tif  # background + field
+    semantic_3class/
+      <chip_id>__semantic_3class.tif  # background + interior + boundary
+  chips_region.parquet  # Metadata with train/val/test splits
+```
+
+### Temporal options
+
+Control how the two temporal windows are used:
+
+| Option           | Description                                      | Input channels |
+|------------------|--------------------------------------------------|----------------|
+| `stacked`        | Concatenate window_a and window_b (default)      | 8              |
+| `windowA`        | Use only planting window                         | 4              |
+| `windowB`        | Use only harvest window                          | 4              |
+| `median`         | Median across both windows                       | 4              |
+| `random_window`  | Randomly select A or B each epoch                | 4              |
+
+### Advanced configuration
+
+Fine-tune model behavior with additional arguments:
+
+```bash
+# Class weights for imbalanced datasets
+--class-weights 0.1 1.0 5.0 0.0  # [background, interior, boundary, ignore]
+
+# Boundary pixel emphasis
+--pixel-weight-scale 3.0  # Upweight boundary neighborhoods
+
+# Per-class Tversky parameters
+--per-class-tversky \
+--alphas 0.3 0.5 0.7 \  # False negative penalty per class
+--betas 0.7 0.5 0.3     # False positive penalty per class
+
+# Freeze components for transfer learning
+--freeze-backbone       # Fine-tune decoder only
+--freeze-decoder        # Linear probe segmentation head
+
+# Augmentation toggles
+--random-shuffle        # Randomly swap temporal windows
+--brightness-aug        # Random brightness adjustment
+--preprocess-aug        # Random normalization divisor
+--resize-aug            # Random crops and resizing
+--resize-factor 1.5     # Upsample to 384x384
+
+# Training efficiency
+--num-workers 8
+--pin-memory
+--prefetch-factor 2
+```
+
+### Monitoring training
+
+All metrics are logged to TensorBoard and console:
+
+- **Training**: Loss, IoU (macro/micro), per-class IoU, precision, recall
+- **Validation**: Same metrics plus object-level precision, recall, F1
+- **Learning rate**: Tracked per epoch
+
+View training progress:
+
+```bash
+tensorboard --logdir /models/checkpoints/lightning_logs
+```
+
+### Model checkpoints
+
+Best models are saved based on validation loss. Load for inference or resume training:
+
+```python
+from trazo.pt4_train.trainers import CustomSemanticSegmentationTask
+
+# Load from checkpoint
+model = CustomSemanticSegmentationTask.load_from_checkpoint(
+    "/models/checkpoints/best.ckpt"
+)
+```
+
+### Tips for best results
+
+1. **Start with pretrained weights**: Use ImageNet backbones for faster convergence
+2. **Class weighting**: Upweight rare classes (boundaries) to improve detection
+3. **Loss selection**: `tversky_focal_ce` works well for imbalanced boundary detection
+4. **Augmentation**: Enable `preprocess_aug` for radiometric robustness across sensors
+5. **Temporal stacking**: Use both windows (`stacked`) for maximum information
+6. **Batch size**: Larger batches (32-64) improve stability with boundary-focused losses
+7. **Learning rate**: Start with 1e-4, reduce if loss plateaus
+8. **Validation**: Use a different region for validation to test generalization
+
+---
+
 # Step 5: Select per tile pairs and run inference
 
 Step 5 contains utilities to choose the best two Sentinel 2 scenes per tile, write 8 band stacks for those pairs, and run inference with one or many checkpoints.
