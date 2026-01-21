@@ -3,7 +3,7 @@ requires = ["setuptools>=61", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "tkt"
+name = "trazo"
 version = "0.1.0"
 description = "Toolkit for FTW-style field boundary and traceability workflows"
 readme = "README.md"
@@ -23,11 +23,11 @@ pt5 = ["ftw-cli"]  # whatever package provides `ftw`
 all = ["tkt[pt1,pt2,pt5]"]
 
 [project.scripts]
-tkt-pt1-create = "tkt.pt1_createdata.cli:main"
-tkt-pt2-dataprep = "tkt.pt2_dataprep.cli:main"
-tkt-pt3-finetune    = "tkt.pt3_finetune.cli:main"
-tkt-pt4-train       = "tkt.pt4_train.cli:main"
-tkt-pt5-infer = "tkt.pt5_inference.cli:main"
+trazo-pt1-create = "tkt.pt1_createdata.cli:main"
+trazo-pt2-dataprep = "tkt.pt2_dataprep.cli:main"
+trazo-pt3-finetune    = "tkt.pt3_finetune.cli:main"
+trazo-pt4-train       = "tkt.pt4_train.cli:main"
+trazo-pt5-infer = "tkt.pt5_inference.cli:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

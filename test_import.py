@@ -1,3 +1,3 @@
-from tkt.pt1_createdata.gridding import main
+from trazo.pt1_createdata.gridding import main
 
 print('Import successful.')

@@ -90,7 +90,7 @@ def s3_connection(aws_profile=None):
 
 
 
-def generate_task_file(source_files, src_root, dst_root, task_filename="copy_tasks.json", aws_profile = "tkt", check_destination=True):
+def generate_task_file(source_files, src_root, dst_root, task_filename="copy_tasks.json", aws_profile = "trazo", check_destination=True):
     """
     Create a JSON 'task file' with entries for each file:
       {
@@ -181,7 +181,7 @@ def load_task_file(task_filename):
         tasks = json.load(f)
     return [t for t in tasks if t["status"] in ("pending", "failed")]
 
-def copy_file(task, aws_profile = "tkt"):
+def copy_file(task, aws_profile = "trazo"):
     """
     Copy one file from GCS to S3 using fsspec-based filesystems.
     Return the task dict with updated status.
@@ -281,7 +281,7 @@ def main():
                         help="Resume from an existing task file, skipping completed tasks.")
     parser.add_argument("--coiled-region", default="us-east-1",
                         help="Coiled cluster region. Default: us-east-1")
-    parser.add_argument("--aws-profile", default="tkt",
+    parser.add_argument("--aws-profile", default="trazo",
                         help="AWS profile to use for S3 access. Default: None (uses default credentials).")
     
     args = parser.parse_args()
@@ -307,7 +307,7 @@ def main():
             src_root=src_root,
             dst_root=dst_root,
             task_filename=args.task_file,
-            aws_profile = "tkt"
+            aws_profile = "trazo"
         )
         tasks = load_task_file(args.task_file)
         total_size = sum(t["src_size"] for t in tasks)

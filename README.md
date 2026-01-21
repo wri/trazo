@@ -140,7 +140,7 @@ python -m tkt.pt1_createdata.plantingharvest   --input-shps  "/path/to/your/grid
 If your build registers an entrypoint for Step 1, you can also run:
 
 ```bash
-tkt-pt1-create plantingharvest ...  # if present in your install
+trazo-pt1-create plantingharvest ...  # if present in your install
 ```
 
 ### Important inputs
@@ -162,7 +162,7 @@ These tools convert the raw outputs of Step 1 into standardized chips, masks, an
 ### CLI
 
 ```
-tkt-pt2-dataprep <subcommand> [args...]
+trazo-pt2-dataprep <subcommand> [args...]
 ```
 
 Subcommands:
@@ -189,22 +189,22 @@ Subcommands:
 
 ```bash
 # 1. Pair
-tkt-pt2-dataprep pair-stacks   --window-a /data/region/window_a   --window-b /data/region/window_b   --out-dir  /data/region   --overwrite
+trazo-pt2-dataprep pair-stacks   --window-a /data/region/window_a   --window-b /data/region/window_b   --out-dir  /data/region   --overwrite
 
 # 2. Normalize to 256
-tkt-pt2-dataprep resize-256   --folders /data/region
+trazo-pt2-dataprep resize-256   --folders /data/region
 
 # 3. BBoxes
-tkt-pt2-dataprep chips-bboxes   --folders /data/region
+trazo-pt2-dataprep chips-bboxes   --folders /data/region
 
 # 4. Masks and split
-tkt-pt2-dataprep make-masks   --folders /data/region   --boundary-px 1
+trazo-pt2-dataprep make-masks   --folders /data/region   --boundary-px 1
 
 # 5. Parquet
-tkt-pt2-dataprep chips-parquet   --folders /data/region   --train-ratio 0.85 --val-ratio 0.15 --test-ratio 0.0
+trazo-pt2-dataprep chips-parquet   --folders /data/region   --train-ratio 0.85 --val-ratio 0.15 --test-ratio 0.0
 
 # 6. Scale to uint16
-tkt-pt2-dataprep scale-u16   --folders /data/region
+trazo-pt2-dataprep scale-u16   --folders /data/region
 ```
 
 Notes
@@ -410,7 +410,7 @@ Step 5 contains utilities to choose the best two Sentinel 2 scenes per tile, wri
 ### CLI
 
 ```
-tkt-pt5-infer <subcommand> [args...]
+trazo-pt5-infer <subcommand> [args...]
 ```
 
 Subcommands:
@@ -428,7 +428,7 @@ Subcommands:
 Finds the best two dates per tile over your AOI and year. Groups items by `s2:mgrs_tile`, tries cloud thresholds in order, and chooses the pair that minimizes total cloud cover, then prefers longer gaps, then earlier first date. Writes an 8 band stack per pair and a summary CSV.
 
 ```bash
-tkt-pt5-infer tilepairs   --aoi-shp /data/aois/merged.shp   --year 2022   --output-dir /data/stacks   --min-month-gap 4   --cloud-thresholds 5 7 9 10   --bands B04 B03 B02 B08   --full-tile   --write-dtype uint16
+trazo-pt5-infer tilepairs   --aoi-shp /data/aois/merged.shp   --year 2022   --output-dir /data/stacks   --min-month-gap 4   --cloud-thresholds 5 7 9 10   --bands B04 B03 B02 B08   --full-tile   --write-dtype uint16
 ```
 
 ### > 5.2 Tile list with SOS/EOS windows
@@ -438,7 +438,7 @@ If you have a list of MGRS tiles, you can drive selection by SOS and EOS windows
 - `spatial/sentinel_2_index_shapefile.geojson`
 
 ```bash
-tkt-pt5-infer tilepairs-tilelist   --tile-shp /path/to/sentinel_2_tile_index.shp   --year 2024   --out-csv /data/S2_tile_pairs.csv   --min-gap-months 4   --cloud-seq 0 1 2 3 5 7 10   --use-aoi "/data/aois/merged.shp"   --auto-from-index   # to build the tile list by intersecting the repo index
+trazo-pt5-infer tilepairs-tilelist   --tile-shp /path/to/sentinel_2_tile_index.shp   --year 2024   --out-csv /data/S2_tile_pairs.csv   --min-gap-months 4   --cloud-seq 0 1 2 3 5 7 10   --use-aoi "/data/aois/merged.shp"   --auto-from-index   # to build the tile list by intersecting the repo index
 ```
 
 Outputs a CSV with columns: `Tile,Window A,Window B,Nodata % A,Nodata % B`.
@@ -448,7 +448,7 @@ Outputs a CSV with columns: `Tile,Window A,Window B,Nodata % A,Nodata % B`.
 Runs the FTW model inference on every stack in a folder for each checkpoint in a folder. Creates an output subfolder per checkpoint.
 
 ```bash
-tkt-pt5-infer multi-infer   --tif-dir       /data/stacks   --checkpoint-dir /models/ftw_checkpoints   --output-dir    /data/inference/inf_output   --gpu 0   --overwrite
+trazo-pt5-infer multi-infer   --tif-dir       /data/stacks   --checkpoint-dir /models/ftw_checkpoints   --output-dir    /data/inference/inf_output   --gpu 0   --overwrite
 ```
 
 Requires the `ftw` CLI in your environment.
