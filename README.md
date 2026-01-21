@@ -92,7 +92,7 @@ Generates a grid of square AOIs or standardizes an existing grid so it can be us
 
 ```bash
 # Example: build a 2.56 km grid (256 px at 10 m) over an AOI and stamp year 2020
-python -m tkt.pt1_createdata.gridding \
+python -m trazo.pt1_createdata.gridding \
   --aoi "/path/to/aoi_boundary.shp" \
   --out "/path/to/grids/conab2020_grid.shp" \
   --grid-size-m 2560 \
@@ -100,7 +100,7 @@ python -m tkt.pt1_createdata.gridding \
   --year-constant 2020
 
 # Example: standardize an existing grid in place
-python -m tkt.pt1_createdata.gridding \
+python -m trazo.pt1_createdata.gridding \
   --grid "/path/to/existing_grid.shp" \
   --write-inplace \
   --id-field cellid \
@@ -134,7 +134,7 @@ Use the CLI wrapper or call the module directly.
 
 ```bash
 # CLI form
-python -m tkt.pt1_createdata.plantingharvest   --input-shps  "/path/to/your/grid_or_folder"   --year        2020   --span-months-planting 2   --span-months-harvest  2   --scene-cloud-threshold 90   --patch-cloud-threshold 0.08   --target-cloud-max      0.01   --preferred-cloud-max   0.02   --chip-size 256   --batch-size 10   --overwrite
+python -m trazo.pt1_createdata.plantingharvest   --input-shps  "/path/to/your/grid_or_folder"   --year        2020   --span-months-planting 2   --span-months-harvest  2   --scene-cloud-threshold 90   --patch-cloud-threshold 0.08   --target-cloud-max      0.01   --preferred-cloud-max   0.02   --chip-size 256   --batch-size 10   --overwrite
 ```
 
 If your build registers an entrypoint for Step 1, you can also run:
@@ -481,4 +481,4 @@ If you start with a grid of AOIs and a field polygon layer:
 
 ## Acknowledgements and Funding
 
-
+This projects was funded from a Walmart Foundation grant with support from Land and Carbon Lab, Taylor Geospatial Engine, and WRI's Data Lab. We would like to thank data partners and collaborators in South America working to advance sustainable agriculutre who gave time, expertise, and feedback. 
