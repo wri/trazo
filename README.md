@@ -3,10 +3,6 @@
 <p align="center">
   <img src="assets/fieldscropped2.gif" alt="Field Boundaries" />
 </p>
-<b><u>Trazo</u></b> is the Spanish word for brushstroke, from the verb trazar; to trace, to draw, to plot. 
-By tracing fields by hand in satellite imagery, we can choose the most powerful samples for creating robust, generalizable field boundary detection models. Each sketched field in our dataset adds knowledge about the wide diversity of agricultural systems in South America. These sketches teach models the culture of agriculture and how landscapes differ.
-
-Trazo echos the English word "trace": to follow path, uncover origins and make hidden connections legible. Trazo is both about creating powerful, diverse training data and the aim of of tracing commodities through the supply chain, so that agriculture can be monitored for deforestation.
 
 <p></p>
 
@@ -23,6 +19,11 @@ This front page gives you a practical map of Step 1, Step 2, and Step 5 with qui
 
 Trazo was created a joint effort between World Resources Institute and the Kerner Lab at Arizona State University, funded by the Walmart Foundation. Significant support was provided by Land and Carbon Lab at WRI.
 <p></p>
+
+<b><u>Trazo</u></b> is the Spanish word for brushstroke, from the verb trazar; to trace, to draw, to plot. 
+By tracing fields by hand in satellite imagery, we can choose the most powerful samples for creating robust, generalizable field boundary detection models. Each sketched field in our dataset adds knowledge about the wide diversity of agricultural systems in South America. These sketches teach models the culture of agriculture and how landscapes differ.
+
+Trazo echos the English word "trace": to follow path, uncover origins and make hidden connections legible. Trazo is both about creating powerful, diverse training data and the aim of of tracing commodities through the supply chain, so that agriculture can be monitored for deforestation.
 
 ---
 
