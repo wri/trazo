@@ -242,7 +242,7 @@ The training system supports multiple semantic segmentation architectures:
 - **DeepLabV3+** for atrous spatial pyramid pooling
 - **FCSiamDiff**, **FCSiamConc**, **FCSiamAvg** for bi-temporal change detection
 
-All models support pretrained ImageNet weights for transfer learning.
+All models support ImageNet weights.
 
 ### Loss functions
 
