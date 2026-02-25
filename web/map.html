@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trazo Points Map</title>
+<link rel="stylesheet" href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css">
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script src="https://unpkg.com/pmtiles@3.2.0/dist/pmtiles.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #0a0a0a;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+  }
+
+  #map {
+    width: 100%;
+    height: 100%;
+  }
+
+  .info-panel {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    background: rgba(10, 10, 10, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 14px 18px;
+    color: #e0e0e0;
+    z-index: 10;
+    max-width: 280px;
+  }
+
+  .info-panel h2 {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    margin-bottom: 4px;
+    color: #fff;
+  }
+
+  .info-panel p {
+    font-size: 11px;
+    color: rgba(255,255,255,0.5);
+    line-height: 1.4;
+  }
+
+  .legend-dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #f97316;
+    margin-right: 6px;
+    vertical-align: middle;
+    box-shadow: 0 0 6px rgba(249, 115, 22, 0.6);
+  }
+
+  .maplibregl-popup-content {
+    font-family: 'DM Sans', sans-serif;
+    background: rgba(15, 15, 15, 0.92);
+    backdrop-filter: blur(10px);
+    color: #e0e0e0;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    max-width: 300px;
+    max-height: 260px;
+    overflow-y: auto;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+
+  .maplibregl-popup-tip {
+    border-top-color: rgba(15, 15, 15, 0.92) !important;
+  }
+
+  .maplibregl-popup-close-button {
+    color: rgba(255,255,255,0.5);
+    font-size: 16px;
+    padding: 2px 6px;
+  }
+
+  .popup-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+
+  .popup-key {
+    color: rgba(255,255,255,0.45);
+    font-size: 11px;
+    margin-right: 12px;
+    flex-shrink: 0;
+  }
+
+  .popup-val {
+    font-size: 11px;
+    text-align: right;
+    word-break: break-word;
+  }
+</style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<div class="info-panel">
+  <h2><span class="legend-dot"></span>Trazo Points</h2>
+  <p>PMTiles source rendered over WRI neutral basemap. Click points to inspect attributes.</p>
+</div>
+
+<script>
+  // Register PMTiles protocol
+  const protocol = new pmtiles.Protocol();
+  maplibregl.addProtocol('pmtiles', protocol.tile);
+
+  const PMTILES_URL = 'https://datalab-geo.s3.us-east-1.amazonaws.com/dev/trazo_pts.pmtiles';
+
+  const map = new maplibregl.Map({
+    container: 'map',
+    style: 'https://site.tilebucket.xyz/wri/neutral.json',
+    center: [-75.5, -8.5],
+    zoom: 5,
+    attributionControl: false
+  });
+
+  map.addControl(new maplibregl.NavigationControl(), 'top-right');
+  map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
+
+  map.on('load', async () => {
+    // Try to get PMTiles header for initial bounds
+    try {
+      const p = new pmtiles.PMTiles(PMTILES_URL);
+      const header = await p.getHeader();
+      if (header.minLon && header.minLat && header.maxLon && header.maxLat) {
+        map.fitBounds(
+          [[header.minLon, header.minLat], [header.maxLon, header.maxLat]],
+          { padding: 60, maxZoom: 14, duration: 1200 }
+        );
+      }
+    } catch (e) {
+      console.warn('Could not read PMTiles header for bounds:', e);
+    }
+
+    // Add PMTiles source
+    map.addSource('trazo', {
+      type: 'vector',
+      url: `pmtiles://${PMTILES_URL}`
+    });
+
+    // Heatmap at low zooms
+    map.addLayer({
+      id: 'trazo-heat',
+      type: 'heatmap',
+      source: 'trazo',
+      'source-layer': 'trazo',
+      maxzoom: 10,
+      paint: {
+        'heatmap-weight': 1,
+        'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 0.6, 10, 1.5],
+        'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 4, 10, 18],
+        'heatmap-color': [
+          'interpolate', ['linear'], ['heatmap-density'],
+          0, 'rgba(0,0,0,0)',
+          0.15, 'rgba(249,115,22,0.15)',
+          0.3, 'rgba(249,115,22,0.35)',
+          0.5, 'rgba(251,146,60,0.55)',
+          0.7, 'rgba(253,186,116,0.7)',
+          1, 'rgba(255,237,213,0.9)'
+        ],
+        'heatmap-opacity': ['interpolate', ['linear'], ['zoom'], 7, 1, 10, 0]
+      }
+    });
+
+    // Circle layer at higher zooms
+    map.addLayer({
+      id: 'trazo-points',
+      type: 'circle',
+      source: 'trazo',
+      'source-layer': 'trazo',
+      minzoom: 7,
+      paint: {
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 7, 2, 14, 6, 18, 10],
+        'circle-color': '#f97316',
+        'circle-stroke-color': 'rgba(255,255,255,0.25)',
+        'circle-stroke-width': 1,
+        'circle-opacity': ['interpolate', ['linear'], ['zoom'], 7, 0, 10, 0.85]
+      }
+    });
+
+    // Pointer cursor on hover
+    map.on('mouseenter', 'trazo-points', () => { map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', 'trazo-points', () => { map.getCanvas().style.cursor = ''; });
+
+    // Click popup
+    map.on('click', 'trazo-points', (e) => {
+      if (!e.features || !e.features.length) return;
+      const props = e.features[0].properties;
+      const rows = Object.entries(props)
+        .filter(([k, v]) => v !== null && v !== undefined && v !== '')
+        .map(([k, v]) => `<div class="popup-row"><span class="popup-key">${k}</span><span class="popup-val">${v}</span></div>`)
+        .join('');
+
+      new maplibregl.Popup({ offset: 12, maxWidth: '300px' })
+        .setLngLat(e.lngLat)
+        .setHTML(rows || '<em style="color:rgba(255,255,255,0.4)">No attributes</em>')
+        .addTo(map);
+    });
+  });
+</script>
+</body>
+</html>
