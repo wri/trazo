@@ -20,10 +20,7 @@
     overflow: hidden;
   }
 
-  #map {
-    width: 100%;
-    height: 100%;
-  }
+  #map { width: 100%; height: 100%; }
 
   .info-panel {
     position: absolute;
@@ -65,6 +62,110 @@
     box-shadow: 0 0 6px rgba(249, 115, 22, 0.6);
   }
 
+  /* --- Basemap Switcher --- */
+  .basemap-control {
+    position: absolute;
+    bottom: 28px;
+    left: 16px;
+    z-index: 10;
+  }
+
+  .basemap-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(10, 10, 10, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 7px 12px;
+    color: #e0e0e0;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    outline: none;
+  }
+
+  .basemap-toggle:hover {
+    border-color: rgba(255,255,255,0.25);
+  }
+
+  .basemap-toggle svg { flex-shrink: 0; opacity: 0.6; }
+
+  .basemap-toggle .chevron {
+    margin-left: 2px;
+    transition: transform 0.2s;
+  }
+
+  .basemap-control.open .basemap-toggle .chevron {
+    transform: rotate(180deg);
+  }
+
+  .basemap-menu {
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 0;
+    background: rgba(15, 15, 15, 0.92);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 4px;
+    min-width: 150px;
+    display: none;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+
+  .basemap-control.open .basemap-menu {
+    display: block;
+    animation: menuIn 0.15s ease-out;
+  }
+
+  @keyframes menuIn {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .basemap-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 7px 10px;
+    background: none;
+    border: none;
+    border-radius: 5px;
+    color: #ccc;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+    outline: none;
+  }
+
+  .basemap-option:hover { background: rgba(255,255,255,0.07); }
+  .basemap-option.active { color: #f97316; }
+
+  .basemap-option .swatch {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .basemap-option .check {
+    margin-left: auto;
+    opacity: 0;
+    font-size: 13px;
+  }
+
+  .basemap-option.active .check { opacity: 1; }
+
+  /* --- Popups --- */
   .maplibregl-popup-content {
     font-family: 'DM Sans', sans-serif;
     background: rgba(15, 15, 15, 0.92);
@@ -116,8 +217,43 @@
 <div id="map"></div>
 
 <div class="info-panel">
-  <h2><span class="legend-dot"></span>Trazo Points</h2>
-  <p>PMTiles source rendered over WRI neutral basemap. Click points to inspect attributes.</p>
+  <h2><span class="legend-dot"></span>Trazo Fields</h2>
+  <p>Explore Trazo field boundaries generated for Mato Grosso, Brazil</p>
+</div>
+
+<div class="basemap-control" id="basemapControl">
+  <div class="basemap-menu">
+    <button class="basemap-option active" data-style="neutral" data-label="Neutral">
+      <span class="swatch" style="background: linear-gradient(135deg, #d4cfc4, #a8a290);"></span>
+      Neutral
+      <span class="check">✓</span>
+    </button>
+    <button class="basemap-option" data-style="dark" data-label="Dark">
+      <span class="swatch" style="background: linear-gradient(135deg, #1a1a2e, #0f0f1a);"></span>
+      Dark
+      <span class="check">✓</span>
+    </button>
+    <button class="basemap-option" data-style="light" data-label="Light">
+      <span class="swatch" style="background: linear-gradient(135deg, #f5f5f0, #ddddd5);"></span>
+      Light
+      <span class="check">✓</span>
+    </button>
+    <button class="basemap-option" data-style="satellite" data-label="Satellite">
+      <span class="swatch" style="background: linear-gradient(135deg, #1b4332, #1a3c5e);"></span>
+      Satellite
+      <span class="check">✓</span>
+    </button>
+  </div>
+  <button class="basemap-toggle" id="basemapToggle">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+      <line x1="8" y1="2" x2="8" y2="18"/><line x1="16" y1="6" x2="16" y2="22"/>
+    </svg>
+    <span id="basemapLabel">Neutral</span>
+    <svg class="chevron" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="6 9 12 15 18 9"/>
+    </svg>
+  </button>
 </div>
 
 <script>
@@ -125,97 +261,211 @@
   const protocol = new pmtiles.Protocol();
   maplibregl.addProtocol('pmtiles', protocol.tile);
 
-  const PMTILES_URL = 'https://datalab-geo.s3.us-east-1.amazonaws.com/dev/trazo_pts.pmtiles';
+  const PMTILES_URL = 'https://datalab-geo.s3.us-east-1.amazonaws.com/dev/trazo_fields.pmtiles';
 
-  const map = new maplibregl.Map({
-    container: 'map',
-    style: 'https://site.tilebucket.xyz/wri/neutral.json',
-    center: [-75.5, -8.5],
-    zoom: 5,
-    attributionControl: false
-  });
+  // --- Basemap style URLs ---
+  const BASEMAP_URLS = {
+    neutral: 'https://site.tilebucket.xyz/wri/neutral.json',
+    dark: 'https://site.tilebucket.xyz/wri/black.json',
+    light: 'https://site.tilebucket.xyz/wri/white.json',
+  };
 
-  map.addControl(new maplibregl.NavigationControl(), 'top-right');
-  map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
-
-  map.on('load', async () => {
-    // Try to get PMTiles header for initial bounds
-    try {
-      const p = new pmtiles.PMTiles(PMTILES_URL);
-      const header = await p.getHeader();
-      if (header.minLon && header.minLat && header.maxLon && header.maxLat) {
-        map.fitBounds(
-          [[header.minLon, header.minLat], [header.maxLon, header.maxLat]],
-          { padding: 60, maxZoom: 14, duration: 1200 }
-        );
+  const SATELLITE_STYLE = {
+    version: 8,
+    sources: {
+      satellite: {
+        type: 'raster',
+        tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
+        tileSize: 256,
+        maxzoom: 19,
+        attribution: '© Esri, Maxar, Earthstar Geographics'
       }
-    } catch (e) {
-      console.warn('Could not read PMTiles header for bounds:', e);
-    }
+    },
+    layers: [{ id: 'satellite', type: 'raster', source: 'satellite', minzoom: 0, maxzoom: 22 }]
+  };
 
-    // Add PMTiles source
-    map.addSource('trazo', {
-      type: 'vector',
-      url: `pmtiles://${PMTILES_URL}`
-    });
+  // --- Trazo source + layers as plain objects ---
+  const TRAZO_SOURCE_DEF = {
+    type: 'vector',
+    url: `pmtiles://${PMTILES_URL}`,
+    //maxzoom: 12
+  };
 
-    // Heatmap at low zooms
-    map.addLayer({
-      id: 'trazo-heat',
-      type: 'heatmap',
-      source: 'trazo',
-      'source-layer': 'trazo',
+  const TRAZO_LAYERS = [
+    {
+      id: 'trazo-polygons-fill', type: 'fill', source: 'trazo', 'source-layer': 'trazo',
+      minzoom: 9, 
+      filter: ['==', ['geometry-type'], 'Polygon'],
+      paint: { 'fill-color': '#f97316', 'fill-opacity': ['interpolate', ['linear'], ['zoom'], 9, 0, 10, 0.35] }
+    },
+    {
+      id: 'trazo-polygons-outline', type: 'line', source: 'trazo', 'source-layer': 'trazo',
+      minzoom: 9, 
+      filter: ['==', ['geometry-type'], 'Polygon'],
+      paint: {
+        'line-color': '#fb923c',
+        'line-width': ['interpolate', ['linear'], ['zoom'], 9, 0.5, 12, 2],
+        'line-opacity': ['interpolate', ['linear'], ['zoom'], 9, 0, 10, 0.8]
+      }
+    },
+    {
+      id: 'trazo-heat', type: 'heatmap', source: 'trazo', 'source-layer': 'trazo',
       maxzoom: 10,
+      filter: ['==', ['geometry-type'], 'Point'],
       paint: {
         'heatmap-weight': 1,
         'heatmap-intensity': ['interpolate', ['linear'], ['zoom'], 0, 0.6, 10, 1.5],
         'heatmap-radius': ['interpolate', ['linear'], ['zoom'], 0, 4, 10, 18],
         'heatmap-color': [
           'interpolate', ['linear'], ['heatmap-density'],
-          0, 'rgba(0,0,0,0)',
-          0.15, 'rgba(249,115,22,0.15)',
-          0.3, 'rgba(249,115,22,0.35)',
-          0.5, 'rgba(251,146,60,0.55)',
-          0.7, 'rgba(253,186,116,0.7)',
-          1, 'rgba(255,237,213,0.9)'
+          0, 'rgba(0,0,0,0)', 0.15, 'rgba(249,115,22,0.15)', 0.3, 'rgba(249,115,22,0.35)',
+          0.5, 'rgba(251,146,60,0.55)', 0.7, 'rgba(253,186,116,0.7)', 1, 'rgba(255,237,213,0.3)'
         ],
-        'heatmap-opacity': ['interpolate', ['linear'], ['zoom'], 7, 1, 10, 0]
+        'heatmap-opacity': ['interpolate', ['linear'], ['zoom'], 5, 1, 9, 0.8, 10, 0]
       }
-    });
-
-    // Circle layer at higher zooms
-    map.addLayer({
-      id: 'trazo-points',
-      type: 'circle',
-      source: 'trazo',
-      'source-layer': 'trazo',
-      minzoom: 7,
+    },
+    {
+      id: 'trazo-points', type: 'circle', source: 'trazo', 'source-layer': 'trazo',
+      minzoom: 0, maxzoom: 11,
+      filter: ['==', ['geometry-type'], 'Point'],
       paint: {
-        'circle-radius': ['interpolate', ['linear'], ['zoom'], 7, 2, 14, 6, 18, 10],
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 5, 1.5, 9, 3, 11, 0],
         'circle-color': '#f97316',
         'circle-stroke-color': 'rgba(255,255,255,0.25)',
         'circle-stroke-width': 1,
-        'circle-opacity': ['interpolate', ['linear'], ['zoom'], 7, 0, 10, 0.85]
+        'circle-stroke-opacity': ['interpolate', ['linear'], ['zoom'], 5, 0.3, 7, 0.85, 9, 0.85, 10, 0],
+        'circle-opacity': ['interpolate', ['linear'], ['zoom'], 5, 0.3, 7, 0.85, 9, 0.85, 10, 0]
       }
+    }
+  ];
+
+  /**
+   * So, instead of relying on addSource/addLayer after setStyle,
+   * we fetch the basemap style JSON, inject our trazo source + layers
+   * directly into the style object, then call setStyle with the merged result.
+   * idk if this is actually a legit way to do preserve data layer between basemap 
+   * switching but it works.
+   */
+  function injectTrazoIntoStyle(style) {
+    const s = JSON.parse(JSON.stringify(style));
+    s.sources = s.sources || {};
+    s.sources.trazo = JSON.parse(JSON.stringify(TRAZO_SOURCE_DEF));
+    s.layers = (s.layers || []).concat(JSON.parse(JSON.stringify(TRAZO_LAYERS)));
+    return s;
+  }
+
+  // Style cache to avoid re-fetching
+  const styleCache = {};
+
+  async function getStyleWithTrazo(name) {
+    if (styleCache[name]) return JSON.parse(JSON.stringify(styleCache[name]));
+
+    let base;
+    if (name === 'satellite') {
+      base = JSON.parse(JSON.stringify(SATELLITE_STYLE));
+    } else {
+      const resp = await fetch(BASEMAP_URLS[name]);
+      base = await resp.json();
+    }
+    const merged = injectTrazoIntoStyle(base);
+    styleCache[name] = merged;
+    return JSON.parse(JSON.stringify(merged));
+  }
+
+  // --- Map init ---
+  let currentStyle = 'neutral';
+
+  const map = new maplibregl.Map({
+    container: 'map',
+    style: BASEMAP_URLS.neutral,
+    center: [-56, -12],
+    zoom: 4,
+    attributionControl: false,
+    hash: true
+  });
+
+  map.addControl(new maplibregl.NavigationControl(), 'top-right');
+  map.addControl(new maplibregl.AttributionControl({ compact: true }), 'bottom-right');
+
+  function bindInteractions() {
+    ['trazo-points', 'trazo-polygons-fill'].forEach(layer => {
+      map.on('mouseenter', layer, () => { map.getCanvas().style.cursor = 'pointer'; });
+      map.on('mouseleave', layer, () => { map.getCanvas().style.cursor = ''; });
+      map.on('click', layer, (e) => {
+        if (!e.features || !e.features.length) return;
+        const props = e.features[0].properties;
+        const rows = Object.entries(props)
+          .filter(([k, v]) => v !== null && v !== undefined && v !== '')
+          .map(([k, v]) => `<div class="popup-row"><span class="popup-key">${k}</span><span class="popup-val">${v}</span></div>`)
+          .join('');
+        new maplibregl.Popup({ offset: 12, maxWidth: '300px' })
+          .setLngLat(e.lngLat)
+          .setHTML(rows || '<em style="color:rgba(255,255,255,0.4)">No attributes</em>')
+          .addTo(map);
+      });
     });
+  }
 
-    // Pointer cursor on hover
-    map.on('mouseenter', 'trazo-points', () => { map.getCanvas().style.cursor = 'pointer'; });
-    map.on('mouseleave', 'trazo-points', () => { map.getCanvas().style.cursor = ''; });
+  // Initial load - less zoomy zoom
+  map.on('load', async () => {
+    try {
+      const p = new pmtiles.PMTiles(PMTILES_URL);
+      // const header = await p.getHeader();
+      // if (header.minLon && header.minLat && header.maxLon && header.maxLat) {
+      //   map.fitBounds(
+      //     [[header.minLon, header.minLat], [header.maxLon, header.maxLat]],
+      //     { padding: 60, maxZoom: 14, duration: 1200 }
+      //   );
+      // }
+    } catch (e) {
+      console.warn('Could not read PMTiles header for bounds:', e);
+    }
 
-    // Click popup
-    map.on('click', 'trazo-points', (e) => {
-      if (!e.features || !e.features.length) return;
-      const props = e.features[0].properties;
-      const rows = Object.entries(props)
-        .filter(([k, v]) => v !== null && v !== undefined && v !== '')
-        .map(([k, v]) => `<div class="popup-row"><span class="popup-key">${k}</span><span class="popup-val">${v}</span></div>`)
-        .join('');
+    map.addSource('trazo', TRAZO_SOURCE_DEF);
+    TRAZO_LAYERS.forEach(lyr => map.addLayer(lyr));
+    bindInteractions();
+  });
 
-      new maplibregl.Popup({ offset: 12, maxWidth: '300px' })
-        .setLngLat(e.lngLat)
-        .setHTML(rows || '<em style="color:rgba(255,255,255,0.4)">No attributes</em>')
-        .addTo(map);
+  // --- Basemap switching ---
+  async function switchBasemap(name) {
+    if (name === currentStyle) return;
+    currentStyle = name;
+
+    const center = map.getCenter();
+    const zoom = map.getZoom();
+    const bearing = map.getBearing();
+    const pitch = map.getPitch();
+
+    const mergedStyle = await getStyleWithTrazo(name);
+    map.setStyle(mergedStyle);
+
+    map.once('style.load', () => {
+      map.jumpTo({ center, zoom, bearing, pitch });
+      bindInteractions();
+    });
+  }
+
+  // --- Dropdown UI ---
+  const control = document.getElementById('basemapControl');
+  const toggle = document.getElementById('basemapToggle');
+  const label = document.getElementById('basemapLabel');
+
+  toggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    control.classList.toggle('open');
+  });
+
+  document.addEventListener('click', () => control.classList.remove('open'));
+  control.querySelector('.basemap-menu').addEventListener('click', (e) => e.stopPropagation());
+
+  document.querySelectorAll('.basemap-option').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const name = btn.dataset.style;
+      document.querySelectorAll('.basemap-option').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      label.textContent = btn.dataset.label;
+      control.classList.remove('open');
+      switchBasemap(name);
     });
   });
 </script>
