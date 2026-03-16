@@ -19,7 +19,7 @@ dependencies = [
 [project.optional-dependencies]
 pt1 = ["pystac-client>=0.8", "odc-stac>=0.3", "planetary-computer>=1.0"]
 pt2 = ["rasterio", "geopandas", "shapely", "pyproj", "rtree", "pyarrow"]
-pt5 = ["ftw-cli"]  # whatever package provides `ftw`
+pt5 = ["ftw-tools"]  # whatever package provides `ftw`
 all = ["tkt[pt1,pt2,pt5]"]
 
 [project.scripts]
