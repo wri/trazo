@@ -1,0 +1,1674 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8"/>
+  <script>(function(){try{var t=localStorage.getItem("trazo-theme");if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Trazo — Mato Grosso 2024 · Static v8</title>
+
+  <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/pmtiles@3.2.0/dist/pmtiles.js"></script>
+  <script src="https://unpkg.com/pbf@3.2.1/dist/pbf.js"></script>
+  <script src="https://unpkg.com/pako@2.1.0/dist/pako.min.js"></script>
+  <style>
+    /* ── RESET ────────────────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── BRAND TOKENS ──────────────────────────────────────────────────────────── */
+    :root {
+      /* Primary */
+      --gold:   #F0AB00;
+      --black:  #000000;
+      --grey:   #9B9B9B;
+      /* Secondary */
+      --blue:   #3855A3;
+      --teal:   #0096A4;
+      --green:  #32864B;
+      --orange: #EB8026;
+      /* Tertiary / neutrals */
+      --lt-green:  #81C67B;
+      --lt-teal:   #7EBCC6;
+      --cream:     #FBE7C5;
+      --lt-grey:   #E7E6E6;
+      /* UI chrome */
+      --bg-deep:    #070f04;
+      --bg-panel:   #070f04;
+      --bg-overlay: rgba(7,16,5,0.82);
+      --border:     rgba(240,171,0,0.30);
+      --border-dim: rgba(240,171,0,0.12);
+      --text:       #E7E6E6;
+      --text-muted: #9B9B9B;
+      --text-dim:   #666666;
+      /* Fonts */
+      --font-header: 'acumin-pro', 'Acumin Pro', 'Arial Narrow', Arial, sans-serif;
+      --font-body:   'adobe-caslon-pro', 'Adobe Caslon Pro', Georgia, 'Times New Roman', serif;
+      --font-mono:   'Courier New', Courier, monospace;
+    }
+
+    body {
+      font-family: var(--font-body);
+      background: #050c03;
+      color: var(--text);
+      height: 100dvh;
+      overflow: hidden;
+    }
+
+    /* ── LOADING SCREEN ───────────────────────────────────────────────────────── */
+    #drop-screen {
+      position: fixed; inset: 0; z-index: 1000;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: #0a0a0a; transition: opacity 0.5s;
+    }
+    #drop-screen.fade-out { opacity: 0; pointer-events: none; }
+    #dz-status {
+      font-size: 13px; color: var(--text-muted);
+      font-family: var(--font-mono); letter-spacing: 0.05em;
+    }
+    #dz-error {
+      color: #f87171; display: none; margin-top: 10px;
+      font-size: 12px; font-family: var(--font-mono);
+    }
+
+    /* ── MAP ──────────────────────────────────────────────────────────────────── */
+    #map { position: absolute; inset: 0; background: #0a0a0a; }
+
+    /* ── BASEMAP FILTER ───────────────────────────────────────────────────── */
+    /* Basemap filter — dark green-black. Tint baked in via brightness. */
+    .leaflet-tile-pane {
+      filter: brightness(0.35) saturate(0.80) hue-rotate(10deg) contrast(1.05);
+    }
+
+    /* ── UI LAYER: always on top of all Leaflet canvases ──────────────────── */
+    #ui-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      pointer-events: none;   /* pass clicks through to map by default */
+    }
+    /* Re-enable interaction for all actual UI elements */
+    #ui-layer > *,
+    #ui-layer #info-panel,
+    #ui-layer #legend,
+    #ui-layer #zbadge,
+    #ui-layer #header {
+      pointer-events: auto;
+    }
+    .leaflet-tile      { background: transparent !important; }
+    .leaflet-control-zoom,
+    .leaflet-control-scale,
+    .leaflet-control-attribution { display: none !important; }
+
+    /* ── INFO PANEL ───────────────────────────────────────────────────────────── */
+    #info-panel {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      max-height: calc(100vh - 32px);
+      width: clamp(280px, 30vw, 400px);
+
+      /* Hard opaque black — isolation ensures nothing from the map bleeds through */
+      background-color: rgba(0,0,0,0.64);
+      isolation: isolate;
+      border: none;
+      box-shadow:
+        0 0 0 1px rgba(0,0,0,0.7),
+        0 8px 40px rgba(0,0,0,0.6),
+        inset 0 0 0 1px rgba(255,255,255,0.04);
+
+      border-radius: 10px;
+      padding: 24px 22px 22px;
+      z-index: 1;
+      overflow-y: auto;
+      color: var(--text);
+      display: none;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(240,171,0,0.3) transparent;
+    }
+    #info-panel::-webkit-scrollbar { width: 5px; }
+    #info-panel::-webkit-scrollbar-track { background: transparent; }
+    #info-panel::-webkit-scrollbar-thumb {
+      background: rgba(240,171,0,0.3); border-radius: 4px;
+    }
+
+    #info-panel h1 {
+      font-family: var(--font-header);
+      font-size: 30px;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
+      line-height: 1.1;
+    }
+
+    /* ── LANGUAGE SWITCHER ─────────────────────────────────────────────────── */
+    #lang-switcher {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    .lang-btn {
+      background: none;
+      border: none;
+      padding: 2px 0;
+      font-family: var(--font-header);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--text-muted);
+      cursor: pointer;
+      text-transform: uppercase;
+      transition: color 0.15s;
+    }
+    .lang-btn:hover { color: var(--text); }
+    .lang-btn.active { color: var(--gold); border-bottom: 1px solid var(--gold); }
+    .lang-sep { color: rgba(155,155,155,0.4); font-size: 11px; user-select: none; }
+
+    #info-panel p {
+      font-family: var(--font-body);
+      font-size: 13.5px;
+      line-height: 1.7;
+      color: var(--text);
+      margin-bottom: 13px;
+    }
+    #info-panel p:last-child { margin-bottom: 0; }
+
+    #info-panel a {
+      color: var(--gold);
+      text-decoration: underline;
+      text-decoration-color: rgba(240,171,0,0.45);
+      text-underline-offset: 2px;
+      transition: color 0.15s, text-decoration-color 0.15s;
+    }
+    #info-panel a:hover {
+      color: #ffd04d;
+      text-decoration-color: rgba(240,171,0,0.8);
+    }
+
+    .panel-divider {
+      height: 1px;
+      background: rgba(240,171,0,0.15);
+      margin: 16px 0;
+    }
+
+    .collab-block {
+      font-family: var(--font-body);
+      font-size: 12px;
+      line-height: 1.65;
+      color: var(--text-muted);
+      margin-bottom: 0;
+    }
+
+    /* ── HEADER ──────────────────────────────────────────────────────────────── */
+    #header {
+      position: absolute; top: 12px; left: 50%; transform: translateX(-50%);
+      background: var(--bg-overlay);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 7px 18px;
+      color: var(--text);
+      font-family: var(--font-header);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      z-index: 10; pointer-events: none; white-space: nowrap; display: none !important;
+    }
+    #header span {
+      color: var(--text-muted); font-weight: 400; font-size: 11px; margin-left: 10px;
+      font-family: var(--font-mono); text-transform: none; letter-spacing: 0;
+    }
+
+    /* ── LEGEND ──────────────────────────────────────────────────────────────── */
+    #legend {
+      position: absolute; bottom: 28px; right: 12px;
+      background-color: rgba(0,0,0,0.64);
+      isolation: isolate;
+      border: none;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,0,0,0.7);
+      border-radius: 8px;
+      padding: 13px 15px;
+      font-size: 11.5px;
+      z-index: 1;
+      min-width: 220px; max-height: calc(100vh - 80px); overflow-y: auto; display: none;
+    }
+    #legend h3 {
+      font-family: var(--font-header);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--gold);
+      margin-bottom: 2px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    .lsub      { font-family: var(--font-body); font-size: 10.5px; color: var(--text-muted); margin-bottom: 10px; }
+    .lrow      { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; font-family: var(--font-body); color: var(--text); }
+    .swatch    { width: 13px; height: 13px; border-radius: 3px; flex-shrink: 0;
+                 border: 1px solid rgba(255,255,255,0.2); }
+    .lcode     { color: var(--text-muted); font-size: 10px; min-width: 20px; font-family: var(--font-mono); }
+    .ldivider  { height: 1px; background: rgba(255,255,255,0.1); margin: 7px 0; }
+    .lgroup    {
+      font-family: var(--font-header);
+      font-size: 9.5px; font-weight: 700; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--text-muted); margin: 8px 0 5px;
+    }
+
+    /* ── ZOOM BADGE ──────────────────────────────────────────────────────────── */
+    #zbadge {
+      position: absolute; bottom: 28px; left: 12px;
+      background: var(--bg-overlay);
+      border: 1px solid var(--border-dim);
+      border-radius: 6px;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-family: var(--font-mono);
+      padding: 4px 9px;
+      z-index: 10; display: none;
+    }
+
+    /* ── LEAFLET POPUP ──────────────────────────────────────────────────────── */
+    .leaflet-popup-content-wrapper {
+      background: rgba(0,0,0,0.64) !important;
+      color: var(--text) !important;
+      border: 1px solid rgba(240,171,0,0.45) !important;
+      border-radius: 8px !important;
+      box-shadow: 0 6px 24px rgba(0,0,0,0.4) !important;
+    }
+    .leaflet-popup-tip-container .leaflet-popup-tip { background: rgba(0,0,0,0.64); }
+    .leaflet-popup-close-button { color: var(--text-muted) !important; }
+    .ptitle {
+      font-family: var(--font-header);
+      font-weight: 700; font-size: 13px;
+      color: var(--gold);
+      margin-bottom: 6px;
+      padding-left: 8px;
+      border-left: 3px solid var(--gold);
+      letter-spacing: 0.04em;
+    }
+    .prow {
+      font-family: var(--font-body);
+      display: flex; justify-content: space-between; gap: 14px; margin: 2px 0;
+      font-size: 12px;
+    }
+    .pk { color: var(--text-muted); }
+    .pv { font-weight: 600; color: var(--text); }
+
+    /* ── PANEL EXPAND/COLLAPSE ────────────────────────────────────────────────── */
+    #info-panel { cursor: pointer; user-select: none; }
+    #panel-teaser { pointer-events: none; }
+    #lang-switcher, .lang-btn { pointer-events: auto; }
+    #panel-body {
+      max-height: 0; overflow: hidden; opacity: 0;
+      transition: max-height 0.4s ease, opacity 0.3s ease, margin-top 0.3s ease;
+      margin-top: 0; pointer-events: none;
+      scrollbar-width: thin; scrollbar-color: rgba(240,171,0,0.3) transparent;
+    }
+    #panel-body::-webkit-scrollbar { width: 5px; }
+    #panel-body::-webkit-scrollbar-thumb { background: rgba(240,171,0,0.3); border-radius: 4px; }
+    #info-panel:hover #panel-body,
+    #info-panel.pinned #panel-body {
+      max-height: calc(100vh - 140px); overflow-y: auto; overflow-x: hidden;
+      opacity: 1; margin-top: 14px; pointer-events: auto;
+    }
+    #panel-pin-hint {
+      font-family: var(--font-mono); font-size: 9px; color: var(--text-dim);
+      letter-spacing: 0.08em; text-align: right; margin-top: 8px;
+      transition: opacity 0.2s; pointer-events: none;
+    }
+    #info-panel.pinned #panel-pin-hint { color: var(--gold); }
+
+    /* ── CUSTOM ATTRIBUTION ──────────────────────────────────────────────────── */
+    #map-attribution {
+      position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+      font-family: var(--font-mono); font-size: 9px; color: var(--text-dim);
+      letter-spacing: 0.04em; z-index: 1; pointer-events: none; white-space: nowrap;
+    }
+
+
+    /* ── TOPBAR ─────────────────────────────────────────────────────────────── */
+    #topbar {
+      position: absolute;
+      top: 10px; left: 0; right: 0;
+      height: 32px;
+      background: rgba(7,16,5,0.38);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      display: flex;
+      align-items: stretch;
+      font-family: var(--font-header);
+      overflow: visible;
+      pointer-events: auto;
+    }
+    #topbar-nav {
+      display: flex; align-items: stretch; flex: 1;
+      justify-content: flex-end;
+    }
+    .tnav-item {
+      position: relative; display: flex; align-items: center;
+    }
+    .tnav-trigger {
+      height: 100%; display: flex; align-items: center;
+      padding: 0 13px;
+      font-family: var(--font-header);
+      font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--text-muted);
+      cursor: pointer; user-select: none;
+      border: none; background: none;
+      border-right: 1px solid var(--border-dim);
+      transition: color 0.15s, background 0.15s;
+      white-space: nowrap; gap: 5px;
+      pointer-events: auto;
+    }
+    .tnav-trigger:hover,
+    .tnav-item.open .tnav-trigger {
+      color: var(--gold); background: rgba(240,171,0,0.06);
+    }
+    .tnav-trigger .caret {
+      font-size: 8px; font-family: var(--font-mono);
+      transition: transform 0.2s; color: var(--text-dim);
+    }
+    .tnav-item.open .tnav-trigger .caret,
+    .tnav-item:hover .tnav-trigger .caret {
+      transform: rotate(180deg); color: var(--gold);
+    }
+    .tnav-dropdown {
+      position: absolute; top: 48px; left: 0;
+      min-width: 340px; max-width: 480px;
+      background: rgba(7,15,4,0.97);
+      border: 1px solid var(--border); border-top: none;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.7);
+      opacity: 0; pointer-events: none;
+      transform: translateY(-6px);
+      transition: opacity 0.18s ease, transform 0.18s ease;
+      z-index: 100;
+    }
+    .tnav-item:hover .tnav-dropdown,
+    .tnav-item.open .tnav-dropdown {
+      opacity: 1; pointer-events: auto; transform: translateY(0);
+    }
+    .tnav-pin-hint {
+      padding: 5px 14px 6px;
+      font-family: var(--font-mono); font-size: 9px;
+      letter-spacing: 0.08em; color: var(--text-dim);
+      border-bottom: 1px solid var(--border-dim);
+      text-align: center; pointer-events: none;
+    }
+    .tnav-item.open .tnav-pin-hint { color: rgba(240,171,0,0.5); }
+    .tnav-drop-content {
+      padding: 16px 18px 18px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .tnav-drop-head {
+      font-family: var(--font-header); font-size: 10px;
+      font-weight: 700; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--gold); margin-bottom: 4px;
+    }
+    .tnav-drop-text {
+      font-family: var(--font-body); font-size: 13px;
+      line-height: 1.65; color: var(--text); margin: 0;
+    }
+    .tnav-drop-text em { color: var(--gold); font-style: normal; }
+    .tnav-drop-text a { color: var(--gold); text-decoration: underline;
+      text-decoration-color: rgba(240,171,0,0.4); text-underline-offset: 2px; }
+    .tnav-drop-text a:hover { color: #ffd04d; }
+    /* model chips */
+    .tnav-model-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .tnav-model-chip {
+      background: rgba(255,255,255,0.03); border: 1px solid var(--border-dim);
+      padding: 10px 12px; text-decoration: none; color: inherit;
+      display: flex; flex-direction: column; gap: 3px;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .tnav-model-chip:hover { background: rgba(240,171,0,0.07); border-color: rgba(240,171,0,0.35); }
+    .tnav-model-chip .mc-name { font-family: var(--font-header); font-size: 13px; font-weight: 700; letter-spacing: 0.06em; color: var(--gold); text-transform: uppercase; }
+    .tnav-model-chip .mc-tag { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.08em; color: var(--text-muted); text-transform: uppercase; }
+    .tnav-model-chip .mc-stat { font-family: var(--font-header); font-size: 16px; font-weight: 700; color: var(--text); margin-top: 3px; }
+    /* pipeline steps */
+    .tnav-pipeline { display: flex; flex-direction: column; gap: 5px; }
+    .tnav-step {
+      display: flex; align-items: baseline; gap: 10px; padding: 6px 10px;
+      text-decoration: none; color: inherit;
+      border: 1px solid var(--border-dim); background: rgba(255,255,255,0.02);
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .tnav-step:hover { background: rgba(240,171,0,0.06); border-color: rgba(240,171,0,0.3); }
+    .tnav-step .step-num { font-family: var(--font-mono); font-size: 9.5px; color: var(--gold); letter-spacing: 0.1em; flex-shrink: 0; min-width: 22px; }
+    .tnav-step .step-title { font-family: var(--font-header); font-size: 11px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text); flex-shrink: 0; min-width: 90px; }
+    .tnav-step .step-desc { font-family: var(--font-body); font-size: 11.5px; color: var(--text-muted); line-height: 1.4; }
+    /* resource cards */
+    .tnav-resources { display: flex; flex-direction: column; gap: 5px; }
+    .tnav-res {
+      display: flex; align-items: center; gap: 12px; padding: 8px 12px;
+      text-decoration: none; color: inherit;
+      border: 1px solid var(--border-dim); background: rgba(255,255,255,0.02);
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .tnav-res:hover { background: rgba(240,171,0,0.06); border-color: rgba(240,171,0,0.3); }
+    .tnav-res .res-kind { font-family: var(--font-header); font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); min-width: 90px; flex-shrink: 0; }
+    .tnav-res .res-title { font-family: var(--font-body); font-size: 12px; color: var(--text); line-height: 1.35; flex: 1; }
+    .tnav-res .res-arr { font-family: var(--font-mono); font-size: 13px; color: var(--gold); flex-shrink: 0; }
+    /* citation */
+    .tnav-citation {
+      background: rgba(4,8,3,0.92); border: 1px solid var(--border-dim);
+      border-left: 3px solid rgba(200,210,150,0.35); padding: 14px 16px;
+      font-family: var(--font-mono); font-size: 10.5px; line-height: 1.65;
+      color: var(--text-muted); white-space: pre-wrap; overflow-x: auto;
+      max-height: 180px; overflow-y: auto;
+      scrollbar-width: thin; scrollbar-color: rgba(240,171,0,0.3) transparent;
+    }
+    /* group separators with floating label */
+    .tnav-group {
+      display: flex; align-items: stretch; flex-shrink: 0;
+      position: relative;
+      margin-top: -10px;
+      padding-top: 10px;
+    }
+    .tnav-sep-pipe {
+      width: 1px; background: rgba(240,171,0,0.35);
+      align-self: stretch; flex-shrink: 0;
+    }
+    .tnav-group-label {
+      position: absolute; top: 2px; left: 0; right: 0; text-align: center;
+      font-family: var(--font-header); font-size: 9px; font-weight: 700;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: rgba(240,171,0,0.75); white-space: nowrap; pointer-events: none; line-height: 1;
+    }
+    /* coverage geography list */
+    .tnav-coverage-list { display: flex; flex-direction: column; gap: 4px; }
+    .cov-entry {
+      display: flex; align-items: baseline; gap: 10px;
+      padding: 5px 10px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border-dim);
+    }
+    .cov-country {
+      font-family: var(--font-header); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase; color: var(--gold);
+      flex-shrink: 0; min-width: 80px;
+    }
+    .cov-detail {
+      font-family: var(--font-body); font-size: 12px; color: var(--text-muted);
+      line-height: 1.4;
+    }
+    .tnav-drop-divider {
+      height: 1px; background: rgba(240,171,0,0.15); margin: 4px 0;
+    }
+    /* dim release 2 items */
+    .tnav-trigger-dim { opacity: 0.45; }
+    .tnav-item-dim:hover .tnav-trigger-dim,
+    .tnav-item-dim.open .tnav-trigger-dim { opacity: 0.8; }
+    /* highlight animation */
+    @keyframes navHighlight {
+      0%   { background: transparent; color: var(--text-muted); }
+      20%  { background: rgba(240,171,0,0.38); color: #FFD700; text-shadow: 0 0 8px rgba(240,171,0,0.6); }
+      60%  { background: rgba(240,171,0,0.22); color: #FFD700; text-shadow: 0 0 4px rgba(240,171,0,0.4); }
+      100% { background: transparent; color: var(--text-muted); text-shadow: none; }
+    }
+    .tnav-trigger.nav-lit { animation: navHighlight 2.4s ease forwards; }
+    /* offset map for topbar */
+    #map { top: 42px !important; }
+    #info-panel { top: 54px !important; }
+
+  </style>
+
+  <!-- Adobe Fonts: Acumin Pro + Adobe Caslon Pro -->
+  <link rel="stylesheet" href="https://use.typekit.net/fxq7ozw.css"/>
+
+  <!-- ════ RELEASE 1 · FLOATING RADIAL-ORBITAL SELECTOR (bottom-left) ════ -->
+  <style id="tz-orbital-css">
+    #tgroup-r1{ display:none !important; }   /* release 1 now floats on the map */
+
+    #tz-orbital{ position:fixed; left:0; right:0; top:42px; bottom:0; z-index:600; pointer-events:none; overflow:hidden; }
+    .tzo-backdrop{ position:fixed; inset:0; z-index:10; display:none; }
+    #tz-orbital.expanded .tzo-backdrop{ display:block; pointer-events:auto; }
+    /* anchor the orbit centre in the bottom-left sector */
+    #tz-orbital-stage{ position:absolute; left:208px; bottom:238px; width:1px; height:1px; }
+
+    .tzo-orbit-ring{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+      width:300px; height:300px; border-radius:50%; border:1px dashed var(--border); opacity:.45; }
+
+    /* flat, semi-transparent fills — no gradients, no glow */
+    .tzo-hub{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+      width:58px; height:58px; border-radius:50%; pointer-events:auto; cursor:default; z-index:50;
+      background:rgba(240,171,0,0.80); display:flex; align-items:center; justify-content:center; }
+    [data-theme="light"] .tzo-hub{ background:rgba(139,105,20,0.80); }
+    .tzo-hub .tzo-core{ width:26px; height:26px; border-radius:50%; background:rgba(255,255,255,0.85); }
+    .tzo-hub .tzo-ring{ position:absolute; border-radius:50%; border:1px solid rgba(240,171,0,0.40);
+      animation:tzoPing 2.6s cubic-bezier(0,0,0.2,1) infinite; }
+    [data-theme="light"] .tzo-hub .tzo-ring{ border-color:rgba(139,105,20,0.40); }
+    .tzo-hub .tzo-ring.r2{ animation-delay:.7s; }
+    .tzo-hub-label{ position:absolute; left:50%; top:calc(50% + 44px); transform:translateX(-50%);
+      font-family:var(--font-mono); font-size:9px; letter-spacing:.22em; text-transform:uppercase;
+      color:var(--gold); white-space:nowrap; pointer-events:none; opacity:.85; }
+
+    .tzo-node{ position:absolute; left:50%; top:50%; pointer-events:auto; cursor:pointer; will-change:transform,opacity; }
+    .tzo-node .tzo-dot{ width:40px; height:40px; border-radius:50%; transform:translate(-50%,-50%);
+      display:flex; align-items:center; justify-content:center;
+      background:var(--bg-overlay); color:var(--gold); border:2px solid var(--border);
+      transition:background .3s,color .3s,border-color .3s,transform .3s; }
+    .tzo-node .tzo-dot svg{ width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+    .tzo-node .tzo-title{ position:absolute; left:50%; top:26px; transform:translateX(-50%); white-space:nowrap;
+      font-family:var(--font-header); font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+      color:var(--text-muted); transition:color .3s,transform .3s; pointer-events:none; }
+    .tzo-node.related .tzo-dot{ border-color:var(--gold); animation:tzoPulse 1.4s ease-in-out infinite; }
+    .tzo-node.active  .tzo-dot{ background:rgba(240,171,0,0.85); color:#fff; border-color:var(--gold);
+      transform:translate(-50%,-50%) scale(1.4); }
+    [data-theme="light"] .tzo-node.active .tzo-dot{ background:rgba(139,105,20,0.85); }
+    .tzo-node.active  .tzo-title{ color:var(--text); transform:translateX(-50%) scale(1.15); }
+
+    /* card opens ABOVE the node (room is up & right in the bottom-left corner) */
+    .tzo-card{ position:absolute; left:50%; bottom:50px; transform:translateX(-50%) translateY(-8px);
+      width:306px; max-height:min(62vh,452px); overflow-y:auto; overscroll-behavior:contain;
+      opacity:0; pointer-events:none; z-index:200;
+      background:var(--bg-overlay); border:1px solid var(--border); border-radius:10px;
+      box-shadow:0 14px 44px rgba(0,0,0,0.28); padding:14px 16px;
+      transition:opacity .25s ease, transform .25s ease; }
+    .tzo-node.active .tzo-card{ opacity:1; pointer-events:auto; transform:translateX(-50%) translateY(0); }
+    .tzo-card-k{ font-family:var(--font-mono); font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--gold); margin-bottom:7px; }
+    .tzo-card-b{ font-family:var(--font-body); font-size:12px; line-height:1.55; color:var(--text); }
+    .tzo-card-b em{ font-style:normal; color:var(--gold); font-weight:700; }
+
+    .tzo-facts{ margin-top:9px; display:flex; flex-direction:column; gap:6px; }
+    .tzo-fact{ font-family:var(--font-body); font-size:11.5px; line-height:1.4; color:var(--text); }
+    .tzo-fact b{ color:var(--gold); font-weight:700; margin-right:6px; }
+
+    .tzo-links{ margin-top:11px; padding-top:9px; border-top:1px solid var(--border-dim); display:flex; flex-direction:column; gap:2px; }
+    .tzo-link{ display:flex; align-items:baseline; gap:8px; text-decoration:none; padding:5px 7px; border-radius:6px; transition:background .15s; }
+    .tzo-link:hover{ background:rgba(139,105,20,0.09); }
+    .tzo-link-kind{ flex:none; min-width:60px; font-family:var(--font-mono); font-size:8.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--gold); }
+    .tzo-link-title{ flex:1; font-family:var(--font-body); font-size:11px; line-height:1.36; color:var(--text); }
+    .tzo-link-arr{ flex:none; color:var(--text-dim); font-size:10px; }
+
+    .tzo-card-rel{ margin-top:11px; padding-top:9px; border-top:1px solid var(--border-dim); display:flex; flex-wrap:wrap; gap:5px; }
+    .tzo-rel{ font-family:var(--font-mono); font-size:9px; letter-spacing:.06em; text-transform:uppercase; color:var(--text-muted);
+      border:1px solid var(--border); border-radius:4px; padding:3px 7px; cursor:pointer; background:none; transition:color .15s,border-color .15s; }
+    .tzo-rel:hover{ color:var(--gold); border-color:var(--gold); }
+
+    @keyframes tzoPing{ 0%{ width:66px;height:66px; opacity:.6 } 80%,100%{ width:120px;height:120px; opacity:0 } }
+    @keyframes tzoPulse{ 0%,100%{ opacity:1 } 50%{ opacity:.5 } }
+  </style>
+
+  <!-- ════ FULL LIGHT / DARK THEME — matches the main Trazo app ═══════════
+       The original styling above is the DARK theme (untouched). data-theme="light"
+       restyles every surface to the cream palette and switches the basemap to a
+       light hillshade. data-theme="dark" falls back to the base (original) styles. -->
+  <style id="tz-theme-css">
+    #topbar #theme-toggle{
+      align-self:center; padding:0 16px;
+      font-family:var(--font-mono); font-size:9.5px; letter-spacing:.14em;
+      text-transform:uppercase; color:var(--text-dim); text-decoration:none;
+      opacity:.55; white-space:nowrap; cursor:pointer;
+      transition:color .15s,opacity .15s; pointer-events:auto;
+    }
+    #topbar #theme-toggle:hover{ color:var(--gold); opacity:1; }
+
+    /* ── LIGHT THEME TOKENS (from the main app) ── */
+    :root[data-theme="light"]{
+      --gold:#8B6914; --black:#1a1a18; --grey:#5a5648; --lt-grey:#1e1c16;
+      --bg-deep:#f0ede6; --bg-panel:#f0ede6; --bg-overlay:rgba(240,237,230,0.77);
+      --border:rgba(80,70,40,0.22); --border-dim:rgba(80,70,40,0.12);
+      --text:#1e1c16; --text-muted:#5a5648; --text-dim:#9a9488;
+    }
+    [data-theme="light"] body         { background:#f0ede6; }
+    [data-theme="light"] #map         { background:#f0ede6; }
+    [data-theme="light"] #drop-screen { background:#f0ede6; }
+    [data-theme="light"] #dz-status   { color:#6b6555; }
+    [data-theme="light"] #dz-error    { color:#b91c1c; }
+
+    /* light hillshade basemap → gentle, airy filter (not the dark darkening one) */
+    [data-theme="light"] .leaflet-tile-pane{ filter:saturate(0.92) contrast(1.0) brightness(1.04); }
+
+    [data-theme="light"] #info-panel{
+      background-color:rgba(242,238,228,0.77);
+      box-shadow:0 0 0 1px rgba(80,70,40,0.18), 0 8px 40px rgba(0,0,0,0.12),
+                 inset 0 0 0 1px rgba(255,255,255,0.30);
+    }
+    [data-theme="light"] #legend{
+      background-color:rgba(242,238,228,0.77);
+      box-shadow:0 8px 40px rgba(0,0,0,0.12), 0 0 0 1px rgba(80,70,40,0.18);
+    }
+    [data-theme="light"] #topbar       { background:rgba(240,237,230,0.50); }
+    [data-theme="light"] .tnav-dropdown{ background:rgba(242,238,228,0.82); box-shadow:0 12px 40px rgba(0,0,0,0.12); }
+    [data-theme="light"] .tnav-trigger:hover,
+    [data-theme="light"] .tnav-item.open .tnav-trigger{ background:rgba(139,105,20,0.08); }
+    [data-theme="light"] .tnav-sep-pipe   { background:rgba(139,105,20,0.35); }
+    [data-theme="light"] .tnav-group-label{ color:rgba(139,105,20,0.85); }
+
+    [data-theme="light"] .tnav-model-chip,
+    [data-theme="light"] .tnav-step,
+    [data-theme="light"] .tnav-res,
+    [data-theme="light"] .cov-entry      { background:rgba(80,70,40,0.05); }
+    [data-theme="light"] .tnav-model-chip:hover,
+    [data-theme="light"] .tnav-step:hover,
+    [data-theme="light"] .tnav-res:hover { background:rgba(139,105,20,0.08); border-color:rgba(139,105,20,0.35); }
+    [data-theme="light"] .tnav-citation  { background:rgba(255,253,247,0.92); }
+
+    [data-theme="light"] .swatch   { border-color:rgba(0,0,0,0.18); }
+    [data-theme="light"] .ldivider { background:rgba(0,0,0,0.10); }
+    [data-theme="light"] .lang-sep { color:rgba(90,86,72,0.40); }
+    [data-theme="light"] #info-panel a:hover,
+    [data-theme="light"] .tnav-drop-text a:hover{ color:#6b4e0a; }
+
+    [data-theme="light"] .leaflet-popup-content-wrapper{
+      background:rgba(242,238,228,0.92) !important; color:var(--text) !important;
+      border:1px solid rgba(139,105,20,0.45) !important; box-shadow:0 6px 24px rgba(0,0,0,0.20) !important;
+    }
+    [data-theme="light"] .leaflet-popup-tip-container .leaflet-popup-tip{ background:rgba(242,238,228,0.92); }
+    [data-theme="light"] .leaflet-popup-close-button{ color:#5a5648 !important; }
+  </style>
+</head>
+<body>
+
+<div id="drop-screen">
+  <div id="dz-status">Loading Trazo fields…</div>
+  <div id="dz-error"></div>
+
+  </div><!-- /panel-body -->
+  <div id="panel-pin-hint">click to pin ▾</div>
+
+</div>
+
+<div id="map"></div>
+
+<!-- ── UI OVERLAY: sits in DOM after #map, forced above all Leaflet canvases ── -->
+<div id="ui-layer">
+<div id="topbar">
+  <nav id="topbar-nav">
+
+    <!-- RELEASE 1 -->
+    <div class="tnav-group" id="tgroup-r1">
+      <div class="tnav-sep-pipe"></div>
+      <span class="tnav-group-label">Release 1</span>
+
+      <div class="tnav-item" id="tnav-coverage">
+        <button class="tnav-trigger">Coverage <span class="caret">▾</span></button>
+        <div class="tnav-dropdown">
+          <div class="tnav-pin-hint">click to pin · click again to dismiss</div>
+          <div class="tnav-drop-content">
+            <div class="tnav-drop-head">01 · Coverage</div>
+            <p class="tnav-drop-text"><em>10,935,129</em> AI-generated boundaries released across the following geographies:</p>
+            <div class="tnav-coverage-list">
+              <div class="cov-entry"><span class="cov-country">Brazil</span><span class="cov-detail">Mato Grosso, Mato Grosso do Sul, Rio Grande do Sul, Pará, Paraná, Piauí, Tocantins, Goiás, and São Paulo state</span></div>
+              <div class="cov-entry"><span class="cov-country">Paraguay</span><span class="cov-detail"></span></div>
+              <div class="cov-entry"><span class="cov-country">Argentina</span><span class="cov-detail">Chaco ecoregion and Córdoba</span></div>
+              <div class="cov-entry"><span class="cov-country">Bolivia</span><span class="cov-detail"></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tnav-item" id="tnav-training">
+        <button class="tnav-trigger">Training Data <span class="caret">▾</span></button>
+        <div class="tnav-dropdown" style="min-width:380px">
+          <div class="tnav-pin-hint">click to pin · click again to dismiss</div>
+          <div class="tnav-drop-content">
+            <div class="tnav-drop-head">Training Data</div>
+            <p class="tnav-drop-text">The original Fields of the World benchmark included 1,854 field boundaries in South America (about 0.11% of its global corpus) from a single site in Bahia, Brazil. Trazo extends the training data to <em>17 soy-producing ecoregions</em>, including the Andean foothills, the Chiquitania, the Pampas, Amazonian moist forests, the Chaco, and the Cerrado.</p>
+            <p class="tnav-drop-text"><em>46,908</em> expert-annotated training fields · <em>7,453</em> test fields</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="tnav-item" id="tnav-models">
+        <button class="tnav-trigger">Models <span class="caret">▾</span></button>
+        <div class="tnav-dropdown" style="min-width:400px">
+          <div class="tnav-pin-hint">click to pin · click again to dismiss</div>
+          <div class="tnav-drop-content">
+            <div class="tnav-drop-head">02 · Models</div>
+            <p class="tnav-drop-text">Four checkpoints share a U-Net architecture with an EfficientNet-B3 backbone. The right checkpoint depends on region, agricultural system, and whether pixel-level or object-level accuracy matters more.</p>
+            <div class="tnav-model-row">
+              <a class="tnav-model-chip" href="https://huggingface.co/worldresourcesinstitute/Trazo1" target="_blank" rel="noopener">
+                <span class="mc-name">Trazo1</span><span class="mc-tag">Initial SA adaptation</span><span class="mc-stat">77.1%</span><span class="mc-tag">SA soy pixel IoU</span>
+              </a>
+              <a class="tnav-model-chip" href="https://huggingface.co/worldresourcesinstitute/TrazoSA" target="_blank" rel="noopener">
+                <span class="mc-name">TrazoSA</span><span class="mc-tag">South America only</span><span class="mc-stat">93.1%</span><span class="mc-tag">SA soy pixel precision</span>
+              </a>
+              <a class="tnav-model-chip" href="https://huggingface.co/worldresourcesinstitute/Trazo2" target="_blank" rel="noopener">
+                <span class="mc-name">Trazo2</span><span class="mc-tag">Global + regional</span><span class="mc-stat">76.3%</span><span class="mc-tag">Mato Grosso pixel IoU</span>
+              </a>
+              <a class="tnav-model-chip" href="https://huggingface.co/worldresourcesinstitute/Trazo3" target="_blank" rel="noopener">
+                <span class="mc-name">Trazo3</span><span class="mc-tag">Active learning · recommended</span><span class="mc-stat">79.2%</span><span class="mc-tag">Mato Grosso pixel IoU</span>
+              </a>
+            </div>
+            <p class="tnav-drop-text" style="font-size:11.5px;color:var(--text-muted)">All checkpoints on <a href="https://huggingface.co/collections/worldresourcesinstitute/trazo-models" target="_blank">Hugging Face ↗</a></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="tnav-item" id="tnav-pipeline">
+        <button class="tnav-trigger">Pipeline <span class="caret">▾</span></button>
+        <div class="tnav-dropdown" style="min-width:440px">
+          <div class="tnav-pin-hint">click to pin · click again to dismiss</div>
+          <div class="tnav-drop-content">
+            <div class="tnav-drop-head">03 · Pipeline</div>
+            <p class="tnav-drop-text">Composable utilities for moving from raw imagery to field-boundary predictions. Full reference in the <a href="https://github.com/wri/trazo#readme" target="_blank">repository README ↗</a>.</p>
+            <div class="tnav-pipeline">
+              <a class="tnav-step" href="https://github.com/wri/trazo#step-1-create-grids-and-data-windows-from-grids" target="_blank"><span class="step-num">01</span><span class="step-title">Create data</span><span class="step-desc">AOI grids and 4-band Sentinel-2 chips at planting and harvest windows.</span></a>
+              <a class="tnav-step" href="https://github.com/wri/trazo#step-2-data-preparation" target="_blank"><span class="step-num">02</span><span class="step-title">Prepare data</span><span class="step-desc">Pair temporal stacks, normalize, build instance and semantic masks.</span></a>
+              <a class="tnav-step" href="https://github.com/wri/trazo/blob/main/src/trazo/pt3_finetune/Cerrado_Fine_Tuning.ipynb" target="_blank"><span class="step-num">03</span><span class="step-title">Sample &amp; fine-tune</span><span class="step-desc">Active learning, temporal diversity, geographic balancing.</span></a>
+              <a class="tnav-step" href="https://github.com/wri/trazo#step-4-model-training" target="_blank"><span class="step-num">04</span><span class="step-title">Train</span><span class="step-desc">U-Net, UperNet, DeepLabV3+, FCSiam, with twelve loss functions.</span></a>
+              <a class="tnav-step" href="https://github.com/wri/trazo#step-5-select-per-tile-pairs-and-run-inference" target="_blank"><span class="step-num">05</span><span class="step-title">Infer at scale</span><span class="step-desc">Select best Sentinel-2 scenes per tile and run multi-checkpoint inference at scale.</span></a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tnav-item" id="tnav-use">
+        <button class="tnav-trigger">Use <span class="caret">▾</span></button>
+        <div class="tnav-dropdown" style="min-width:460px">
+          <div class="tnav-pin-hint">click to pin · click again to dismiss</div>
+          <div class="tnav-drop-content">
+            <div class="tnav-drop-head">04 · Use</div>
+            <p class="tnav-drop-text">Five open artifacts under CC-BY-4.0, covering the technical foundation through to the 10.9-million-field release for the 2023–2024 planting season.</p>
+            <div class="tnav-resources">
+              <a href="#" class="tnav-res"><span class="res-kind">Technical note</span><span class="res-title">Field Boundaries of South America — Grupp et al. · WRI · 2026</span><span class="res-arr">↗</span></a>
+              <a href="https://source.coop/tristangruppwri/trazotraining" class="tnav-res" target="_blank" rel="noopener"><span class="res-kind">Dataset</span><span class="res-title">46,908 training + 7,453 test annotations across 17 ecoregions</span><span class="res-arr">↗</span></a>
+              <a href="https://huggingface.co/collections/worldresourcesinstitute/trazo-models" class="tnav-res" target="_blank" rel="noopener"><span class="res-kind">Models</span><span class="res-title">Four checkpoints: Trazo1, TrazoSA, Trazo2, Trazo3</span><span class="res-arr">↗</span></a>
+              <a href="https://github.com/wri/trazo" class="tnav-res" target="_blank" rel="noopener"><span class="res-kind">Pipeline</span><span class="res-title">Inference and fine-tuning pipeline configured by MGRS tile ID</span><span class="res-arr">↗</span></a>
+              <a href="https://source.coop/tristangruppwri/trazofields" class="tnav-res" target="_blank" rel="noopener"><span class="res-kind">Field boundaries</span><span class="res-title">10,935,129 AI-generated boundaries across South America</span><span class="res-arr">↗</span></a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tnav-sep-pipe"></div>
+    </div>
+
+    <!-- RELEASE 2 -->
+    <div class="tnav-group" id="tgroup-r2">
+      <div class="tnav-sep-pipe"></div>
+      <span class="tnav-group-label">Release 2</span>
+
+      <div class="tnav-item tnav-item-dim" id="tnav-r2-coverage">
+        <button class="tnav-trigger tnav-trigger-dim">Coverage <span class="caret">▾</span></button>
+        <div class="tnav-dropdown">
+          <div class="tnav-pin-hint">click to pin · click again to dismiss</div>
+          <div class="tnav-drop-content">
+            <div class="tnav-drop-head">Release 2 · Coverage</div>
+            <p class="tnav-drop-text" style="color:var(--text-muted)">Forthcoming. Release 2 will expand field boundary coverage to additional regions and seasons beyond the initial 2023–2024 South America release.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="tnav-item tnav-item-dim" id="tnav-r2-training">
+        <button class="tnav-trigger tnav-trigger-dim">Training Data <span class="caret">▾</span></button>
+        <div class="tnav-dropdown" style="min-width:380px">
+          <div class="tnav-pin-hint">click to pin · click again to dismiss</div>
+          <div class="tnav-drop-content">
+            <div class="tnav-drop-head">Release 2 · Training Data</div>
+            <p class="tnav-drop-text" style="color:var(--text-muted)">Forthcoming. New training data in the Cerrado, with samples of cotton, rice, and coffee from Brazilian national data sources, new pasture field samples, and expanded coverage in other geographies.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="tnav-item tnav-item-dim" id="tnav-r2-models">
+        <button class="tnav-trigger tnav-trigger-dim">Models <span class="caret">▾</span></button>
+        <div class="tnav-dropdown">
+          <div class="tnav-pin-hint">click to pin · click again to dismiss</div>
+          <div class="tnav-drop-content">
+            <div class="tnav-drop-head">Release 2 · Models</div>
+            <p class="tnav-drop-text" style="color:var(--text-muted)">Forthcoming. Next-generation model checkpoints trained on expanded annotation coverage, median composited imagery, and new loss weights.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="tnav-sep-pipe"></div>
+    </div>
+
+    <!-- USE CASES -->
+    <div class="tnav-group" id="tgroup-uc">
+      <div class="tnav-sep-pipe"></div>
+      <span class="tnav-group-label">Use Cases</span>
+
+      <div class="tnav-item" id="tnav-uc-eudr">
+        <button class="tnav-trigger">EUDR <span class="caret">▾</span></button>
+        <div class="tnav-dropdown">
+          <div class="tnav-pin-hint">click to pin · click again to dismiss</div>
+          <div class="tnav-drop-content">
+            <div class="tnav-drop-head">Use Case · EUDR</div>
+            <p class="tnav-drop-text">The EU Deforestation Regulation requires operators and traders to verify that commodities such as soy, beef, and palm oil were not produced on deforested land. Trazo field boundaries provide one artifact; the parcel-level geometry needed to link supply chain records to satellite-derived land-cover histories, supporting due-diligence at scale across South American sourcing regions.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="tnav-item" id="tnav-uc-emissions">
+        <button class="tnav-trigger">Emissions <span class="caret">▾</span></button>
+        <div class="tnav-dropdown">
+          <div class="tnav-pin-hint">click to pin · click again to dismiss</div>
+          <div class="tnav-drop-content">
+            <div class="tnav-drop-head">Use Case · Emissions</div>
+            <p class="tnav-drop-text">Accurate field boundaries can improve carbon accounting. By mapping fields, estimates can move to a fine geospatial scale, supplanting coarser less accurate units of analysis like counties, land ownership parcels, or calculating emissions over crop masks. A spatially explicit estimate of soil carbon flux, crop residue management, among others can improve emissions estimation models. Trazo boundaries can be combined with yield, fertilizer, and management data to produce field-level greenhouse gas inventories across the South American agricultural frontier.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="tnav-item" id="tnav-uc-landuse">
+        <button class="tnav-trigger">Land Use <span class="caret">▾</span></button>
+        <div class="tnav-dropdown">
+          <div class="tnav-pin-hint">click to pin · click again to dismiss</div>
+          <div class="tnav-drop-content">
+            <div class="tnav-drop-head">Use Case · Land Use</div>
+            <p class="tnav-drop-text">Annual field boundary layers make agricultural expansion and conversion legible at the parcel level. By comparing Trazo outputs across seasons, analysts can track the agricultural frontier, quantify conversion of native vegetation, and monitor intensification within existing cropland. This resolution and scale was previously impossible with manual mapping.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="tnav-item" id="tnav-uc-food">
+        <button class="tnav-trigger">Food Security <span class="caret">▾</span></button>
+        <div class="tnav-dropdown" style="left:auto;right:0">
+          <div class="tnav-pin-hint">click to pin · click again to dismiss</div>
+          <div class="tnav-drop-content">
+            <div class="tnav-drop-head">Use Case · Food Security</div>
+            <p class="tnav-drop-text">Field boundaries are the foundational layer for smallholder-sensitive crop monitoring and yield forecasting. Trazo's coverage of diverse agricultural systems across 17 ecoregions enables national statistical offices and food security agencies to move from coarse administrative statistics toward spatially explicit, field-resolved estimates of production and growing conditions.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="tnav-sep-pipe"></div>
+    </div>
+
+    <!-- CITE (standalone, flush right end) -->
+    <div class="tnav-item" id="tnav-cite">
+      <button class="tnav-trigger">Cite <span class="caret">▾</span></button>
+      <div class="tnav-dropdown" style="min-width:480px;left:auto;right:0">
+        <div class="tnav-pin-hint">click to pin · click again to dismiss</div>
+        <div class="tnav-drop-content">
+          <div class="tnav-drop-head">05 · Citation</div>
+          <p class="tnav-drop-text">Cite both the Trazo technical note (Grupp et al. 2026) and the original Fields of the World benchmark (Kerner et al. 2025).</p>
+          <div class="tnav-citation">@techreport{grupp2026trazo,
+  title  = {Field Boundaries of South America},
+  author = {Grupp, Tristan and Elmustafa, Amna and Zvonkov, Ivan
+            and Tarano, Ana M. and Jupiter, Jaelah and Esipova, Elena
+            and Blevins, Hunter and Nguyen, Catlynh
+            and Tenorio Fenton, Sofia and Winchester, Caroline
+            and Stolle, Fred and Rognstad, Rhiannon L. and Kerner, Hannah},
+  year   = {2026},
+  month  = apr,
+  institution = {World Resources Institute and Arizona State University},
+  url    = {https://github.com/wri/trazo}
+}
+
+@inproceedings{kerner2025ftw,
+  title  = {Fields of The World: A Machine Learning Benchmark Dataset
+            For Global Agricultural Field Boundary Segmentation},
+  author = {Kerner, Hannah and Chaudhari, Snehal and Ghosh, Aninda
+            and Robinson, Caleb and Ahmad, Adeel and Choi, Eunjung
+            and Jacobs, Nathan and Holmes, Christopher and Mohr, Matthias
+            and Dodhia, Rahul and Lavista Ferres, Juan M. and Marcus, Jennifer},
+  booktitle = {Proceedings of the AAAI Conference on Artificial Intelligence},
+  volume = {39},
+  number = {27},
+  pages  = {28151--28159},
+  year   = {2025},
+  doi    = {10.1609/aaai.v39i27.35034}
+}</div>
+        </div>
+      </div>
+    </div>
+
+  </nav>
+  <a id="theme-toggle" href="#" onclick="window.TZ.toggle();return false;" title="Toggle light / dark theme">Dark ◗</a>
+</div>
+
+<div id="header">mapv6 — Mato Grosso 2024<span>mbmode24 · local file</span></div>
+<div id="legend"><h3>Crop Type</h3><div class="lsub">mode value of Mapbiomas 2024</div></div>
+<div id="zbadge">z<span id="zval">—</span></div>
+
+<!-- ── TRAZO INFO PANEL ────────────────────────────────────────────────────── -->
+<div id="info-panel">
+
+  <!-- TEASER: always visible -->
+  <div id="panel-teaser">
+    <h1>Trazo</h1>
+    <div id="lang-switcher">
+      <button class="lang-btn active" data-lang="en">EN</button>
+      <span class="lang-sep">|</span>
+      <button class="lang-btn" data-lang="es">ESP</button>
+      <span class="lang-sep">|</span>
+      <button class="lang-btn" data-lang="pt">PT</button>
+    </div>
+    <div class="teaser-text" id="teaser-en">
+      <p><strong>Trazo generates field boundaries across South America from satellite imagery — revealing how agricultural landscapes change over time.</strong></p>
+    </div>
+    <div class="teaser-text" id="teaser-es" style="display:none">
+      <p><strong>Trazo genera límites de campos en toda América del Sur a partir de imágenes satelitales, revelando cómo cambian los paisajes agrícolas a lo largo del tiempo.</strong></p>
+    </div>
+    <div class="teaser-text" id="teaser-pt" style="display:none">
+      <p><strong>O Trazo gera limites de campos em toda a América do Sul a partir de imagens de satélite, revelando como as paisagens agrícolas mudam ao longo do tempo.</strong></p>
+    </div>
+  </div>
+
+  <!-- EXPANDED BODY: shown on hover / pin -->
+  <div id="panel-body">
+
+  <!-- ── ENGLISH ── -->
+  <div class="lang-content" id="lang-en">
+    <p>Trazo is the Spanish word for brushstroke, from the verb <em>trazar</em>; to trace, to draw, and to plot. By tracing fields by hand in satellite imagery, we can choose the most powerful field training data for creating robust, generalizable field boundary detection models. Each sketched field in our dataset adds knowledge about the wide diversity of agricultural systems in South America. These sketches teach models the culture of agriculture and how landscapes differ.</p>
+
+    <p>Trazo echoes the English word &ldquo;trace&rdquo;: to follow a path, uncover origins and make hidden connections legible. Trazo is both about creating powerful, diverse training data and the aim of tracing commodities through the supply chain, so that agriculture can be monitored for deforestation.</p>
+
+    <p>Visualized on this map are fields generated by the Trazo2 model from 2024 in Mato Grosso, Brazil. Each field is tagged with the mode Mapbiomas land cover value.</p>
+
+    <p>Read the technical note, <a href="">&ldquo;Field Boundaries of South America&rdquo;</a> to learn about Trazo.</p>
+
+    <p>Trazo includes <a href="">training data</a>, <a href="">model checkpoints produced from the training data</a>, and <a href="">field boundaries produced by Trazo models</a>.</p>
+
+    <p>The Github for Trazo can be found <a href="https://github.com/wri/trazo/">here</a> and the FTW repository can be found <a href="https://github.com/fieldsoftheworld/">here</a>.</p>
+
+    <div class="panel-divider"></div>
+
+    <p class="collab-block">This dataset was produced as part of a collaboration with <a href="https://www.wri.org">World Resources Institute (WRI)</a> and <a href="https://www.asu.edu">Arizona State University</a> with support from the <a href="https://landcarbonlab.org">Land and Carbon Lab</a>. This work was funded through a <a href="https://walmart.org">Walmart Foundation</a> grant. Trazo is a direct extension of <a href="https://fieldsofthe.world/">Fields of The World</a>.</p>
+  </div>
+
+  <!-- ── ESPAÑOL ── -->
+  <div class="lang-content" id="lang-es" style="display:none">
+    <p>Trazo es la palabra en español para «pincelada», derivada del verbo <em>trazar</em>: delinear, dibujar y planificar. Al trazar campos manualmente sobre imágenes satelitales, podemos seleccionar los datos de entrenamiento más potentes para crear modelos robustos y generalizables de detección de límites de campos. Cada campo delineado en nuestro conjunto de datos aporta conocimiento sobre la amplia diversidad de sistemas agrícolas en América del Sur. Estos trazos enseñan a los modelos la cultura de la agricultura y cómo difieren los paisajes.</p>
+
+    <p>Trazo evoca la palabra inglesa <em>trace</em> (trazar): seguir un camino, descubrir orígenes y hacer legibles las conexiones ocultas. Trazo trata, por un lado, de la creación de datos de entrenamiento potentes y diversos y, por otro, del objetivo de rastrear las materias primas a lo largo de la cadena de suministro, de modo que la actividad agrícola pueda ser monitoreada para detectar la deforestación.</p>
+
+    <p>En este mapa se visualizan los campos generados por el modelo Trazo2 en 2024, en Mato Grosso, Brasil. Cada campo está etiquetado con el valor modal de cobertura del suelo según MapBiomas.</p>
+
+    <p>Lea la nota técnica <a href="">«Field Boundaries of South America» (Límites de campos de América del Sur)</a> para obtener más información sobre Trazo.</p>
+
+    <p>Trazo incluye <a href="">datos de entrenamiento</a>, <a href="">puntos de control del modelo generados a partir de dichos datos</a> y <a href="">los límites de campos producidos por los modelos Trazo</a>.</p>
+
+    <p>El repositorio de GitHub para Trazo se puede encontrar <a href="https://github.com/wri/trazo/">aquí</a> y el repositorio de FTW se puede encontrar <a href="https://github.com/fieldsoftheworld/">aquí</a>.</p>
+
+    <div class="panel-divider"></div>
+
+    <p class="collab-block">Este conjunto de datos se generó como parte de una colaboración con el <a href="https://www.wri.org">World Resources Institute (WRI)</a> y la <a href="https://www.asu.edu">Universidad Estatal de Arizona (Arizona State University)</a>, con el apoyo del <a href="https://landcarbonlab.org">Land and Carbon Lab</a>. Este trabajo fue financiado mediante una subvención de la <a href="https://walmart.org">Walmart Foundation</a>. Trazo constituye una extensión directa del proyecto <a href="https://fieldsofthe.world/"><em>Fields of The World</em></a>.</p>
+  </div>
+
+  <!-- ── PORTUGUÊS ── -->
+  <div class="lang-content" id="lang-pt" style="display:none">
+    <p>Trazo é a palavra em espanhol para pincelada, derivada do verbo <em>trazar</em> — traçar, desenhar e delinear. Ao traçar manualmente os limites dos campos em imagens de satélite, podemos selecionar os dados de treinamento mais eficazes para a criação de modelos robustos e generalizáveis de detecção de limites de campos agrícolas. Cada campo delineado em nosso conjunto de dados agrega conhecimento sobre a vasta diversidade de sistemas agrícolas na América do Sul. Esses delineamentos ensinam aos modelos a cultura da agricultura e como as paisagens se diferenciam.</p>
+
+    <p>Trazo evoca a palavra inglesa <em>trace</em>: seguir um caminho, desvendar origens e tornar visíveis conexões ocultas. O conceito de Trazo abrange tanto a criação de dados de treinamento poderosos e diversificados quanto o objetivo de rastrear <em>commodities</em> ao longo da cadeia de suprimentos, permitindo, assim, o monitoramento da agricultura em relação ao desmatamento.</p>
+
+    <p>Neste mapa, estão visualizados os campos gerados pelo modelo Trazo2 em 2024, no estado de Mato Grosso, Brasil. Cada campo está identificado com o valor modal de cobertura do solo do MapBiomas.</p>
+
+    <p>Leia a nota técnica <a href="">"Field Boundaries of South America" (Limites de Campos da América do Sul)</a> para saber mais sobre o Trazo.</p>
+
+    <p>O Trazo inclui <a href="">dados de treinamento</a>, <a href=""><em>checkpoints</em> do modelo gerados a partir desses dados</a> e <a href="">os limites dos campos produzidos pelos modelos Trazo</a>.</p>
+
+    <p>O repositório do GitHub para o Trazo pode ser encontrado <a href="https://github.com/wri/trazo/">aqui</a> e o repositório do FTW pode ser encontrado <a href="https://github.com/fieldsoftheworld/">aqui</a>.</p>
+
+    <div class="panel-divider"></div>
+
+    <p class="collab-block">Este conjunto de dados foi produzido como parte de uma colaboração com o <a href="https://www.wri.org">World Resources Institute (WRI)</a> e a <a href="https://www.asu.edu">Arizona State University</a>, com o apoio do <a href="https://landcarbonlab.org">Land and Carbon Lab</a>. Este trabalho foi financiado por meio de um subsídio da <a href="https://walmart.org">Walmart Foundation</a>. O Trazo é uma extensão direta do projeto <a href="https://fieldsofthe.world/"><em>Fields of The World</em></a>.</p>
+  </div>
+</div>
+
+<script>
+// ── CROP STYLES ──────────────────────────────────────────────────────────────
+const CROPS = [
+  { code: 39, name: "Soybean",                 color: "#F0AB00", primary: true  },
+  { code: 19, name: "Temporary Crops",         color: "#EB8026", primary: true  },
+  { code: 41, name: "Other Temporary Crops",   color: "#EB8026", primary: true  },
+  { code:  9, name: "Forest Plantation",       color: "#32864B", primary: false },
+  { code: 15, name: "Pasture",                 color: "#FBE7C5", primary: false },
+  { code: 20, name: "Sugar Cane",              color: "#7EBCC6", primary: false },
+  { code: 21, name: "Mosaic of Uses",          color: "#FBE7C5", primary: false },
+  { code: 35, name: "Oil Palm",                color: "#81C67B", primary: false },
+  { code: 36, name: "Perennial Crops",         color: "#81C67B", primary: false },
+  { code: 40, name: "Rice",                    color: "#0096A4", primary: false },
+  { code: 46, name: "Coffee",                  color: "#81C67B", primary: false },
+  { code: 47, name: "Citrus",                  color: "#81C67B", primary: false },
+  { code: 48, name: "Other Perennial Crops",   color: "#81C67B", primary: false },
+  { code: 49, name: "Wooded Pasture",          color: "#FBE7C5", primary: false },
+  { code: 62, name: "Cotton",                  color: "#E7E6E6", primary: false },
+];
+const COLOR_MAP  = Object.fromEntries(CROPS.map(c => [c.code, c.color]));
+const NAME_MAP   = Object.fromEntries(CROPS.map(c => [c.code, c.name]));
+const PRIMARY    = new Set(CROPS.filter(c => c.primary).map(c => c.code));
+const LAYER_NAME = "trazo";
+
+function hexRgba(hex, a) {
+  const r = parseInt(hex.slice(1,3), 16);
+  const g = parseInt(hex.slice(3,5), 16);
+  const b = parseInt(hex.slice(5,7), 16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+// ── GZIP DECOMPRESSION (synchronous via pako) ─────────────────────────────────
+function gunzip(buf) {
+  return pako.inflate(new Uint8Array(buf)).buffer;
+}
+
+// ── TILE CACHE (LRU, max 200 entries) ────────────────────────────────────────
+const TILE_CACHE = new Map();
+const CACHE_MAX  = 1000;
+function cachePut(key, val) {
+  if (TILE_CACHE.size >= CACHE_MAX)
+    TILE_CACHE.delete(TILE_CACHE.keys().next().value);
+  TILE_CACHE.set(key, val);
+}
+
+// ── MINIMAL MVT DECODER (pbf-based) ──────────────────────────────────────────
+function decodeTile(buf) {
+  const p = new Pbf(new Uint8Array(buf));
+  return p.readFields(readTile, { layers: {} });
+}
+function readTile(tag, tile, pbf) {
+  if (tag === 3) {
+    const layer = pbf.readMessage(readLayer,
+      { name: "", features: [], keys: [], values: [], extent: 4096 });
+    tile.layers[layer.name] = layer;
+  }
+}
+function readLayer(tag, l, pbf) {
+  if      (tag === 1)  l.name = pbf.readString();
+  else if (tag === 5)  l.extent = pbf.readVarint();
+  else if (tag === 3)  l.keys.push(pbf.readString());
+  else if (tag === 4)  l.values.push(pbf.readMessage(readValue, { v: null }));
+  else if (tag === 2)  l.features.push(pbf.readMessage(readFeature,
+                         { type: 0, tags: [], geometry: [] }));
+}
+function readValue(tag, o, pbf) {
+  if      (tag === 1) o.v = pbf.readString();
+  else if (tag === 2) o.v = pbf.readFloat();
+  else if (tag === 3) o.v = pbf.readDouble();
+  else if (tag === 4) o.v = pbf.readVarint(true);
+  else if (tag === 5) o.v = pbf.readVarint();
+  else if (tag === 6) o.v = pbf.readSVarint();
+  else if (tag === 7) o.v = pbf.readBoolean();
+}
+function readFeature(tag, f, pbf) {
+  if      (tag === 1) f.id       = pbf.readVarint();
+  else if (tag === 2) f.tags     = pbf.readPackedVarint();
+  else if (tag === 3) f.type     = pbf.readVarint();
+  else if (tag === 4) f.geometry = pbf.readPackedVarint();
+}
+function zz(n) { return (n >> 1) ^ (-(n & 1)); }
+
+function postProcess(feat, layer) {
+  const props = {};
+  for (let i = 0; i < feat.tags.length; i += 2)
+    props[layer.keys[feat.tags[i]]] = layer.values[feat.tags[i + 1]]?.v ?? null;
+  feat.props = props;
+  const rings = [];
+  let x = 0, y = 0, i = 0;
+  const g = feat.geometry;
+  while (i < g.length) {
+    const cmd = g[i] & 7, cnt = g[i] >> 3; i++;
+    if (cmd === 1) {
+      for (let j = 0; j < cnt; j++) {
+        x += zz(g[i++]); y += zz(g[i++]);
+        rings.push([[x, y]]);
+      }
+    } else if (cmd === 2) {
+      const ring = rings[rings.length - 1];
+      for (let j = 0; j < cnt; j++) {
+        x += zz(g[i++]); y += zz(g[i++]);
+        ring.push([x, y]);
+      }
+    }
+  }
+  feat.rings = rings;
+}
+
+// ── LEAFLET PMTILES GRID LAYER ───────────────────────────────────────────────
+const PMTilesLayer = L.GridLayer.extend({
+  initialize(p, options) {
+    this._p = p;
+    L.GridLayer.prototype.initialize.call(this, options);
+  },
+
+  createTile({ z, x, y }, done) {
+    const canvas = document.createElement("canvas");
+    const sz = this.getTileSize();
+    canvas.width  = sz.x;
+    canvas.height = sz.y;
+    this._draw(canvas, z, x, y)
+      .then(() => done(null, canvas))
+      .catch(e  => { console.warn("tile error", z, x, y, e); done(null, canvas); });
+    return canvas;
+  },
+
+  async _draw(canvas, z, x, y) {
+    const cacheKey = `${z}/${x}/${y}`;
+    const ctx = canvas.getContext("2d");
+    const sz  = canvas.width;
+    const sc  = sz / 4096;
+    const lw  = Math.max(0.3, 0.7 + Math.max(0, z - 12) * (1.1 / 5));
+
+    let cached = TILE_CACHE.get(cacheKey);
+
+    if (!cached) {
+      const resp = await this._p.getZxy(z, x, y);
+      if (!resp) return;
+
+      let buf = resp.data;
+      const b = new Uint8Array(buf);
+      if (b[0] === 0x1f && b[1] === 0x8b) buf = gunzip(buf);
+
+      const tile  = decodeTile(buf);
+      const layer = tile.layers[LAYER_NAME];
+      if (!layer) return;
+
+      for (const f of layer.features) postProcess(f, layer);
+
+      const polyGroups = {};
+      const pointFeats = [];
+
+      for (const feat of layer.features) {
+        const code  = Math.round(feat.props.mbmode24 ?? -1);
+        const color = COLOR_MAP[code] || "#888888";
+        const prim  = PRIMARY.has(code);
+        const key   = `${color}|${prim}`;
+
+        if (feat.type === 3) {
+          if (!polyGroups[key]) polyGroups[key] = {
+            fill:   hexRgba(color, prim ? 0.5 : 0.10),
+            stroke: hexRgba(color, prim ? 0.7 : 0.10),
+            prim,
+            color,
+            path:   new Path2D()
+          };
+          const path = polyGroups[key].path;
+          for (const ring of feat.rings) {
+            let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+            for (const [px, py] of ring) {
+              if (px < minX) minX = px; if (px > maxX) maxX = px;
+              if (py < minY) minY = py; if (py > maxY) maxY = py;
+            }
+            if ((maxX - minX) * sc < 0.5 && (maxY - minY) * sc < 0.5) continue;
+            ring.forEach(([px, py], i) =>
+              i ? path.lineTo(px * sc, py * sc) : path.moveTo(px * sc, py * sc));
+            path.closePath();
+          }
+        } else if (feat.type === 1) {
+          pointFeats.push({ feat, color, prim });
+        }
+      }
+
+      cached = { polyGroups, pointFeats };
+      cachePut(cacheKey, cached);
+    }
+
+    const { polyGroups, pointFeats } = cached;
+    // Light theme: the faint non-primary ("in development") crop boundaries wash out on the
+    // cream basemap, so lift them with a visible light-gray boundary and dot.
+    const isLightTheme = document.documentElement.getAttribute("data-theme") !== "dark";
+
+    for (const g of Object.values(polyGroups)) {
+      // light theme: soy + temporary crops (primary) interior fill 25% more transparent
+      ctx.fillStyle = (isLightTheme && g.prim) ? hexRgba(g.color, 0.375) : g.fill;
+      ctx.fill(g.path);
+    }
+
+    if (z >= 10) {
+      ctx.lineWidth = lw;
+      for (const g of Object.values(polyGroups)) {
+        const devGray = isLightTheme && !g.prim;
+        ctx.strokeStyle = devGray ? "rgba(120,120,120,0.42)" : g.stroke;
+        ctx.lineWidth   = devGray ? Math.max(lw, 0.85) : lw;
+        ctx.stroke(g.path);
+      }
+    }
+
+    for (const { feat, color, prim } of pointFeats) {
+      const cnt  = feat.props.point_count;
+      const area = feat.props.field_area_ha != null ? +feat.props.field_area_ha : 0;
+      const zScale = 0.15 + Math.max(0, z - 1) * 0.03;
+      const zoomShrink = Math.max(0.3, 1 - (z - 6) * 0.15);
+      let r;
+      if (cnt > 1) {
+        r = prim
+          ? Math.max(0.8, Math.min(Math.sqrt(cnt) * 0.15 * zScale, 3))
+          : Math.max(0.8, Math.min(Math.sqrt(cnt) * 0.08 * zScale, 2));
+      } else {
+        if (z >= 11) {
+          r = prim ? 2.2 : 1.4;
+        } else {
+          r = prim ? 1.5 * zoomShrink : 1 * zoomShrink;
+        }
+      }
+      for (const ring of feat.rings) {
+        const [px, py] = ring[0];
+        ctx.beginPath();
+        ctx.arc(px * sc, py * sc, r, 0, Math.PI * 2);
+        const devGray = isLightTheme && !prim;
+        ctx.fillStyle   = devGray ? "rgba(135,135,135,0.55)" : hexRgba(color, prim ? 0.8 : 0.3);
+        ctx.fill();
+        ctx.strokeStyle = devGray ? "rgba(80,80,80,0.33)" : "rgba(255,255,255,0.25)";
+        ctx.lineWidth   = 0.6;
+        ctx.stroke();
+      }
+    }
+  }
+});
+
+// ── TILE → LAT/LNG BOUNDS ────────────────────────────────────────────────────
+function tileBounds(z, x, y) {
+  const n = Math.pow(2, z);
+  return {
+    w: x / n * 360 - 180,
+    e: (x + 1) / n * 360 - 180,
+    n: Math.atan(Math.sinh(Math.PI * (1 - 2 * y / n))) * 180 / Math.PI,
+    s: Math.atan(Math.sinh(Math.PI * (1 - 2 * (y + 1) / n))) * 180 / Math.PI,
+  };
+}
+function pointInPoly(px, py, ring) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i], [xj, yj] = ring[j];
+    if ((yi > py) !== (yj > py) && px < (xj - xi) * (py - yi) / (yj - yi) + xi)
+      inside = !inside;
+  }
+  return inside;
+}
+
+// ── LEGEND ────────────────────────────────────────────────────────────────────
+function buildLegend() {
+  const el = document.getElementById("legend");
+  const prim = CROPS.filter(c => c.primary);
+  const rest = CROPS.filter(c => !c.primary);
+  function row(c) {
+    return `<div class="lrow">
+      <div class="swatch" style="background:${hexRgba(c.color, c.primary ? 0.5 : 0.10)}"></div>
+      <span class="lcode">${c.code}</span><span>${c.name}</span>
+    </div>`;
+  }
+  el.innerHTML += `<div class="lgroup">Crop</div>` + prim.map(row).join("");
+  el.innerHTML += `<div class="ldivider"></div><div class="lgroup">In Development Field Boundaries</div>` + rest.map(row).join("");
+}
+
+// ── MAIN LOAD ────────────────────────────────────────────────────────────────
+async function loadFile() {
+  setStatus("Loading Trazo fields…");
+
+  try {
+    const p      = new pmtiles.PMTiles("https://wri-datalab-sandbox.s3.us-east-1.amazonaws.com/trazofields/matogrosso_2024_v11.pmtiles");
+    const header = await p.getHeader();
+
+    // Fade loading screen
+    const ds = document.getElementById("drop-screen");
+    ds.classList.add("fade-out");
+    setTimeout(() => ds.style.display = "none", 520);
+
+    // Init Leaflet — always open at the specified location and zoom
+    const map = L.map("map", {
+      center: [-12.286425, -52.662142],
+      zoom:   10,
+      maxZoom: 13,
+      zoomControl: false,
+      attributionControl: false,
+    });
+    // Theme-aware basemap — light: hillshade terrain · dark: satellite imagery
+    var TZ_LIGHT_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}";
+    var TZ_DARK_TILES  = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
+    function tzIsDark(){ return document.documentElement.getAttribute("data-theme") === "dark"; }
+    var __baseTiles = L.tileLayer(tzIsDark() ? TZ_DARK_TILES : TZ_LIGHT_TILES, {
+      attribution: "", maxZoom: 19, maxNativeZoom: 17, opacity: 1.0,
+    }).addTo(map);
+    document.addEventListener("tztheme", function(){
+      try { __baseTiles.setUrl(tzIsDark() ? TZ_DARK_TILES : TZ_LIGHT_TILES); } catch(e){}
+      try { vtLayer.redraw(); } catch(e){}
+    });
+
+    // Custom pane for field boundaries — sits ABOVE .leaflet-tile-pane
+    // so the CSS filter (which only targets tile-pane) never affects it
+    map.createPane('fieldsPane');
+    map.getPane('fieldsPane').style.zIndex = 450;
+    map.getPane('fieldsPane').style.pointerEvents = 'auto';
+
+    const maxData = header.maxZoom || 12;
+    const vtLayer = new PMTilesLayer(p, {
+      minZoom: header.minZoom || 0,
+      maxZoom: 22,
+      maxNativeZoom: maxData,
+      tileSize: 256,
+      pane: 'fieldsPane',
+    });
+    vtLayer.addTo(map);
+
+    // Show UI
+    // header hidden (removed from UI)
+    document.getElementById("legend").style.display = "block";
+    document.getElementById("zbadge").style.display = "block";
+    document.getElementById("info-panel").style.display = "block";
+    buildLegend();
+
+    // Zoom badge
+    const zEl = document.getElementById("zval");
+    const updateZ = () => zEl.textContent = map.getZoom().toFixed(1);
+    map.on("zoomend", updateZ);
+    updateZ();
+
+    // Click popup
+    map.on("click", async (e) => {
+      const z  = Math.min(header.maxZoom || 12, Math.floor(map.getZoom()));
+      const n  = Math.pow(2, z);
+      const tx = Math.floor((e.latlng.lng + 180) / 360 * n);
+      const lr = e.latlng.lat * Math.PI / 180;
+      const ty = Math.floor((1 - Math.log(Math.tan(lr) + 1 / Math.cos(lr)) / Math.PI) / 2 * n);
+
+      const resp = await p.getZxy(z, tx, ty);
+      if (!resp) return;
+      let buf = resp.data;
+      if (new Uint8Array(buf)[0] === 0x1f) buf = gunzip(buf);
+
+      const tile  = decodeTile(buf);
+      const layer = tile.layers[LAYER_NAME];
+      if (!layer) return;
+      for (const f of layer.features) postProcess(f, layer);
+
+      const tb = tileBounds(z, tx, ty);
+      const px = (e.latlng.lng - tb.w) / (tb.e - tb.w) * layer.extent;
+      const py = (tb.n - e.latlng.lat) / (tb.n - tb.s) * layer.extent;
+
+      let found = null;
+      for (const feat of layer.features) {
+        if (feat.type !== 3) continue;
+        for (const ring of feat.rings)
+          if (pointInPoly(px, py, ring)) { found = feat; break; }
+        if (found) break;
+      }
+
+      if (!found) return;
+      const code  = Math.round(found.props.mbmode24 ?? -1);
+      const color = COLOR_MAP[code] || "#aaa";
+      const area  = found.props.field_area_ha != null
+        ? (+found.props.field_area_ha).toFixed(2) + " ha" : "—";
+      L.popup({ className: "dark-popup" })
+        .setLatLng(e.latlng)
+        .setContent(`
+          <div class="ptitle" style="border-left-color:${color}">${NAME_MAP[code] || "Unknown"}</div>
+          <div class="prow"><span class="pk">mbmode24</span><span class="pv">${code}</span></div>
+          <div class="prow"><span class="pk">Field ID</span><span class="pv">${found.props.Id ?? "—"}</span></div>
+          <div class="prow"><span class="pk">Area</span><span class="pv">${area}</span></div>`)
+        .openOn(map);
+    });
+
+  } catch (err) {
+    console.error(err);
+    showError("Failed to load: " + err.message);
+  }
+}
+
+function setStatus(msg) { document.getElementById("dz-status").textContent = msg; }
+function showError(msg) {
+  const el = document.getElementById("dz-error");
+  el.textContent = msg; el.style.display = "block";
+  document.getElementById("dz-status").textContent = "";
+}
+
+// ── LANGUAGE SWITCHER ────────────────────────────────────────────────────────
+// Language switcher — event delegation
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.lang-btn');
+  if (!btn) return;
+  e.stopPropagation();
+  const lang = btn.dataset.lang;
+  document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.lang-content').forEach(el => {
+    el.style.display = el.id === 'lang-' + lang ? '' : 'none';
+  });
+  document.querySelectorAll('.teaser-text').forEach(el => {
+    el.style.display = el.id === 'teaser-' + lang ? '' : 'none';
+  });
+});
+
+// Panel pin — click to lock open
+const infoPanel = document.getElementById('info-panel');
+const pinHint   = document.getElementById('panel-pin-hint');
+if (infoPanel) {
+  infoPanel.addEventListener('click', (e) => {
+    if (e.target.closest('.lang-btn') || e.target.closest('a')) return;
+    infoPanel.classList.toggle('pinned');
+    if (pinHint) pinHint.textContent = infoPanel.classList.contains('pinned')
+      ? 'click to collapse ▴' : 'click to pin ▾';
+  });
+}
+
+// ── AUTO-LOAD FROM GCS ───────────────────────────────────────────────────────
+loadFile();
+
+// ── TOPBAR: pin/unpin on click ────────────────────────────────────────────────
+(function() {
+  const items = document.querySelectorAll('.tnav-item');
+  items.forEach(item => {
+    const trigger = item.querySelector('.tnav-trigger');
+    if (!trigger) return;
+    trigger.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const wasOpen = item.classList.contains('open');
+      items.forEach(i => i.classList.remove('open'));
+      if (!wasOpen) item.classList.add('open');
+    });
+  });
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.tnav-item')) {
+      items.forEach(i => i.classList.remove('open'));
+    }
+  });
+})();
+
+// ── TOPBAR: sequential highlight every 3s ────────────────────────────────────
+(function() {
+  const seq = [
+    'tnav-coverage','tnav-training','tnav-models','tnav-pipeline','tnav-use',
+    'tnav-uc-eudr','tnav-uc-emissions','tnav-uc-landuse','tnav-uc-food',
+    'tnav-cite'
+  ];
+  let idx = 0;
+  function next() {
+    const el = document.getElementById(seq[idx]);
+    if (el) {
+      const t = el.querySelector('.tnav-trigger');
+      if (t) {
+        t.classList.remove('nav-lit');
+        void t.offsetWidth;
+        t.classList.add('nav-lit');
+        t.addEventListener('animationend', () => t.classList.remove('nav-lit'), { once: true });
+      }
+    }
+    idx = (idx + 1) % seq.length;
+  }
+  setTimeout(function() { next(); setInterval(next, 3000); }, 2000);
+})();
+
+</script>
+  <div id="map-attribution">Trazo by WRI and ASU</div>
+</div><!-- /ui-layer -->
+
+<script>
+/* Light / dark theme controller (API-compatible with the main app) */
+window.TZ = (function(){
+  var KEY="trazo-theme", root=document.documentElement;
+  function cur(){ return root.getAttribute("data-theme")==="dark" ? "dark" : "light"; }
+  function label(t){ return t==="dark" ? "Light \u25d6" : "Dark \u25d7"; }
+  function apply(t){
+    t = (t==="dark") ? "dark" : "light";
+    root.setAttribute("data-theme", t);
+    try { localStorage.setItem(KEY, t); } catch(e){}
+    var el=document.getElementById("theme-toggle"); if(el) el.textContent=label(t);
+    try { document.dispatchEvent(new CustomEvent("tztheme",{detail:t})); } catch(e){}
+    return t;
+  }
+  function toggle(){ return apply(cur()==="dark" ? "light" : "dark"); }
+  function dark(){ return cur()==="dark"; }
+  apply(cur());
+  return { toggle:toggle, dark:dark, set:apply, current:cur };
+})();
+</script>
+
+<script>
+/* ── Release 1 floating radial-orbital selector (full content + links) ── */
+(function(){
+  var ITEMS = [
+    { id:1, title:"Coverage", tag:"01 \u00b7 Coverage", icon:"coverage", related:[2,3,5],
+      html:"<em>10,935,129</em> AI-generated field boundaries released across the following geographies:",
+      facts:[
+        { label:"Brazil",    detail:"Mato Grosso, Mato Grosso do Sul, Rio Grande do Sul, Par\u00e1, Paran\u00e1, Piau\u00ed, Tocantins, Goi\u00e1s, and S\u00e3o Paulo" },
+        { label:"Paraguay",  detail:"" },
+        { label:"Argentina", detail:"Chaco ecoregion and C\u00f3rdoba" },
+        { label:"Bolivia",   detail:"" }
+      ] },
+    { id:2, title:"Training Data", tag:"Training Data", icon:"training", related:[1,3,4],
+      html:"The original Fields of the World benchmark included 1,854 field boundaries in South America (about 0.11% of its global corpus) from a single site in Bahia, Brazil. Trazo extends the training data to <em>17 soy-producing ecoregions</em>, including the Andean foothills, the Chiquitania, the Pampas, Amazonian moist forests, the Chaco, and the Cerrado.<br><br><em>46,908</em> expert-annotated training fields \u00b7 <em>7,453</em> test fields" },
+    { id:3, title:"Models", tag:"02 \u00b7 Models", icon:"models", related:[2,4,5],
+      html:"Four checkpoints share a U-Net architecture with an EfficientNet-B3 backbone. The right checkpoint depends on region, agricultural system, and whether pixel-level or object-level accuracy matters more.",
+      links:[
+        { kind:"Trazo1",  title:"Initial SA adaptation \u00b7 77.1% SA soy pixel IoU",        href:"HFTrazo1" },
+        { kind:"TrazoSA", title:"South America only \u00b7 93.1% SA soy pixel precision",      href:"HFTrazoSA" },
+        { kind:"Trazo2",  title:"Global + regional \u00b7 76.3% Mato Grosso pixel IoU",        href:"HFTrazo2" },
+        { kind:"Trazo3",  title:"Active learning \u00b7 recommended \u00b7 79.2% Mato Grosso pixel IoU", href:"HFTrazo3" },
+        { kind:"All",     title:"All checkpoints on Hugging Face",                               href:"https://huggingface.co/collections/worldresourcesinstitute/trazo-models" }
+      ] },
+    { id:4, title:"Pipeline", tag:"03 \u00b7 Pipeline", icon:"pipeline", related:[2,3,5],
+      html:"Composable utilities for moving from raw imagery to field-boundary predictions.",
+      links:[
+        { kind:"01 Create",  title:"AOI grids and 4-band Sentinel-2 chips at planting and harvest windows.", href:"GH#step-1-create-grids-and-data-windows-from-grids" },
+        { kind:"02 Prepare", title:"Pair temporal stacks, normalize, build instance and semantic masks.",   href:"GH#step-2-data-preparation" },
+        { kind:"03 Sample",  title:"Sample & fine-tune \u2014 active learning, temporal diversity, geographic balancing.", href:"GH/blob/main/src/trazo/pt3_finetune/Cerrado_Fine_Tuning.ipynb" },
+        { kind:"04 Train",   title:"U-Net, UperNet, DeepLabV3+, FCSiam, with twelve loss functions.",        href:"GH#step-4-model-training" },
+        { kind:"05 Infer",   title:"Select best Sentinel-2 scenes per tile and run multi-checkpoint inference at scale.", href:"GH#step-5-select-per-tile-pairs-and-run-inference" },
+        { kind:"Repo",       title:"Repository README",                                                       href:"GH#readme" }
+      ] },
+    { id:5, title:"Use", tag:"04 \u00b7 Use", icon:"use", related:[1,3,4],
+      html:"Five open artifacts under CC-BY-4.0, covering the technical foundation through to the 10.9-million-field release for the 2023\u20132024 planting season.",
+      links:[
+        { kind:"Tech note",  title:"Field Boundaries of South America \u2014 Grupp et al. \u00b7 WRI \u00b7 2026", href:"#" },
+        { kind:"Dataset",    title:"46,908 training + 7,453 test annotations across 17 ecoregions",            href:"https://source.coop/tristangruppwri/trazotraining" },
+        { kind:"Models",     title:"Four checkpoints: Trazo1, TrazoSA, Trazo2, Trazo3",                        href:"https://huggingface.co/collections/worldresourcesinstitute/trazo-models" },
+        { kind:"Pipeline",   title:"Inference and fine-tuning pipeline configured by MGRS tile ID",           href:"GH" },
+        { kind:"Boundaries", title:"10,935,129 AI-generated boundaries across South America",                 href:"https://source.coop/tristangruppwri/trazofields" }
+      ] }
+  ];
+  // expand href shorthands
+  var HF="https://huggingface.co/worldresourcesinstitute/", GH="https://github.com/wri/trazo";
+  ITEMS.forEach(function(it){ (it.links||[]).forEach(function(l){
+    l.href = l.href.replace(/^HF/, HF).replace(/^GH/, GH);
+  }); });
+
+  var ICONS = {
+    coverage:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>',
+    training:'<svg viewBox="0 0 24 24"><path d="M12 3 3 8l9 5 9-5-9-5zM3 13l9 5 9-5"/></svg>',
+    models:'<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></svg>',
+    pipeline:'<svg viewBox="0 0 24 24"><circle cx="5" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="19" cy="12" r="2"/><path d="M7 6h6a4 4 0 0 1 4 4M7 18h6a4 4 0 0 0 4-4"/></svg>',
+    use:'<svg viewBox="0 0 24 24"><path d="M21 8 12 3 3 8v8l9 5 9-5V8zM3 8l9 5 9-5M12 22v-9"/></svg>'
+  };
+
+  var RADIUS = 150, rotation = 0, autoRotate = true, targetRot = null, activeId = null, raf = null;
+  var wrap, stage, nodes = {};
+  function idx(id){ return ITEMS.findIndex(function(x){ return x.id === id; }); }
+  function item(id){ return ITEMS.find(function(x){ return x.id === id; }); }
+
+  function buildCard(it){
+    var card = document.createElement("div"); card.className = "tzo-card";
+    card.addEventListener("click", function(e){ e.stopPropagation(); });   // don't collapse on card interaction
+    var k = document.createElement("div"); k.className = "tzo-card-k"; k.textContent = it.tag; card.appendChild(k);
+    var b = document.createElement("div"); b.className = "tzo-card-b"; b.innerHTML = it.html; card.appendChild(b);
+    if (it.facts){
+      var f = document.createElement("div"); f.className = "tzo-facts";
+      it.facts.forEach(function(ft){
+        var r = document.createElement("div"); r.className = "tzo-fact";
+        var bb = document.createElement("b"); bb.textContent = ft.label; r.appendChild(bb);
+        if (ft.detail) r.appendChild(document.createTextNode(ft.detail));
+        f.appendChild(r);
+      });
+      card.appendChild(f);
+    }
+    if (it.links){
+      var l = document.createElement("div"); l.className = "tzo-links";
+      it.links.forEach(function(ln){
+        var a = document.createElement("a"); a.className = "tzo-link"; a.href = ln.href;
+        if (ln.href !== "#"){ a.target = "_blank"; a.rel = "noopener"; }
+        a.addEventListener("click", function(e){ e.stopPropagation(); });
+        var ks = document.createElement("span"); ks.className = "tzo-link-kind";  ks.textContent = ln.kind;
+        var ts = document.createElement("span"); ts.className = "tzo-link-title"; ts.textContent = ln.title;
+        var as = document.createElement("span"); as.className = "tzo-link-arr";   as.textContent = "\u2197";
+        a.appendChild(ks); a.appendChild(ts); a.appendChild(as); l.appendChild(a);
+      });
+      card.appendChild(l);
+    }
+    if (it.related && it.related.length){
+      var rel = document.createElement("div"); rel.className = "tzo-card-rel";
+      it.related.forEach(function(rid){
+        var ri = item(rid); if (!ri) return;
+        var btn = document.createElement("button"); btn.className = "tzo-rel"; btn.textContent = ri.title;
+        btn.addEventListener("click", function(e){ e.stopPropagation(); expand(rid); });
+        rel.appendChild(btn);
+      });
+      card.appendChild(rel);
+    }
+    return card;
+  }
+
+  function build(){
+    wrap = document.createElement("div"); wrap.id = "tz-orbital";
+    var back = document.createElement("div"); back.className = "tzo-backdrop"; back.addEventListener("click", collapse);
+    wrap.appendChild(back);
+    stage = document.createElement("div"); stage.id = "tz-orbital-stage";
+    var ring = document.createElement("div"); ring.className = "tzo-orbit-ring"; stage.appendChild(ring);
+    var hub = document.createElement("div"); hub.className = "tzo-hub";
+    hub.innerHTML = '<div class="tzo-ring r1"></div><div class="tzo-ring r2"></div><div class="tzo-core"></div>';
+    stage.appendChild(hub);
+    var hl = document.createElement("div"); hl.className = "tzo-hub-label"; hl.textContent = "Release 1"; stage.appendChild(hl);
+    ITEMS.forEach(function(it){
+      var n = document.createElement("div"); n.className = "tzo-node";
+      var dot = document.createElement("div"); dot.className = "tzo-dot"; dot.innerHTML = ICONS[it.icon] || "";
+      var title = document.createElement("div"); title.className = "tzo-title"; title.textContent = it.title;
+      n.appendChild(dot); n.appendChild(title); n.appendChild(buildCard(it));
+      n.addEventListener("click", function(e){ e.stopPropagation(); (activeId === it.id) ? collapse() : expand(it.id); });
+      stage.appendChild(n); nodes[it.id] = n;
+    });
+    wrap.appendChild(stage); document.body.appendChild(wrap);
+  }
+
+  function layout(){
+    var total = ITEMS.length;
+    ITEMS.forEach(function(it, i){
+      var ang = ((i / total) * 360 + rotation) % 360, rad = ang * Math.PI / 180;
+      var x = RADIUS * Math.cos(rad), y = RADIUS * Math.sin(rad);
+      var z = Math.round(100 + 50 * Math.cos(rad));
+      var op = Math.max(0.45, Math.min(1, 0.45 + 0.55 * ((1 + Math.sin(rad)) / 2)));
+      var n = nodes[it.id], active = (activeId === it.id);
+      n.style.transform = "translate(" + x + "px," + y + "px)";
+      n.style.zIndex = active ? 300 : z;
+      n.style.opacity = active ? 1 : op;
+    });
+  }
+
+  function frame(){
+    if (autoRotate){ rotation = (rotation + 0.08) % 360; }     /* slowed 50% (was 0.16) */
+    else if (targetRot != null){
+      var d = targetRot - rotation; rotation += d * 0.14;
+      if (Math.abs(d) < 0.2){ rotation = targetRot; targetRot = null; }
+    }
+    layout(); raf = requestAnimationFrame(frame);
+  }
+
+  function expand(id){
+    activeId = id; autoRotate = false; wrap.classList.add("expanded");
+    var base = (idx(id) / ITEMS.length) * 360, t = 270 - base;
+    while (t - rotation > 180) t -= 360;
+    while (t - rotation < -180) t += 360;
+    targetRot = t;
+    var related = (item(id) || {}).related || [];
+    ITEMS.forEach(function(it){
+      nodes[it.id].classList.toggle("active", it.id === id);
+      nodes[it.id].classList.toggle("related", related.indexOf(it.id) >= 0);
+    });
+  }
+  function collapse(){
+    activeId = null; autoRotate = true; targetRot = null;
+    if (wrap) wrap.classList.remove("expanded");
+    Object.keys(nodes).forEach(function(k){ nodes[k].classList.remove("active", "related"); });
+  }
+  function init(){
+    build();
+    document.addEventListener("keydown", function(e){ if (e.key === "Escape") collapse(); });
+    raf = requestAnimationFrame(frame);
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
+})();
+</script>
+</body>
+</html>
