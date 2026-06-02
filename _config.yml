@@ -1,0 +1,27 @@
+# GitHub Pages (Jekyll) configuration.
+#
+# Scopes the published site to the web-facing content so the public Pages
+# site does NOT expose the rest of this (private) repo's source and data.
+# README.md still renders as the homepage; web/ (the map) and landing/
+# (the password-gated landing page) are published. Everything listed under
+# `exclude` is omitted from the build output.
+#
+# Note: _landing-src/ holds the *plaintext* landing page. Jekyll already
+# ignores leading-underscore directories, so it is never published; it is
+# the source the encrypt step reads to regenerate landing/index.html.
+
+exclude:
+  - src
+  - scripts
+  - seasontifs
+  - spatial
+  - validation
+  - scratch
+  - doc
+  - assets            # LFS originals; the workflow stages copies into web/assets/
+  - test_import.py
+  - pyproject.toml
+  - web.zip
+  - _landing-src
+# README.md is intentionally NOT excluded — Jekyll renders it as the
+# homepage at https://wri.github.io/trazo/, matching the current site.
