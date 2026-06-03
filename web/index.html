@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <script>document.documentElement.setAttribute("data-theme","light");</script>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Trazo — Interactive Map · Mato Grosso 2024</title>
+  <title>Trazo — Field Boundaries of South America</title>
 
   <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -516,7 +516,7 @@
     }
     .tnav-trigger.nav-lit { animation: navHighlight 2.4s ease forwards; }
     /* offset map for topbar */
-    #map { top: 42px !important; }
+    #map { top: 0 !important; }
     #info-panel { top: 54px !important; }
 
   </style>
@@ -674,7 +674,7 @@
        It is ~one screen tall minus a small peek so PAGE 2 shows at the bottom on load.
        overflow:hidden keeps the panel / legend / zoom badge / arrow CONTAINED to the
        map page, so they scroll away with it instead of hovering down the whole site. */
-    #map-screen{ position:relative; height:100vh; overflow:hidden; z-index:2; isolation:isolate; }
+    #map-screen{ position:relative; height:64vh; overflow:hidden; z-index:2; isolation:isolate; }
     #hero-spacer{ display:none; }
 
     #scroll-down-arrow{
@@ -737,7 +737,7 @@
 
     /* hero (text only) */
     #index-content .hero{ padding:38px 0 36px; }
-    #index-content .hero-grid{ display:grid; grid-template-columns:1.05fr 1fr; gap:clamp(28px,4vw,56px); align-items:end; }
+    #index-content .hero-grid{ display:grid; grid-template-columns:1.05fr 1fr; gap:clamp(28px,4vw,56px); align-items:start; }
     @media (max-width:880px){ #index-content .hero-grid{ grid-template-columns:1fr; } }
     #index-content h1.hero-title{ font-family:var(--font-header); font-weight:700; font-size:clamp(40px,6.4vw,80px); line-height:1.05; letter-spacing:.005em; color:var(--text); }
     #index-content h1.hero-title em{ font-style:normal; font-weight:300; color:var(--text); display:block; }
@@ -841,32 +841,24 @@
   </style>
 
   <style id="tz-split-css">
-    .tz-back{ display:flex; align-items:center; padding:0 14px; font-family:var(--font-header);
-      font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
-      color:var(--text-muted); text-decoration:none; border-right:1px solid var(--border-dim);
-      transition:color .15s, background .15s; pointer-events:auto; white-space:nowrap; }
-    .tz-back:hover{ color:var(--gold); background:rgba(240,171,0,0.06); }
-    /* Trazo on the Ground — quote lists + hover notes */
-    .tnav-drop-scroll{ max-height:min(72vh,580px); overflow-y:auto; overflow-x:hidden;
-      padding-right:12px; scrollbar-width:thin; scrollbar-color:rgba(240,171,0,0.3) transparent; }
-    .tnav-drop-scroll::-webkit-scrollbar{ width:5px; }
-    .tnav-drop-scroll::-webkit-scrollbar-thumb{ background:rgba(240,171,0,0.3); border-radius:4px; }
-    .tz-intro{ font-family:var(--font-body); font-size:12.5px; line-height:1.55; color:var(--text-muted); margin-top:2px; }
-    .tz-quote{ display:block; border-left:2px solid var(--border); padding:2px 0 2px 12px; margin-top:12px; }
-    .tz-q{ display:block; font-family:var(--font-body); font-size:12.5px; line-height:1.5; color:var(--text); font-style:italic; }
-    .tz-cite{ display:block; margin-top:5px; font-family:var(--font-header); font-size:9.5px; font-weight:700;
-      letter-spacing:.07em; text-transform:uppercase; color:var(--gold); }
-    .tz-cite a{ color:var(--gold); text-decoration:underline; text-underline-offset:2px; }
-    .tz-cite a:hover{ color:var(--gold-lt); }
-    .tz-tip{ display:inline-block; font-family:var(--font-mono); font-size:8.5px; letter-spacing:.06em;
-      text-transform:uppercase; color:var(--text-muted); border:1px solid var(--border-dim); border-radius:3px;
-      padding:1px 5px; margin-left:6px; cursor:help; white-space:nowrap; transition:color .15s,border-color .15s; }
-    .tz-quote:hover .tz-tip{ color:var(--gold); border-color:var(--gold); }
-    .tz-extra{ display:block; max-height:0; overflow:hidden; opacity:0; margin-top:0;
-      transition:max-height .3s ease, opacity .25s ease, margin-top .25s ease;
-      font-family:var(--font-body); font-size:11px; line-height:1.5; color:var(--text-muted); }
-    .tz-quote:hover .tz-extra{ max-height:320px; opacity:1; margin-top:7px; }
-    .tz-extra .oq{ font-style:italic; }
+    #landing-cta{ position:absolute; top:16px; left:16px; z-index:5;
+      width:clamp(264px,30vw,346px); background-color:rgba(0,0,0,0.64); isolation:isolate;
+      border-radius:10px; padding:20px 20px 18px;
+      box-shadow:0 0 0 1px rgba(0,0,0,0.7), 0 8px 40px rgba(0,0,0,0.6); pointer-events:auto; }
+    [data-theme="light"] #landing-cta{ background-color:rgba(242,238,228,0.82);
+      box-shadow:0 0 0 1px rgba(80,70,40,0.18), 0 8px 40px rgba(0,0,0,0.12); }
+    #landing-cta .lc-title{ font-family:var(--font-header); font-size:26px; font-weight:700;
+      color:var(--gold); letter-spacing:.06em; text-transform:uppercase; line-height:1; }
+    #landing-cta .lc-sub{ font-family:var(--font-body); font-size:13px; color:var(--text-muted);
+      margin-top:6px; margin-bottom:16px; }
+    #landing-cta .lc-btn{ display:flex; align-items:center; justify-content:space-between; gap:10px;
+      font-family:var(--font-header); font-size:11.5px; font-weight:700; letter-spacing:.09em;
+      text-transform:uppercase; padding:11px 14px; border:1px solid var(--gold); color:var(--text);
+      text-decoration:none; margin-top:8px; transition:background .15s, color .15s; }
+    #landing-cta .lc-btn span{ font-family:var(--font-mono); font-weight:400; }
+    #landing-cta .lc-btn:hover{ background:var(--gold); color:var(--bg-page); }
+    #landing-cta .lc-btn-primary{ background:var(--gold); color:var(--bg-page); }
+    #landing-cta .lc-btn-primary:hover{ background:var(--gold-lt); }
   </style>
 </head>
 <body>
@@ -882,359 +874,20 @@
 
 <!-- ── UI OVERLAY: sits in DOM after #map, forced above all Leaflet canvases ── -->
 <div id="ui-layer">
-<div id="topbar">
-  <a class="tz-back" href="index.html">← Trazo</a>
-  <nav id="topbar-nav">
-
-    <!-- RELEASE 1 -->
-    <div class="tnav-group" id="tgroup-r1">
-      <div class="tnav-sep-pipe"></div>
-      <span class="tnav-group-label">Release 1</span>
-
-      <div class="tnav-item" id="tnav-coverage">
-        <button class="tnav-trigger">Coverage <span class="caret">▾</span></button>
-        <div class="tnav-dropdown">
-          <div class="tnav-pin-hint">click to pin · click again to dismiss</div>
-          <div class="tnav-drop-content">
-            <div class="tnav-drop-head">01 · Coverage</div>
-            <p class="tnav-drop-text"><em>10,935,129</em> AI-generated boundaries released across the following geographies:</p>
-            <div class="tnav-coverage-list">
-              <div class="cov-entry"><span class="cov-country">Brazil</span><span class="cov-detail">Mato Grosso, Mato Grosso do Sul, Rio Grande do Sul, Pará, Paraná, Piauí, Tocantins, Goiás, and São Paulo state</span></div>
-              <div class="cov-entry"><span class="cov-country">Paraguay</span><span class="cov-detail"></span></div>
-              <div class="cov-entry"><span class="cov-country">Argentina</span><span class="cov-detail">Chaco ecoregion and Córdoba</span></div>
-              <div class="cov-entry"><span class="cov-country">Bolivia</span><span class="cov-detail"></span></div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="tnav-item" id="tnav-training">
-        <button class="tnav-trigger">Training Data <span class="caret">▾</span></button>
-        <div class="tnav-dropdown" style="min-width:380px">
-          <div class="tnav-pin-hint">click to pin · click again to dismiss</div>
-          <div class="tnav-drop-content">
-            <div class="tnav-drop-head">Training Data</div>
-            <p class="tnav-drop-text">The original Fields of the World benchmark included 1,854 field boundaries in South America (about 0.11% of its global corpus) from a single site in Bahia, Brazil. Trazo extends the training data to <em>17 soy-producing ecoregions</em>, including the Andean foothills, the Chiquitania, the Pampas, Amazonian moist forests, the Chaco, and the Cerrado.</p>
-            <p class="tnav-drop-text"><em>46,908</em> expert-annotated training fields · <em>7,453</em> test fields</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="tnav-item" id="tnav-models">
-        <button class="tnav-trigger">Models <span class="caret">▾</span></button>
-        <div class="tnav-dropdown" style="min-width:400px">
-          <div class="tnav-pin-hint">click to pin · click again to dismiss</div>
-          <div class="tnav-drop-content">
-            <div class="tnav-drop-head">02 · Models</div>
-            <p class="tnav-drop-text">Four checkpoints share a U-Net architecture with an EfficientNet-B3 backbone. The right checkpoint depends on region, agricultural system, and whether pixel-level or object-level accuracy matters more.</p>
-            <div class="tnav-model-row">
-              <a class="tnav-model-chip" href="https://huggingface.co/worldresourcesinstitute/Trazo1" target="_blank" rel="noopener">
-                <span class="mc-name">Trazo1</span><span class="mc-tag">Initial SA adaptation</span><span class="mc-stat">77.1%</span><span class="mc-tag">SA soy pixel IoU</span>
-              </a>
-              <a class="tnav-model-chip" href="https://huggingface.co/worldresourcesinstitute/TrazoSA" target="_blank" rel="noopener">
-                <span class="mc-name">TrazoSA</span><span class="mc-tag">South America only</span><span class="mc-stat">93.1%</span><span class="mc-tag">SA soy pixel precision</span>
-              </a>
-              <a class="tnav-model-chip" href="https://huggingface.co/worldresourcesinstitute/Trazo2" target="_blank" rel="noopener">
-                <span class="mc-name">Trazo2</span><span class="mc-tag">Global + regional</span><span class="mc-stat">76.3%</span><span class="mc-tag">Mato Grosso pixel IoU</span>
-              </a>
-              <a class="tnav-model-chip" href="https://huggingface.co/worldresourcesinstitute/Trazo3" target="_blank" rel="noopener">
-                <span class="mc-name">Trazo3</span><span class="mc-tag">Active learning · recommended</span><span class="mc-stat">79.2%</span><span class="mc-tag">Mato Grosso pixel IoU</span>
-              </a>
-            </div>
-            <p class="tnav-drop-text" style="font-size:11.5px;color:var(--text-muted)">All checkpoints on <a href="https://huggingface.co/collections/worldresourcesinstitute/trazo-models" target="_blank">Hugging Face ↗</a></p>
-          </div>
-        </div>
-      </div>
-
-      <div class="tnav-item" id="tnav-pipeline">
-        <button class="tnav-trigger">Pipeline <span class="caret">▾</span></button>
-        <div class="tnav-dropdown" style="min-width:440px">
-          <div class="tnav-pin-hint">click to pin · click again to dismiss</div>
-          <div class="tnav-drop-content">
-            <div class="tnav-drop-head">03 · Pipeline</div>
-            <p class="tnav-drop-text">Composable utilities for moving from raw imagery to field-boundary predictions. Full reference in the <a href="https://github.com/wri/trazo#readme" target="_blank">repository README ↗</a>.</p>
-            <div class="tnav-pipeline">
-              <a class="tnav-step" href="https://github.com/wri/trazo#step-1-create-grids-and-data-windows-from-grids" target="_blank"><span class="step-num">01</span><span class="step-title">Create data</span><span class="step-desc">AOI grids and 4-band Sentinel-2 chips at planting and harvest windows.</span></a>
-              <a class="tnav-step" href="https://github.com/wri/trazo#step-2-data-preparation" target="_blank"><span class="step-num">02</span><span class="step-title">Prepare data</span><span class="step-desc">Pair temporal stacks, normalize, build instance and semantic masks.</span></a>
-              <a class="tnav-step" href="https://github.com/wri/trazo/blob/main/src/trazo/pt3_finetune/Cerrado_Fine_Tuning.ipynb" target="_blank"><span class="step-num">03</span><span class="step-title">Sample &amp; fine-tune</span><span class="step-desc">Active learning, temporal diversity, geographic balancing.</span></a>
-              <a class="tnav-step" href="https://github.com/wri/trazo#step-4-model-training" target="_blank"><span class="step-num">04</span><span class="step-title">Train</span><span class="step-desc">U-Net, UperNet, DeepLabV3+, FCSiam, with twelve loss functions.</span></a>
-              <a class="tnav-step" href="https://github.com/wri/trazo#step-5-select-per-tile-pairs-and-run-inference" target="_blank"><span class="step-num">05</span><span class="step-title">Infer at scale</span><span class="step-desc">Select best Sentinel-2 scenes per tile and run multi-checkpoint inference at scale.</span></a>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="tnav-item" id="tnav-use">
-        <button class="tnav-trigger">Use <span class="caret">▾</span></button>
-        <div class="tnav-dropdown" style="min-width:460px">
-          <div class="tnav-pin-hint">click to pin · click again to dismiss</div>
-          <div class="tnav-drop-content">
-            <div class="tnav-drop-head">04 · Use</div>
-            <p class="tnav-drop-text">Five open artifacts under CC-BY-4.0, covering the technical foundation through to the 10.9-million-field release for the 2023–2024 planting season.</p>
-            <div class="tnav-resources">
-              <a href="#" class="tnav-res"><span class="res-kind">Technical note</span><span class="res-title">Field Boundaries of South America — Grupp et al. · WRI · 2026</span><span class="res-arr">↗</span></a>
-              <a href="https://source.coop/tristangruppwri/trazotraining" class="tnav-res" target="_blank" rel="noopener"><span class="res-kind">Dataset</span><span class="res-title">46,908 training + 7,453 test annotations across 17 ecoregions</span><span class="res-arr">↗</span></a>
-              <a href="https://huggingface.co/collections/worldresourcesinstitute/trazo-models" class="tnav-res" target="_blank" rel="noopener"><span class="res-kind">Models</span><span class="res-title">Four checkpoints: Trazo1, TrazoSA, Trazo2, Trazo3</span><span class="res-arr">↗</span></a>
-              <a href="https://github.com/wri/trazo" class="tnav-res" target="_blank" rel="noopener"><span class="res-kind">Pipeline</span><span class="res-title">Inference and fine-tuning pipeline configured by MGRS tile ID</span><span class="res-arr">↗</span></a>
-              <a href="https://source.coop/tristangruppwri/trazofields" class="tnav-res" target="_blank" rel="noopener"><span class="res-kind">Field boundaries</span><span class="res-title">10,935,129 AI-generated boundaries across South America</span><span class="res-arr">↗</span></a>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="tnav-sep-pipe"></div>
-    </div>
-
-    <!-- RELEASE 2 -->
-    <div class="tnav-group" id="tgroup-r2">
-      <div class="tnav-sep-pipe"></div>
-      <span class="tnav-group-label">Release 2</span>
-
-      <div class="tnav-item tnav-item-dim" id="tnav-r2-coverage">
-        <button class="tnav-trigger tnav-trigger-dim">Coverage <span class="caret">▾</span></button>
-        <div class="tnav-dropdown">
-          <div class="tnav-pin-hint">click to pin · click again to dismiss</div>
-          <div class="tnav-drop-content">
-            <div class="tnav-drop-head">Release 2 · Coverage</div>
-            <p class="tnav-drop-text" style="color:var(--text-muted)">Forthcoming. Release 2 will expand field boundary coverage to additional regions and seasons beyond the initial 2023–2024 South America release.</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="tnav-item tnav-item-dim" id="tnav-r2-training">
-        <button class="tnav-trigger tnav-trigger-dim">Training Data <span class="caret">▾</span></button>
-        <div class="tnav-dropdown" style="min-width:380px">
-          <div class="tnav-pin-hint">click to pin · click again to dismiss</div>
-          <div class="tnav-drop-content">
-            <div class="tnav-drop-head">Release 2 · Training Data</div>
-            <p class="tnav-drop-text" style="color:var(--text-muted)">Forthcoming. New training data in the Cerrado, with samples of cotton, rice, and coffee from Brazilian national data sources, new pasture field samples, and expanded coverage in other geographies.</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="tnav-item tnav-item-dim" id="tnav-r2-models">
-        <button class="tnav-trigger tnav-trigger-dim">Models <span class="caret">▾</span></button>
-        <div class="tnav-dropdown">
-          <div class="tnav-pin-hint">click to pin · click again to dismiss</div>
-          <div class="tnav-drop-content">
-            <div class="tnav-drop-head">Release 2 · Models</div>
-            <p class="tnav-drop-text" style="color:var(--text-muted)">Forthcoming. Next-generation model checkpoints trained using <a href="https://arxiv.org/abs/2603.27101" target="_blank" rel="noopener">PRUE</a> settings and on expanded annotation coverage, median composited imagery, and varying loss weights.</p>
-          </div>
-        </div>
-      </div>
-
-      <div class="tnav-sep-pipe"></div>
-    </div>
-
-    <!-- TRAZO ON THE GROUND -->
-    <div class="tnav-group" id="tgroup-uc">
-      <div class="tnav-sep-pipe"></div>
-      <span class="tnav-group-label">Trazo on the Ground</span>
-
-      <div class="tnav-item" id="tnav-tg-barriers">
-        <button class="tnav-trigger">Barriers <span class="caret">▾</span></button>
-        <div class="tnav-dropdown" style="min-width:460px;max-width:560px;left:auto;right:0">
-          <div class="tnav-pin-hint">click to pin · click again to dismiss</div>
-          <div class="tnav-drop-content tnav-drop-scroll">
-            <div class="tnav-drop-head">Barriers</div>
-            <p class="tz-intro">We conducted an early data access program and got feedback from end users.  These are the barriers end users face in their work currently:</p>
-            <div class="tz-quote"><span class="tz-q">"The main challenge in achieving these goals is that the development of methodologies to achieve them first requires extensive data generation and gathering. One of the key inputs consists of an updated vector layer of individual agricultural fields."</span><div class="tz-cite">— Private Bank investing in sustainable agriculture</div></div>
-            <div class="tz-quote"><span class="tz-q">The need for a "solid MRV for impact monitoring and clear claim framework for commercialisation of impact."</span><div class="tz-cite">— Grain Trader</div></div>
-            <div class="tz-quote"><span class="tz-q">"Existing forest cover loss remote sensing products are coarse. Products focused on agriculture are often paywalled."</span><div class="tz-cite">— Environmental NGO</div></div>
-            <div class="tz-quote"><span class="tz-q">"We have very little up-to-date information regarding the agricultural areas of the territories in which we work."</span><div class="tz-cite">— Research Organization</div></div>
-            <div class="tz-quote"><span class="tz-q">"Complex spatial analysis and lack of traceability."</span><div class="tz-cite">— Environmental Sustainability Consultant</div></div>
-            <div class="tz-quote"><span class="tz-q">"Insufficient access to modern agricultural technology and data systems restricts farmers’ productivity and resilience."</span><div class="tz-cite">— Farmer Advocacy Cooperation</div></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="tnav-item" id="tnav-tg-using">
-        <button class="tnav-trigger">Using Fields <span class="caret">▾</span></button>
-        <div class="tnav-dropdown" style="min-width:460px;max-width:560px;left:auto;right:0">
-          <div class="tnav-pin-hint">click to pin · click again to dismiss</div>
-          <div class="tnav-drop-content tnav-drop-scroll">
-            <div class="tnav-drop-head">Using Fields</div>
-            <p class="tz-intro">We conducted an early data access program and got feedback from end users. Here is how they use fields in their work:</p>
-            <div class="tz-quote"><span class="tz-q">"It would allow us to concentrate our unit of analysis from pixels to fields."</span><div class="tz-cite">— Data Service Provider</div></div>
-            <div class="tz-quote"><span class="tz-q">"It enables us to achieve greater precision regarding agricultural and livestock activities, and we also assess land concentration in relation to specific crops or activities."</span><div class="tz-cite">— Carbon Market Development Public Institution <span class="tz-tip">Cita Original</span></div><div class="tz-extra"><span class="oq">"Nos permite tener una mayor precisión de las actividades agropecuarias, y tambipen evaluamos la concentración de la tierra en determinado cultivo o actividad."</span></div></div>
-            <div class="tz-quote"><span class="tz-q">"To start work with local producers to enhance the traceability of deforestation-free products, within the framework of the European regulations coming into force."</span><div class="tz-cite">— Food Security NGO <span class="tz-tip">Cita Original</span></div><div class="tz-extra"><span class="oq">"En particular para empezar el trabajo con los productores locales para aumentar la trazabilidad de los productos libre de deforestacion en el marco de la normativa europea que entra en vigencia."</span></div></div>
-            <div class="tz-quote"><span class="tz-q">"It will enhance the analysis of subnational regions, as well as updated data, for incorporation into the information necessary for planning and public policy."</span><div class="tz-cite">— National Planning Agency <span class="tz-tip">Cita Original</span></div><div class="tz-extra"><span class="oq">"Mejorará el análisis de regiones subnacionales, así como datos actualizados para incorporar a información necesaria para la planificación y políticas públicas."</span></div></div>
-            <div class="tz-quote"><span class="tz-q">"We use field boundaries as the basis for generating agricultural metrics and regional-scale analyses."</span><div class="tz-cite">— Agricultural Service Provider</div></div>
-            <div class="tz-quote"><span class="tz-q">"The field boundary data helps by accurately mapping and monitoring crop areas, enabling better planning, resource allocation, and decision-making."</span><div class="tz-cite">— Agricultural Development NGO</div></div>
-            <div class="tz-quote"><span class="tz-q">"Allows us to identify where trees could be added without negatively impacting agricultural production (and thereby causing leakage)."</span><div class="tz-cite">— Environmental NGO</div></div>
-            <div class="tz-quote"><span class="tz-q">"We use property boundary data in Brazil to match with animal sanitation records and track deforestation upstream in the cattle supply chain."</span><div class="tz-cite">— University</div></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="tnav-item" id="tnav-tg-scaling">
-        <button class="tnav-trigger">Scaling <span class="caret">▾</span></button>
-        <div class="tnav-dropdown" style="min-width:460px;max-width:560px;left:auto;right:0">
-          <div class="tnav-pin-hint">click to pin · click again to dismiss</div>
-          <div class="tnav-drop-content tnav-drop-scroll">
-            <div class="tnav-drop-head">Scaling with Fields</div>
-            <p class="tz-intro">We conducted an early data access program and got feedback from end users. They described how manual methods limit their work.</p>
-            <div class="tz-quote"><span class="tz-q">"We have a database of boundaries collected through a variety of means but need to scale to more areas."</span><div class="tz-cite">— Agricultural Analytics Company <span class="tz-tip">Importance</span></div><div class="tz-extra">There is need for field boundaries for <b>scale</b>.</div></div>
-            <div class="tz-quote"><span class="tz-q">"Staff time for smallholder parcel mapping is considerable. Recently we mapped roughly 700 ha of rubber plantations. This required 3 teams of 5 people each, working over 1 month. This creates well-defined plot boundaries but is a significant commitment per project."</span><div class="tz-cite">— Carbon Capture Company <span class="tz-tip">Importance</span></div><div class="tz-extra">Automated field boundaries can <b>significantly reduce costs</b>. 20 of 70 early data access participants reported using staff time to collect field boundaries by annotation or site visits.</div></div>
-            <div class="tz-quote"><span class="tz-q">"Field boundary data either comes from the local land manager or hired consultants."</span><div class="tz-cite">— NGO <span class="tz-tip">Importance</span></div><div class="tz-extra">Automated field boundaries can reduce the need for costly field visits or manual annotation.</div></div>
-            <div class="tz-quote"><span class="tz-q">"For regional analyses, we use Varda’s Global Field ID product. However, we have identified several inconsistencies and data gaps in the regions where we operate. We have considered developing our own model for field boundary delineation, but we currently face time and team constraints."</span><div class="tz-cite">— Service Provider <span class="tz-tip">Importance</span></div><div class="tz-extra">Automated field boundaries from a single model version can give a <b>consistent output</b> for comparative analysis and <b>fill data gaps</b>.</div></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="tnav-item" id="tnav-tg-feedback">
-        <button class="tnav-trigger">Feedback <span class="caret">▾</span></button>
-        <div class="tnav-dropdown" style="min-width:460px;max-width:560px;left:auto;right:0">
-          <div class="tnav-pin-hint">click to pin · click again to dismiss</div>
-          <div class="tnav-drop-content tnav-drop-scroll">
-            <div class="tnav-drop-head">Trazo Feedback</div>
-            <p class="tz-intro">Feedback from end users on the Trazo data products themselves.</p>
-            <div class="tz-quote"><span class="tz-q">"The data strongly aligns with our expectations. The precision, spatial coherence, and compatibility with national land-use datasets make it highly useful for monitoring, planning, and agricultural intelligence. It supports ongoing workflows related to production estimation, land-use classification, and farm-level analysis. The delineation accuracy is remarkably high, especially in the Chaco region, where the boundaries aligned very well with our land-use planning layers. The outputs were more consistent and detailed than anticipated for such a heterogeneous landscape."</span><div class="tz-cite">— Geotechnical Specialist, <a href="https://mundoagropecuario.com.py/" target="_blank" rel="noopener">Mundo Agropecuario</a></div></div>
-            <div class="tz-quote"><span class="tz-q">"The spatial patterns and visual cues in the data were helpful because they provide a basis for identifying field boundaries, which could become even more useful as the model improves."</span><div class="tz-cite">— GIS Analyst, Agricultural Service Provider</div></div>
-            <div class="tz-quote"><span class="tz-q">"Las parcelas quedan muy bien delineadas a partir de cierto tamaño ... Los datos ajustan mejor a sistemas agricolas o sistemas ganaderos en pasturas puras sin arboles.  Pero tienen problema para detectar los contornos de las parcelas silvopastoriles o silvicolas puros (cultivos de arboles)."</span><div class="tz-cite">— Investigator, National Agricultural Technical Institute</div></div>
-            <div class="tz-quote"><span class="tz-q">"Most farms were identified so the layer would be very useful for aggregated agricultural area measurements."</span><div class="tz-cite">— Senior Data Scientist, Private sector / Business</div></div>
-            <div class="tz-quote"><span class="tz-q">"The dataset was generally very clear. In a few highly fragmented areas, small-holder plot boundaries were slightly harder to interpret, but this is expected and understandable given the inherent landscape complexity."</span><div class="tz-cite">— Geotechnical Specialist, <a href="https://mundoagropecuario.com.py/" target="_blank" rel="noopener">Mundo Agropecuario</a></div></div>
-            <div class="tz-quote"><span class="tz-q">"The model’s data performance was generally in line with what I expected. More specifically, I expected a high-quality result but anticipated that complex areas (for example, fields that differ from the average in the Chaco region with different textures, diverse geometries, color, etc.) would be challenging, which was largely the case. Our organization is interested in accurate and up-to-date data on agricultural and livestock plots, both for monitoring deforestation and for tracking productivity, degradation status, and the implementation of sustainable practices in these areas. The data format aligns perfectly with what we typically use and prefer, and the spatial resolution is high.<br><br>These initial datasets demonstrated the quality that can be achieved with this methodology and align well with the needs mentioned, with the only exception being temporal coverage, as we require the most up-to-date data possible. However, this is not a major concern since the datasets that will be published next year will enable us to generate this type of information as frequently as needed.<br><br>It is also worth noting that we are highly interested in differentiating between crop types, and the segmentation models and training samples that will be shared next year will allow us to customize the model to better meet this need."</span><div class="tz-cite">— GIS Specialist, Major Bank Investing in Sustainable Agriculture</div></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="tnav-sep-pipe"></div>
-    </div>
-
-    <!-- CITE (standalone, flush right end) -->
-    <div class="tnav-item" id="tnav-cite">
-      <button class="tnav-trigger">Cite <span class="caret">▾</span></button>
-      <div class="tnav-dropdown" style="min-width:480px;left:auto;right:0">
-        <div class="tnav-pin-hint">click to pin · click again to dismiss</div>
-        <div class="tnav-drop-content">
-          <div class="tnav-drop-head">05 · Citation</div>
-          <p class="tnav-drop-text">Cite both the Trazo technical note (Grupp et al. 2026) and the original Fields of the World benchmark (Kerner et al. 2025).</p>
-          <div class="tnav-citation">@techreport{grupp2026trazo,
-  title  = {Field Boundaries of South America},
-  author = {Grupp, Tristan and Elmustafa, Amna and Zvonkov, Ivan
-            and Tarano, Ana M. and Jupiter, Jaelah and Esipova, Elena
-            and Blevins, Hunter and Nguyen, Catlynh
-            and Tenorio Fenton, Sofia and Winchester, Caroline
-            and Stolle, Fred and Rognstad, Rhiannon L. and Kerner, Hannah},
-  year   = {2026},
-  month  = apr,
-  institution = {World Resources Institute and Arizona State University},
-  url    = {https://github.com/wri/trazo}
-}
-
-@inproceedings{kerner2025ftw,
-  title  = {Fields of The World: A Machine Learning Benchmark Dataset
-            For Global Agricultural Field Boundary Segmentation},
-  author = {Kerner, Hannah and Chaudhari, Snehal and Ghosh, Aninda
-            and Robinson, Caleb and Ahmad, Adeel and Choi, Eunjung
-            and Jacobs, Nathan and Holmes, Christopher and Mohr, Matthias
-            and Dodhia, Rahul and Lavista Ferres, Juan M. and Marcus, Jennifer},
-  booktitle = {Proceedings of the AAAI Conference on Artificial Intelligence},
-  volume = {39},
-  number = {27},
-  pages  = {28151--28159},
-  year   = {2025},
-  doi    = {10.1609/aaai.v39i27.35034}
-}</div>
-        </div>
-      </div>
-    </div>
-
-  </nav>
-  <a id="theme-toggle" href="#" onclick="window.TZ.toggle();return false;" title="Toggle light / dark theme">Dark ◗</a>
+<div id="landing-cta">
+  <div class="lc-title">Trazo</div>
+  <div class="lc-sub">Mato Grosso · 2024 field boundaries</div>
+  <a class="lc-btn lc-btn-primary" href="map.html">View larger map <span>→</span></a>
+  <a class="lc-btn" href="https://source.coop/tristangruppwri/trazofields" target="_blank" rel="noopener">Access field boundaries for 2024 <span>→</span></a>
 </div>
+
 
 <div id="header">mapv6 — Mato Grosso 2024<span>mbmode24 · local file</span></div>
 <div id="legend"><h3>Crop Type</h3><div class="lsub">mode value of Mapbiomas 2024</div></div>
 <div id="zbadge">z<span id="zval">—</span></div>
 
 <!-- ── TRAZO INFO PANEL ────────────────────────────────────────────────────── -->
-<div id="info-panel">
 
-  <!-- TEASER: always visible -->
-  <div id="panel-teaser">
-    <h1>Trazo</h1>
-    <div id="lang-switcher">
-      <button class="lang-btn active" data-lang="en">EN</button>
-      <span class="lang-sep">|</span>
-      <button class="lang-btn" data-lang="es">ESP</button>
-      <span class="lang-sep">|</span>
-      <button class="lang-btn" data-lang="pt">PT</button>
-    </div>
-    <div class="teaser-text" id="teaser-en">
-      <p><strong>Trazo generates field boundaries across South America from satellite imagery — revealing how agricultural landscapes change over time.</strong></p>
-    </div>
-    <div class="teaser-text" id="teaser-es" style="display:none">
-      <p><strong>Trazo genera límites de campos en toda América del Sur a partir de imágenes satelitales, revelando cómo cambian los paisajes agrícolas a lo largo del tiempo.</strong></p>
-    </div>
-    <div class="teaser-text" id="teaser-pt" style="display:none">
-      <p><strong>O Trazo gera limites de campos em toda a América do Sul a partir de imagens de satélite, revelando como as paisagens agrícolas mudam ao longo do tempo.</strong></p>
-    </div>
-  </div>
-
-  <!-- EXPANDED BODY: shown on hover / pin -->
-  <div id="panel-body">
-
-  <!-- ── ENGLISH ── -->
-  <div class="lang-content" id="lang-en">
-    <p>Trazo is the Spanish word for brushstroke, from the verb <em>trazar</em>; to trace, to draw, and to plot. By tracing fields by hand in satellite imagery, we can choose the most powerful field training data for creating robust, generalizable field boundary detection models. Each sketched field in our dataset adds knowledge about the wide diversity of agricultural systems in South America. These sketches teach models the culture of agriculture and how landscapes differ.</p>
-
-    <p>Trazo echoes the English word &ldquo;trace&rdquo;: to follow a path, uncover origins and make hidden connections legible. Trazo is both about creating powerful, diverse training data and the aim of tracing commodities through the supply chain, so that agriculture can be monitored for deforestation.</p>
-
-    <p>Visualized on this map are fields generated by the Trazo2 model from 2024 in Mato Grosso, Brazil. Each field is tagged with the mode Mapbiomas land cover value.</p>
-
-    <p>Read the technical note, <a href="">&ldquo;Field Boundaries of South America&rdquo;</a> to learn about Trazo.</p>
-
-    <p>Trazo includes <a href="">training data</a>, <a href="">model checkpoints produced from the training data</a>, and <a href="">field boundaries produced by Trazo models</a>.</p>
-
-    <p>The Github for Trazo can be found <a href="https://github.com/wri/trazo/">here</a> and the FTW repository can be found <a href="https://github.com/fieldsoftheworld/">here</a>.</p>
-
-    <div class="panel-divider"></div>
-
-    <p class="collab-block">This dataset was produced as part of a collaboration with <a href="https://www.wri.org">World Resources Institute (WRI)</a> and <a href="https://www.asu.edu">Arizona State University</a> with support from the <a href="https://landcarbonlab.org">Land and Carbon Lab</a>. This work was funded through a <a href="https://walmart.org">Walmart Foundation</a> grant. Trazo is a direct extension of <a href="https://fieldsofthe.world/">Fields of The World</a>.</p>
-  </div>
-
-  <!-- ── ESPAÑOL ── -->
-  <div class="lang-content" id="lang-es" style="display:none">
-    <p>Trazo es la palabra en español para «pincelada», derivada del verbo <em>trazar</em>: delinear, dibujar y planificar. Al trazar campos manualmente sobre imágenes satelitales, podemos seleccionar los datos de entrenamiento más potentes para crear modelos robustos y generalizables de detección de límites de campos. Cada campo delineado en nuestro conjunto de datos aporta conocimiento sobre la amplia diversidad de sistemas agrícolas en América del Sur. Estos trazos enseñan a los modelos la cultura de la agricultura y cómo difieren los paisajes.</p>
-
-    <p>Trazo evoca la palabra inglesa <em>trace</em> (trazar): seguir un camino, descubrir orígenes y hacer legibles las conexiones ocultas. Trazo trata, por un lado, de la creación de datos de entrenamiento potentes y diversos y, por otro, del objetivo de rastrear las materias primas a lo largo de la cadena de suministro, de modo que la actividad agrícola pueda ser monitoreada para detectar la deforestación.</p>
-
-    <p>En este mapa se visualizan los campos generados por el modelo Trazo2 en 2024, en Mato Grosso, Brasil. Cada campo está etiquetado con el valor modal de cobertura del suelo según MapBiomas.</p>
-
-    <p>Lea la nota técnica <a href="">«Field Boundaries of South America» (Límites de campos de América del Sur)</a> para obtener más información sobre Trazo.</p>
-
-    <p>Trazo incluye <a href="">datos de entrenamiento</a>, <a href="">puntos de control del modelo generados a partir de dichos datos</a> y <a href="">los límites de campos producidos por los modelos Trazo</a>.</p>
-
-    <p>El repositorio de GitHub para Trazo se puede encontrar <a href="https://github.com/wri/trazo/">aquí</a> y el repositorio de FTW se puede encontrar <a href="https://github.com/fieldsoftheworld/">aquí</a>.</p>
-
-    <div class="panel-divider"></div>
-
-    <p class="collab-block">Este conjunto de datos se generó como parte de una colaboración con el <a href="https://www.wri.org">World Resources Institute (WRI)</a> y la <a href="https://www.asu.edu">Universidad Estatal de Arizona (Arizona State University)</a>, con el apoyo del <a href="https://landcarbonlab.org">Land and Carbon Lab</a>. Este trabajo fue financiado mediante una subvención de la <a href="https://walmart.org">Walmart Foundation</a>. Trazo constituye una extensión directa del proyecto <a href="https://fieldsofthe.world/"><em>Fields of The World</em></a>.</p>
-  </div>
-
-  <!-- ── PORTUGUÊS ── -->
-  <div class="lang-content" id="lang-pt" style="display:none">
-    <p>Trazo é a palavra em espanhol para pincelada, derivada do verbo <em>trazar</em> — traçar, desenhar e delinear. Ao traçar manualmente os limites dos campos em imagens de satélite, podemos selecionar os dados de treinamento mais eficazes para a criação de modelos robustos e generalizáveis de detecção de limites de campos agrícolas. Cada campo delineado em nosso conjunto de dados agrega conhecimento sobre a vasta diversidade de sistemas agrícolas na América do Sul. Esses delineamentos ensinam aos modelos a cultura da agricultura e como as paisagens se diferenciam.</p>
-
-    <p>Trazo evoca a palavra inglesa <em>trace</em>: seguir um caminho, desvendar origens e tornar visíveis conexões ocultas. O conceito de Trazo abrange tanto a criação de dados de treinamento poderosos e diversificados quanto o objetivo de rastrear <em>commodities</em> ao longo da cadeia de suprimentos, permitindo, assim, o monitoramento da agricultura em relação ao desmatamento.</p>
-
-    <p>Neste mapa, estão visualizados os campos gerados pelo modelo Trazo2 em 2024, no estado de Mato Grosso, Brasil. Cada campo está identificado com o valor modal de cobertura do solo do MapBiomas.</p>
-
-    <p>Leia a nota técnica <a href="">"Field Boundaries of South America" (Limites de Campos da América do Sul)</a> para saber mais sobre o Trazo.</p>
-
-    <p>O Trazo inclui <a href="">dados de treinamento</a>, <a href=""><em>checkpoints</em> do modelo gerados a partir desses dados</a> e <a href="">os limites dos campos produzidos pelos modelos Trazo</a>.</p>
-
-    <p>O repositório do GitHub para o Trazo pode ser encontrado <a href="https://github.com/wri/trazo/">aqui</a> e o repositório do FTW pode ser encontrado <a href="https://github.com/fieldsoftheworld/">aqui</a>.</p>
-
-    <div class="panel-divider"></div>
-
-    <p class="collab-block">Este conjunto de dados foi produzido como parte de uma colaboração com o <a href="https://www.wri.org">World Resources Institute (WRI)</a> e a <a href="https://www.asu.edu">Arizona State University</a>, com o apoio do <a href="https://landcarbonlab.org">Land and Carbon Lab</a>. Este trabalho foi financiado por meio de um subsídio da <a href="https://walmart.org">Walmart Foundation</a>. O Trazo é uma extensão direta do projeto <a href="https://fieldsofthe.world/"><em>Fields of The World</em></a>.</p>
-  </div>
-  </div><!-- /panel-body -->
-  <div id="panel-pin-hint">click to pin ▾</div>
-</div><!-- /info-panel -->
 
 <script>
 // ── CROP STYLES ──────────────────────────────────────────────────────────────
@@ -1581,8 +1234,8 @@ async function loadFile() {
     // Show UI
     // header hidden (removed from UI)
     document.getElementById("legend").style.display = "block";
-    document.getElementById("zbadge").style.display = "block";
-    document.getElementById("info-panel").style.display = "block";
+    
+    
     buildLegend();
 
     // Zoom badge
@@ -1705,7 +1358,7 @@ loadFile();
 (function() {
   const seq = [
     'tnav-coverage','tnav-training','tnav-models','tnav-pipeline','tnav-use',
-    'tnav-tg-barriers','tnav-tg-using','tnav-tg-scaling','tnav-tg-feedback',
+    'tnav-uc-eudr','tnav-uc-emissions','tnav-uc-landuse','tnav-uc-food',
     'tnav-cite'
   ];
   let idx = 0;
@@ -1727,12 +1380,364 @@ loadFile();
 
 </script>
   <div id="map-attribution">Trazo by WRI and ASU</div>
-  
+  <!-- scroll-down indicator -->
+  <a id="scroll-down-arrow" href="#index-content" aria-label="Scroll for more" onclick="document.getElementById('index-content').scrollIntoView({behavior:'smooth'});return false;">
+    <svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>
+    <svg viewBox="0 0 24 24" class="chev2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+  </a>
 </div><!-- /ui-layer -->
 
 </div><!-- /map-screen -->
 
+<div id="hero-spacer"></div>
 
+<div id="index-content">
+  <!-- ═══ MASTHEAD ═══ -->
+  <header class="masthead">
+    <div class="wrap masthead-inner">
+      <a class="mark" href="#" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">
+        <span class="dot"></span><span>Trazo</span>
+      </a>
+      <nav class="primary">
+        <a href="map.html">Map</a>
+        <a href="#coverage">Coverage</a>
+        <a href="#models">Models</a>
+        <a href="#pipeline-section">Pipeline</a>
+        <a href="#use">Use</a>
+        <a href="#cite">Cite</a>
+        <a class="nav-cta" href="https://github.com/wri/trazo">GitHub →</a>
+        <button class="theme-toggle-idx" onclick="window.TZ&&window.TZ.toggle();return false;" title="Toggle light / dark theme">Theme ◑</button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ═══ HERO (text only — full map lives above) ═══ -->
+  <section class="hero" id="top">
+    <div class="wrap">
+      <div class="hero-grid">
+        <div>
+          <h1 class="hero-title">
+            Tracing fields,
+            <em>tracing commodities</em>
+          </h1>
+        </div>
+        <div>
+          <p class="hero-lede">
+            Trazo is a suite of tools for field boundary segmentation,
+            initially developed for South America’s rich landscapes. It
+            includes a diverse training dataset, test sets, four model
+            checkpoints, and an inference pipeline for delineating
+            agricultural field boundaries across South America. The first
+            release includes <em>10,935,129 field boundaries</em> and extends
+            <a href="https://github.com/fieldsoftheworld">Fields of the World</a>.
+          </p>
+          <dl class="hero-meta">
+            <div><dt>Training annotations</dt><dd>46,908 fields</dd></div>
+            <div><dt>Test annotations</dt><dd>7,453 fields</dd></div>
+            <div><dt>Boundaries released</dt><dd>10,935,129</dd></div>
+          </dl>
+          <div class="cta-row">
+            <a href="https://source.coop/tristangruppwri/trazofields" class="btn primary" target="_blank" rel="noopener">Access field boundaries (2024) <span class="arr">→</span></a>
+            <a href="map.html" class="btn">View interactive map <span class="arr">→</span></a>
+            <a href="https://github.com/wri/trazo" class="btn">Open the repo <span class="arr">→</span></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ COVERAGE ═══ -->
+  <section class="section" id="coverage">
+    <div class="wrap">
+      <h2 class="section-num">01 · Coverage</h2>
+      <p class="section-lead">The original benchmark included 1,854 field boundaries in South America. Trazo adds <em>46,908</em>.</p>
+      <p class="eyebrow" style="margin-bottom: 24px;">46,908 expert annotated fields</p>
+      <p class="section-intro">
+        The Fields of the World benchmark included 1,854 field boundaries
+        in South America, about 0.11% of its global corpus, drawn from a
+        single site in Bahia, Brazil. Trazo extends that coverage to 17
+        soy-producing ecoregions, including the Andean foothills, the
+        Chiquitania, the Pampas, Amazonian moist forests, the Chaco, and
+        the Cerrado.
+      </p>
+    </div>
+  </section>
+
+  <!-- ═══ MODELS ═══ -->
+  <section class="section" id="models">
+    <div class="wrap">
+      <h2 class="section-num">02 · Models</h2>
+      <p class="section-intro">
+        Trazo provides four model checkpoints, each trained on a different
+        combination of FTW and South American data for different use cases.
+        The right checkpoint depends on the region, the agricultural system,
+        and whether pixel-level or object-level accuracy matters more.
+      </p>
+
+      <div class="model-grid">
+
+        <a class="model-card" href="https://huggingface.co/worldresourcesinstitute/Trazo1" target="_blank" rel="noopener">
+          <div class="model-head">
+            <div class="model-name">Trazo1</div>
+            <div class="model-tag">Initial SA adaptation</div>
+          </div>
+          <div class="model-body">
+            <p class="model-desc">Best for large, uniform row-crop systems and boundary-sensitive tasks where subtle hard boundaries matter.</p>
+            <div class="model-headline">
+              <span class="headline-num">77.1%</span>
+              <span class="headline-lbl">SA soy pixel IoU</span>
+            </div>
+          </div>
+          <div class="model-foot-link">
+            <span>worldresourcesinstitute/Trazo1</span>
+            <span class="hf-tag">Hugging Face <span class="arr">↗</span></span>
+          </div>
+        </a>
+
+        <a class="model-card" href="https://huggingface.co/worldresourcesinstitute/TrazoSA" target="_blank" rel="noopener">
+          <div class="model-head">
+            <div class="model-name">TrazoSA</div>
+            <div class="model-tag">South America only</div>
+          </div>
+          <div class="model-body">
+            <p class="model-desc">Tuned for South American agricultural systems, with strong pixel and object precision.</p>
+            <div class="model-headline">
+              <span class="headline-num">93.1%</span>
+              <span class="headline-lbl">SA soy pixel precision</span>
+            </div>
+          </div>
+          <div class="model-foot-link">
+            <span>worldresourcesinstitute/TrazoSA</span>
+            <span class="hf-tag">Hugging Face <span class="arr">↗</span></span>
+          </div>
+        </a>
+
+        <a class="model-card" href="https://huggingface.co/worldresourcesinstitute/Trazo2" target="_blank" rel="noopener">
+          <div class="model-head">
+            <div class="model-name">Trazo2</div>
+            <div class="model-tag">Global + regional</div>
+          </div>
+          <div class="model-body">
+            <p class="model-desc">A balanced default for mixed deployments, combining global FTW coverage with the 17-ecoregion regional data.</p>
+            <div class="model-headline">
+              <span class="headline-num">76.3%</span>
+              <span class="headline-lbl">Mato Grosso pixel IoU</span>
+            </div>
+          </div>
+          <div class="model-foot-link">
+            <span>worldresourcesinstitute/Trazo2</span>
+            <span class="hf-tag">Hugging Face <span class="arr">↗</span></span>
+          </div>
+        </a>
+
+        <a class="model-card model-card-featured" href="https://huggingface.co/worldresourcesinstitute/Trazo3" target="_blank" rel="noopener">
+          <div class="model-head">
+            <div class="model-name">Trazo3</div>
+            <div class="model-tag">Active learning &middot; recommended</div>
+          </div>
+          <div class="model-body">
+            <p class="model-desc">Tuned for Mato Grosso and complex landscapes, with strong object-level recall. Works with <code>median()</code> composite imagery.</p>
+            <div class="model-headline">
+              <span class="headline-num">79.2%</span>
+              <span class="headline-lbl">Mato Grosso pixel IoU</span>
+            </div>
+          </div>
+          <div class="model-foot-link">
+            <span>worldresourcesinstitute/Trazo3</span>
+            <span class="hf-tag">Hugging Face <span class="arr">↗</span></span>
+          </div>
+        </a>
+
+      </div>
+
+      <p class="model-foot">
+        All four checkpoints share the same U-Net architecture with an
+        EfficientNet-B3 backbone, inherited from
+        <a href="https://github.com/fieldsoftheworld">FTW</a>. For
+        fine-tuning to new regions, see the
+        <a href="https://github.com/wri/trazo#readme">repository README</a>.
+      </p>
+    </div>
+  </section>
+
+  <!-- ═══ PIPELINE ═══ -->
+  <section class="section" id="pipeline-section">
+    <div class="wrap">
+      <h2 class="section-num">03 · Pipeline</h2>
+      <p class="section-intro">
+        A sequence of composable utilities for moving from raw imagery to
+        field-boundary predictions. Use the whole pipeline end-to-end, or
+        borrow individual steps. Full reference in the
+        <a href="https://github.com/wri/trazo#readme">repository README</a>.
+      </p>
+
+      <div class="pipeline">
+        <a class="step" href="https://github.com/wri/trazo#step-1-create-grids-and-data-windows-from-grids">
+          <div class="num">01</div>
+          <h4>Create data</h4>
+          <p>AOI grids and 4-band Sentinel-2 chips at planting and harvest windows.</p>
+        </a>
+        <a class="step" href="https://github.com/wri/trazo#step-2-data-preparation">
+          <div class="num">02</div>
+          <h4>Prepare data</h4>
+          <p>Pair temporal stacks, normalize, build instance and semantic masks.</p>
+        </a>
+        <a class="step" href="https://github.com/wri/trazo/blob/main/src/trazo/pt3_finetune/Cerrado_Fine_Tuning.ipynb">
+          <div class="num">03</div>
+          <h4>Sample &amp; fine-tune</h4>
+          <p>Active learning, temporal diversity, geographic balancing.</p>
+        </a>
+        <a class="step" href="https://github.com/wri/trazo#step-4-model-training">
+          <div class="num">04</div>
+          <h4>Train</h4>
+          <p>U-Net, UperNet, DeepLabV3+, FCSiam, with twelve loss functions.</p>
+        </a>
+        <a class="step" href="https://github.com/wri/trazo#step-5-select-per-tile-pairs-and-run-inference">
+          <div class="num">05</div>
+          <h4>Infer at scale</h4>
+          <p>Select the best Sentinel-2 scenes per tile and run multi-checkpoint inference at scale.</p>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ RESOURCES / USE ═══ -->
+  <section class="section" id="use">
+    <div class="wrap">
+      <h2 class="section-num">04 · Use</h2>
+      <p class="section-intro">
+        Five open artifacts under CC-BY-4.0, covering the technical
+        foundation through to the 10.9-million-field release for the
+        2023–2024 planting season.
+      </p>
+
+      <div class="resources">
+        <a href="#" class="res-card" data-pending="technote">
+          <span class="res-kind">Technical note</span>
+          <span class="res-title">Field Boundaries of South America</span>
+          <span class="res-foot"><span>Grupp et al. · WRI · 2026</span><span class="res-arrow">↗</span></span>
+        </a>
+        <a href="https://source.coop/tristangruppwri/trazotraining" class="res-card" target="_blank" rel="noopener">
+          <span class="res-kind">Dataset</span>
+          <span class="res-title">46,908 training + 7,453 test field-boundary annotations across 17 ecoregions</span>
+          <span class="res-foot"><span>Source Cooperative</span><span class="res-arrow">↗</span></span>
+        </a>
+        <a href="https://huggingface.co/collections/worldresourcesinstitute/trazo-models" class="res-card" target="_blank" rel="noopener">
+          <span class="res-kind">Models</span>
+          <span class="res-title">Four checkpoints: Trazo1, TrazoSA, Trazo2, Trazo3</span>
+          <span class="res-foot"><span>Hugging Face</span><span class="res-arrow">↗</span></span>
+        </a>
+        <a href="https://github.com/wri/trazo" class="res-card">
+          <span class="res-kind">Pipeline</span>
+          <span class="res-title">Inference and fine-tuning pipeline configured by MGRS tile ID</span>
+          <span class="res-foot"><span>wri/trazo</span><span class="res-arrow">↗</span></span>
+        </a>
+        <a href="https://source.coop/tristangruppwri/trazofields" class="res-card" target="_blank" rel="noopener">
+          <span class="res-kind">Field boundaries</span>
+          <span class="res-title">10,935,129 AI-generated boundaries across South America</span>
+          <span class="res-foot"><span>Source Cooperative</span><span class="res-arrow">↗</span></span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ CITATION ═══ -->
+  <section class="section" id="cite">
+    <div class="wrap">
+      <h2 class="section-num">05 · Citation</h2>
+      <p class="section-intro">
+        Cite both the Trazo technical note (Grupp et al. 2026) and the original
+        Fields of the World benchmark (Kerner et al. 2025).
+      </p>
+
+      <details class="cite-toggle">
+        <summary>
+          <span>Show BibTeX</span>
+          <span class="cite-arrow">↓</span>
+        </summary>
+        <div class="citation">@techreport{grupp2026trazo,
+  title  = {Field Boundaries of South America},
+  author = {Grupp, Tristan and Elmustafa, Amna and Zvonkov, Ivan
+            and Tarano, Ana M. and Jupiter, Jaelah and Esipova, Elena
+            and Blevins, Hunter and Nguyen, Catlynh
+            and Tenorio Fenton, Sofia and Winchester, Caroline
+            and Stolle, Fred and Rognstad, Rhiannon L. and Kerner, Hannah},
+  year   = {2026},
+  month  = apr,
+  institution = {World Resources Institute and Arizona State University},
+  url    = {https://github.com/wri/trazo}
+}
+
+@inproceedings{kerner2025ftw,
+  title  = {Fields of The World: A Machine Learning Benchmark Dataset
+            For Global Agricultural Field Boundary Segmentation},
+  author = {Kerner, Hannah and Chaudhari, Snehal and Ghosh, Aninda
+            and Robinson, Caleb and Ahmad, Adeel and Choi, Eunjung
+            and Jacobs, Nathan and Holmes, Christopher and Mohr, Matthias
+            and Dodhia, Rahul and Lavista Ferres, Juan M. and Marcus, Jennifer},
+  booktitle = {Proceedings of the AAAI Conference on Artificial Intelligence},
+  volume = {39},
+  number = {27},
+  pages  = {28151--28159},
+  year   = {2025},
+  doi    = {10.1609/aaai.v39i27.35034}
+}</div>
+      </details>
+    </div>
+  </section>
+
+  <!-- ═══ FOOTER ═══ -->
+  <footer>
+    <div class="wrap">
+      <div class="inner">
+        <div>
+          <div class="footer-brand-line"><span class="dot"></span>Trazo</div>
+          <p>
+            A framework for tracing fields and tracing commodities. A direct
+            extension of <a href="https://fieldsofthe.world/">Fields of the World</a>,
+            produced with WRI and the Kerner Lab at Arizona State University.
+          </p>
+        </div>
+
+        <div>
+          <h6>Project</h6>
+          <ul>
+            <li><a href="https://github.com/wri/trazo">GitHub repo</a></li>
+            <li><a href="map.html">Trazo map</a></li>
+            <li><a href="#pipeline-section">Pipeline</a></li>
+            <li><a href="#cite">Cite</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h6>Related</h6>
+          <ul>
+            <li><a href="https://github.com/fieldsoftheworld">Fields of the World</a></li>
+            <li><a href="https://fieldsofthe.world/">fieldsofthe.world</a></li>
+            <li><a href="https://www.wri.org/initiatives/land-carbon-lab">Land &amp; Carbon Lab</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h6>Partners</h6>
+          <ul>
+            <li><a href="https://www.wri.org">WRI</a></li>
+            <li><a href="https://www.asu.edu">Arizona State</a></li>
+            <li><a href="https://landcarbonlab.org">Land &amp; Carbon Lab</a></li>
+            <li><a href="https://taylorgeospatial.org">Taylor Geospatial Engine</a></li>
+            <li><a href="https://www.wri.org/data">WRI Data Lab</a></li>
+            <li><a href="https://walmart.org">Walmart Foundation</a></li>
+          </ul>
+        </div>
+
+        <div class="small" style="grid-column: 1 / -1;">
+          <span>© World Resources Institute &amp; Kerner Lab at ASU · Released under CC-BY-4.0 where applicable</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+</div><!-- /index-content -->
 
 <script>
 /* Light / dark theme controller (API-compatible with the main app) */
@@ -1755,179 +1760,23 @@ window.TZ = (function(){
 })();
 </script>
 
+
+
 <script>
-/* ── Release 1 floating radial-orbital selector (full content + links) ── */
+/* PAGE 1 (map) scrolls away on its own now that it is a real block.
+   We only fade the down-arrow as the reader begins to scroll. */
 (function(){
-  var ITEMS = [
-    { id:1, title:"Coverage", tag:"01 \u00b7 Coverage", icon:"coverage", related:[2,3,5],
-      html:"<em>10,935,129</em> AI-generated field boundaries released across the following geographies:",
-      facts:[
-        { label:"Brazil",    detail:"Mato Grosso, Mato Grosso do Sul, Rio Grande do Sul, Par\u00e1, Paran\u00e1, Piau\u00ed, Tocantins, Goi\u00e1s, and S\u00e3o Paulo" },
-        { label:"Paraguay",  detail:"" },
-        { label:"Argentina", detail:"Chaco ecoregion and C\u00f3rdoba" },
-        { label:"Bolivia",   detail:"" }
-      ] },
-    { id:2, title:"Training Data", tag:"Training Data", icon:"training", related:[1,3,4],
-      html:"The original Fields of the World benchmark included 1,854 field boundaries in South America (about 0.11% of its global corpus) from a single site in Bahia, Brazil. Trazo extends the training data to <em>17 soy-producing ecoregions</em>, including the Andean foothills, the Chiquitania, the Pampas, Amazonian moist forests, the Chaco, and the Cerrado.<br><br><em>46,908</em> expert-annotated training fields \u00b7 <em>7,453</em> test fields" },
-    { id:3, title:"Models", tag:"02 \u00b7 Models", icon:"models", related:[2,4,5],
-      html:"Four checkpoints share a U-Net architecture with an EfficientNet-B3 backbone. The right checkpoint depends on region, agricultural system, and whether pixel-level or object-level accuracy matters more.",
-      links:[
-        { kind:"Trazo1",  title:"Initial SA adaptation \u00b7 77.1% SA soy pixel IoU",        href:"HFTrazo1" },
-        { kind:"TrazoSA", title:"South America only \u00b7 93.1% SA soy pixel precision",      href:"HFTrazoSA" },
-        { kind:"Trazo2",  title:"Global + regional \u00b7 76.3% Mato Grosso pixel IoU",        href:"HFTrazo2" },
-        { kind:"Trazo3",  title:"Active learning \u00b7 recommended \u00b7 79.2% Mato Grosso pixel IoU", href:"HFTrazo3" },
-        { kind:"All",     title:"All checkpoints on Hugging Face",                               href:"https://huggingface.co/collections/worldresourcesinstitute/trazo-models" }
-      ] },
-    { id:4, title:"Pipeline", tag:"03 \u00b7 Pipeline", icon:"pipeline", related:[2,3,5],
-      html:"Composable utilities for moving from raw imagery to field-boundary predictions.",
-      links:[
-        { kind:"01 Create",  title:"AOI grids and 4-band Sentinel-2 chips at planting and harvest windows.", href:"GH#step-1-create-grids-and-data-windows-from-grids" },
-        { kind:"02 Prepare", title:"Pair temporal stacks, normalize, build instance and semantic masks.",   href:"GH#step-2-data-preparation" },
-        { kind:"03 Sample",  title:"Sample & fine-tune \u2014 active learning, temporal diversity, geographic balancing.", href:"GH/blob/main/src/trazo/pt3_finetune/Cerrado_Fine_Tuning.ipynb" },
-        { kind:"04 Train",   title:"U-Net, UperNet, DeepLabV3+, FCSiam, with twelve loss functions.",        href:"GH#step-4-model-training" },
-        { kind:"05 Infer",   title:"Select best Sentinel-2 scenes per tile and run multi-checkpoint inference at scale.", href:"GH#step-5-select-per-tile-pairs-and-run-inference" },
-        { kind:"Repo",       title:"Repository README",                                                       href:"GH#readme" }
-      ] },
-    { id:5, title:"Use", tag:"04 \u00b7 Use", icon:"use", related:[1,3,4],
-      html:"Five open artifacts under CC-BY-4.0, covering the technical foundation through to the 10.9-million-field release for the 2023\u20132024 planting season.",
-      links:[
-        { kind:"Tech note",  title:"Field Boundaries of South America \u2014 Grupp et al. \u00b7 WRI \u00b7 2026", href:"#" },
-        { kind:"Dataset",    title:"46,908 training + 7,453 test annotations across 17 ecoregions",            href:"https://source.coop/tristangruppwri/trazotraining" },
-        { kind:"Models",     title:"Four checkpoints: Trazo1, TrazoSA, Trazo2, Trazo3",                        href:"https://huggingface.co/collections/worldresourcesinstitute/trazo-models" },
-        { kind:"Pipeline",   title:"Inference and fine-tuning pipeline configured by MGRS tile ID",           href:"GH" },
-        { kind:"Boundaries", title:"10,935,129 AI-generated boundaries across South America",                 href:"https://source.coop/tristangruppwri/trazofields" }
-      ] }
-  ];
-  // expand href shorthands
-  var HF="https://huggingface.co/worldresourcesinstitute/", GH="https://github.com/wri/trazo";
-  ITEMS.forEach(function(it){ (it.links||[]).forEach(function(l){
-    l.href = l.href.replace(/^HF/, HF).replace(/^GH/, GH);
-  }); });
-
-  var ICONS = {
-    coverage:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18"/></svg>',
-    training:'<svg viewBox="0 0 24 24"><path d="M12 3 3 8l9 5 9-5-9-5zM3 13l9 5 9-5"/></svg>',
-    models:'<svg viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/></svg>',
-    pipeline:'<svg viewBox="0 0 24 24"><circle cx="5" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="19" cy="12" r="2"/><path d="M7 6h6a4 4 0 0 1 4 4M7 18h6a4 4 0 0 0 4-4"/></svg>',
-    use:'<svg viewBox="0 0 24 24"><path d="M21 8 12 3 3 8v8l9 5 9-5V8zM3 8l9 5 9-5M12 22v-9"/></svg>'
-  };
-
-  var RADIUS = 150, rotation = 0, autoRotate = true, targetRot = null, activeId = null, raf = null;
-  var wrap, stage, nodes = {};
-  function idx(id){ return ITEMS.findIndex(function(x){ return x.id === id; }); }
-  function item(id){ return ITEMS.find(function(x){ return x.id === id; }); }
-
-  function buildCard(it){
-    var card = document.createElement("div"); card.className = "tzo-card";
-    card.addEventListener("click", function(e){ e.stopPropagation(); });   // don't collapse on card interaction
-    var k = document.createElement("div"); k.className = "tzo-card-k"; k.textContent = it.tag; card.appendChild(k);
-    var b = document.createElement("div"); b.className = "tzo-card-b"; b.innerHTML = it.html; card.appendChild(b);
-    if (it.facts){
-      var f = document.createElement("div"); f.className = "tzo-facts";
-      it.facts.forEach(function(ft){
-        var r = document.createElement("div"); r.className = "tzo-fact";
-        var bb = document.createElement("b"); bb.textContent = ft.label; r.appendChild(bb);
-        if (ft.detail) r.appendChild(document.createTextNode(ft.detail));
-        f.appendChild(r);
-      });
-      card.appendChild(f);
-    }
-    if (it.links){
-      var l = document.createElement("div"); l.className = "tzo-links";
-      it.links.forEach(function(ln){
-        var a = document.createElement("a"); a.className = "tzo-link"; a.href = ln.href;
-        if (ln.href !== "#"){ a.target = "_blank"; a.rel = "noopener"; }
-        a.addEventListener("click", function(e){ e.stopPropagation(); });
-        var ks = document.createElement("span"); ks.className = "tzo-link-kind";  ks.textContent = ln.kind;
-        var ts = document.createElement("span"); ts.className = "tzo-link-title"; ts.textContent = ln.title;
-        var as = document.createElement("span"); as.className = "tzo-link-arr";   as.textContent = "\u2197";
-        a.appendChild(ks); a.appendChild(ts); a.appendChild(as); l.appendChild(a);
-      });
-      card.appendChild(l);
-    }
-    if (it.related && it.related.length){
-      var rel = document.createElement("div"); rel.className = "tzo-card-rel";
-      it.related.forEach(function(rid){
-        var ri = item(rid); if (!ri) return;
-        var btn = document.createElement("button"); btn.className = "tzo-rel"; btn.textContent = ri.title;
-        btn.addEventListener("click", function(e){ e.stopPropagation(); expand(rid); });
-        rel.appendChild(btn);
-      });
-      card.appendChild(rel);
-    }
-    return card;
+  var arrow = document.getElementById('scroll-down-arrow');
+  function onScroll(){
+    if (!arrow) return;
+    var vh = window.innerHeight || 1;
+    var y = window.scrollY || window.pageYOffset || 0;
+    arrow.style.opacity = (1 - Math.min(1, y/(vh*0.30))).toFixed(3);
   }
-
-  function build(){
-    wrap = document.createElement("div"); wrap.id = "tz-orbital";
-    var back = document.createElement("div"); back.className = "tzo-backdrop"; back.addEventListener("click", collapse);
-    wrap.appendChild(back);
-    stage = document.createElement("div"); stage.id = "tz-orbital-stage";
-    var ring = document.createElement("div"); ring.className = "tzo-orbit-ring"; stage.appendChild(ring);
-    var hub = document.createElement("div"); hub.className = "tzo-hub";
-    hub.innerHTML = '<div class="tzo-ring r1"></div><div class="tzo-ring r2"></div><div class="tzo-core"></div>';
-    stage.appendChild(hub);
-    var hl = document.createElement("div"); hl.className = "tzo-hub-label"; hl.textContent = "Release 1"; stage.appendChild(hl);
-    ITEMS.forEach(function(it){
-      var n = document.createElement("div"); n.className = "tzo-node";
-      var dot = document.createElement("div"); dot.className = "tzo-dot"; dot.innerHTML = ICONS[it.icon] || "";
-      var title = document.createElement("div"); title.className = "tzo-title"; title.textContent = it.title;
-      n.appendChild(dot); n.appendChild(title); n.appendChild(buildCard(it));
-      n.addEventListener("click", function(e){ e.stopPropagation(); (activeId === it.id) ? collapse() : expand(it.id); });
-      stage.appendChild(n); nodes[it.id] = n;
-    });
-    wrap.appendChild(stage); (document.getElementById('map-screen')||document.body).appendChild(wrap);
-  }
-
-  function layout(){
-    var total = ITEMS.length;
-    ITEMS.forEach(function(it, i){
-      var ang = ((i / total) * 360 + rotation) % 360, rad = ang * Math.PI / 180;
-      var x = RADIUS * Math.cos(rad), y = RADIUS * Math.sin(rad);
-      var z = Math.round(100 + 50 * Math.cos(rad));
-      var op = Math.max(0.45, Math.min(1, 0.45 + 0.55 * ((1 + Math.sin(rad)) / 2)));
-      var n = nodes[it.id], active = (activeId === it.id);
-      n.style.transform = "translate(" + x + "px," + y + "px)";
-      n.style.zIndex = active ? 300 : z;
-      n.style.opacity = active ? 1 : op;
-    });
-  }
-
-  function frame(){
-    if (autoRotate){ rotation = (rotation + 0.05) % 360; }     /* slow, gentle drift */
-    else if (targetRot != null){
-      var d = targetRot - rotation; rotation += d * 0.14;
-      if (Math.abs(d) < 0.2){ rotation = targetRot; targetRot = null; }
-    }
-    layout(); raf = requestAnimationFrame(frame);
-  }
-
-  function expand(id){
-    activeId = id; autoRotate = false; wrap.classList.add("expanded");
-    var base = (idx(id) / ITEMS.length) * 360, t = 0 - base;   /* settle active node at far right */
-    while (t - rotation > 180) t -= 360;
-    while (t - rotation < -180) t += 360;
-    targetRot = t;
-    var related = (item(id) || {}).related || [];
-    ITEMS.forEach(function(it){
-      nodes[it.id].classList.toggle("active", it.id === id);
-      nodes[it.id].classList.toggle("related", related.indexOf(it.id) >= 0);
-    });
-  }
-  function collapse(){
-    activeId = null; autoRotate = true; targetRot = null;
-    if (wrap) wrap.classList.remove("expanded");
-    Object.keys(nodes).forEach(function(k){ nodes[k].classList.remove("active", "related"); });
-  }
-  function init(){
-    build();
-    document.addEventListener("keydown", function(e){ if (e.key === "Escape") collapse(); });
-    raf = requestAnimationFrame(frame);
-  }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init); else init();
+  window.addEventListener('scroll', onScroll, {passive:true});
+  window.addEventListener('resize', onScroll);
+  onScroll();
 })();
 </script>
-
-
 </body>
 </html>
