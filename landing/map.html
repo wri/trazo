@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <script>document.documentElement.setAttribute("data-theme","light");</script>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Trazo — Interactive Map · Mato Grosso 2024</title>
+  <title>Trazo Interactive Map</title>
 
   <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -102,9 +102,17 @@
       pointer-events: auto;
     }
     .leaflet-tile      { background: transparent !important; }
-    .leaflet-control-zoom,
     .leaflet-control-scale,
     .leaflet-control-attribution { display: none !important; }
+    /* Zoom control — themed to match Trazo overlays */
+    .leaflet-control-zoom { border: none !important; box-shadow: 0 6px 24px rgba(0,0,0,0.4) !important; overflow: hidden; border-radius: 6px; }
+    .leaflet-control-zoom a {
+      background: var(--bg-overlay) !important; color: var(--text) !important;
+      border: 1px solid var(--border) !important;
+      width: 30px !important; height: 30px !important; line-height: 30px !important;
+      font-family: var(--font-header) !important; font-weight: 700;
+    }
+    .leaflet-control-zoom a:hover { background: rgba(240,171,0,0.16) !important; color: var(--gold) !important; }
 
     /* ── INFO PANEL ───────────────────────────────────────────────────────────── */
     #info-panel {
@@ -1538,21 +1546,23 @@ async function loadFile() {
     const map = L.map("map", {
       center: [-12.286425, -52.662142],
       zoom:   10,
-      minZoom: 10,
-      maxZoom: 10,
+      minZoom: 4,
+      maxZoom: 16,
       zoomControl: false,
       attributionControl: false,
-      scrollWheelZoom: false,
-      doubleClickZoom: false,
-      touchZoom: false,
-      boxZoom: false,
-      keyboard: false,
+      scrollWheelZoom: true,
+      doubleClickZoom: true,
+      touchZoom: true,
+      boxZoom: true,
+      keyboard: true,
       dragging: true,
       inertia: true,
       tap: true,
     });
     // Drag/explore stays enabled (incl. side-to-side touch-drag on mobile)
     map.dragging.enable();
+    // Zoom controls (buttons top-right; scroll / double-click / pinch also enabled)
+    L.control.zoom({ position: 'topright' }).addTo(map);
     // Theme-aware basemap — light: hillshade terrain · dark: satellite imagery
     var TZ_LIGHT_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}";
     var TZ_DARK_TILES  = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
