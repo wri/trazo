@@ -1177,9 +1177,26 @@ async function loadFile() {
     ds.classList.add("fade-out");
     setTimeout(() => ds.style.display = "none", 520);
 
-    // Init Leaflet — always open at the specified location and zoom
+    // Landing-map center — one of these field locations, chosen fresh on each page load
+    const TZ_LANDING_CENTERS = [
+      [-14.294190, -57.451748],
+      [-14.756877, -57.110487],
+      [-14.448006, -55.155231],
+      [-15.104246, -59.509943],
+      [-14.093937, -59.582029],
+      [-13.582742, -57.609610],
+      [-11.463828, -52.242309],
+      [-13.954596, -52.639852],
+      [-15.614889, -54.701822],
+      [-12.429936, -57.222334],
+      [-10.996348, -55.788846],
+      [-13.313981, -58.849335],
+    ];
+    const TZ_CENTER = TZ_LANDING_CENTERS[Math.floor(Math.random() * TZ_LANDING_CENTERS.length)];
+
+    // Init Leaflet — open at a randomly chosen field location and the set zoom
     const map = L.map("map", {
-      center: [-12.286425, -52.662142],
+      center: TZ_CENTER,
       zoom:   10,
       minZoom: 10,
       maxZoom: 10,
