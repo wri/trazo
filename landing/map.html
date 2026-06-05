@@ -909,13 +909,16 @@
 
       /* ───────── TOP BAR → compact mobile bar ───────── */
       #topbar{
-        top:0 !important; left:0; right:0; height:48px;
+        position:fixed !important;            /* pinned to the viewport — page scroll / toolbar shifts can't hide it */
+        top:0 !important; left:0; right:0; height:48px; z-index:1400;
         padding:0 6px; gap:4px; align-items:center; overflow:visible;
         background:rgba(7,16,5,0.86);
         backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
         padding-left:max(6px, env(safe-area-inset-left));
         padding-right:max(6px, env(safe-area-inset-right));
       }
+      /* hero sized to the SMALL viewport: stable, and never extends under Chrome's bottom bar */
+      #map-screen{ height:100vh; height:100svh; }
       [data-theme="light"] #topbar{ background:rgba(240,237,230,0.92); }
       .tz-back{ font-size:12px; padding:0 8px; height:48px; display:flex; align-items:center; }
 
@@ -1069,11 +1072,9 @@
       html.tz-menu-open #map-attribution,   html.tz-reader-open #map-attribution{ display:none !important; }
 
       /* ───────── INFO PANEL teaser → headline + EN|ESP|PT only; blurb reveals on tap-to-pin ───────── */
-      #panel-teaser .teaser-text{
-        max-height:0; overflow:hidden; opacity:0; margin:0;
-        transition:max-height .3s ease, opacity .25s ease;
-      }
-      #info-panel.pinned #panel-teaser .teaser-text{ max-height:220px; opacity:1; margin-top:8px; }
+      /* blurb fully removed from layout when collapsed — the bar hugs "About — EN|ESP|PT" */
+      #panel-teaser .teaser-text{ display:none; }
+      #info-panel.pinned #panel-teaser .teaser-text{ display:block; flex:0 0 100%; margin-top:8px; }
 
       /* ───────── INFO PANEL → slim single line: "About — EN|ESP|PT" (mobile only) ───────── */
       #info-panel{
@@ -1093,8 +1094,9 @@
       #panel-teaser #lang-switcher::before{
         content:"—"; color:var(--text-dim); font-size:11px; margin-right:2px;
       }
-      #panel-teaser .teaser-text{ flex:0 0 100%; }
       #info-panel p{ font-size:13px; line-height:1.6; }
+      /* hidden body removed from layout entirely so it can't widen the collapsed bar */
+      #info-panel:not(.pinned) #panel-body{ display:none; }
       #info-panel:hover #panel-body{ max-height:0; opacity:0; margin-top:0; pointer-events:none; }
       #info-panel.pinned #panel-body{
         max-height:52dvh; opacity:1; margin-top:12px;
@@ -1129,7 +1131,7 @@
       html.tz-legend-open #tz-legend-fab{ font-size:28px; }
 
       /* ───────── ORBITAL (Release 1) → smaller still: tighter hub, dots, orbit ───────── */
-      #tz-orbital-stage{ left:50% !important; bottom:138px !important; }
+      #tz-orbital-stage{ left:50% !important; bottom:calc(178px + env(safe-area-inset-bottom)) !important; }
       .tzo-orbit-ring{ display:none; }                 /* dashed ring is noisy on small screens */
       .tzo-hub{ width:40px; height:40px; }
       .tzo-hub .tzo-core{ width:17px; height:17px; }
@@ -1175,7 +1177,7 @@
     @media (max-width: 768px) and (max-height: 480px){
       #info-panel.pinned #panel-body{ max-height:40dvh; }
       #tzo-sheet{ max-height:78dvh; }
-      #tz-orbital-stage{ bottom:112px !important; }
+      #tz-orbital-stage{ bottom:calc(146px + env(safe-area-inset-bottom)) !important; }
     }
   </style>
 </head>
@@ -2155,7 +2157,7 @@ window.TZ = (function(){
         a.addEventListener("click", function(e){ e.stopPropagation(); });
         var ks = document.createElement("span"); ks.className = "tzo-link-kind";  ks.textContent = ln.kind;
         var ts = document.createElement("span"); ts.className = "tzo-link-title"; ts.textContent = ln.title;
-        var as = document.createElement("span"); as.className = "tzo-link-arr";   as.textContent = "\u2197";
+        var as = document.createElement("span"); as.className = "tzo-link-arr";   as.textContent = "\u21ac";
         a.appendChild(ks); a.appendChild(ts); a.appendChild(as); l.appendChild(a);
       });
       card.appendChild(l);
