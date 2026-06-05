@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <script>document.documentElement.setAttribute("data-theme","light");</script>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
   <title>Trazo Interactive Map</title>
 
   <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet"/>
@@ -248,6 +248,13 @@
       font-size: 11.5px;
       z-index: 1;
       min-width: 220px; max-height: calc(100vh - 80px); overflow-y: auto; display: none;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(240,171,0,0.3) transparent;
+    }
+    #legend::-webkit-scrollbar { width: 5px; }
+    #legend::-webkit-scrollbar-track { background: transparent; }
+    #legend::-webkit-scrollbar-thumb {
+      background: rgba(240,171,0,0.3); border-radius: 4px;
     }
     #legend h3 {
       font-family: var(--font-header);
@@ -885,6 +892,291 @@
       font-family:var(--font-body); font-size:11px; line-height:1.5; color:var(--text-muted); }
     .tz-quote:hover .tz-extra{ max-height:320px; opacity:1; margin-top:7px; }
     .tz-extra .oq{ font-style:italic; }
+  </style>
+
+  <!-- ════════════════════════════════════════════════════════════════════════
+       MOBILE / RESPONSIVE LAYER  (added 2026)
+       One file, auto-detected: everything below only applies at ≤768px wide,
+       so the desktop experience is completely untouched. Rotating the phone or
+       resizing the window switches layouts live. Injected controls (Explore box,
+       legend "+", scrim) are built once but hidden by CSS off mobile.
+  ═════════════════════════════════════════════════════════════════════════ -->
+  <style id="tz-mobile-css">
+    /* injected controls are hidden on desktop, revealed inside the media query */
+    #tz-explore, #tz-menu, #tz-reader, #tz-legend-fab { display:none; }
+
+    @media (max-width: 768px) {
+
+      /* ───────── TOP BAR → compact mobile bar ───────── */
+      #topbar{
+        top:0 !important; left:0; right:0; height:48px;
+        padding:0 6px; gap:4px; align-items:center; overflow:visible;
+        background:rgba(7,16,5,0.86);
+        backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+        padding-left:max(6px, env(safe-area-inset-left));
+        padding-right:max(6px, env(safe-area-inset-right));
+      }
+      [data-theme="light"] #topbar{ background:rgba(240,237,230,0.92); }
+      .tz-back{ font-size:12px; padding:0 8px; height:48px; display:flex; align-items:center; }
+
+      /* push the map + orbital below the fixed bar */
+      #map{ top:48px !important; }
+      #tz-orbital{ top:48px !important; }
+      #info-panel{ top:56px !important; }
+
+      /* theme toggle sits right, just before the Explore box */
+      #topbar #theme-toggle{ margin-left:auto; padding:0 8px; font-size:9px; }
+
+      /* ───────── EXPLORE → large pulsating gold box (replaces the hamburger) ───────── */
+      @keyframes tzExplorePulse{
+        0%   { background:rgba(240,171,0,0.16); color:var(--gold);  border-color:var(--gold);    box-shadow:0 0 0 rgba(240,171,0,0);    text-shadow:none; }
+        50%  { background:rgba(240,171,0,0.42); color:#FFD700;      border-color:#FFD700;        box-shadow:0 0 14px rgba(240,171,0,0.55); text-shadow:0 0 7px rgba(240,171,0,0.45); }
+        100% { background:rgba(240,171,0,0.16); color:var(--gold);  border-color:var(--gold);    box-shadow:0 0 0 rgba(240,171,0,0);    text-shadow:none; }
+      }
+      #tz-explore{
+        display:flex; align-items:center; justify-content:center;
+        height:36px; padding:0 16px; margin-right:2px; flex:none;
+        font-family:var(--font-header); font-size:12px; font-weight:700;
+        letter-spacing:.18em; text-transform:uppercase;
+        color:var(--gold); background:rgba(240,171,0,0.16);
+        border:1px solid var(--gold); border-radius:4px; cursor:pointer;
+        animation:tzExplorePulse 3s ease-in-out infinite;
+        will-change:background,color,border-color,box-shadow;
+      }
+      @media (prefers-reduced-motion: reduce){ #tz-explore{ animation:none; } }
+      html.tz-menu-open #tz-explore,
+      html.tz-reader-open #tz-explore{ animation:none; background:rgba(240,171,0,0.42); color:#FFD700; }
+      [data-theme="light"] #tz-explore{ color:#6b5210; }
+
+      /* the desktop inline nav is replaced wholesale by the full-page menu */
+      #topbar-nav{ display:none !important; }
+
+      /* ───────── FULL-PAGE MENU: two big buttons ───────── */
+      #tz-menu{
+        display:flex; position:fixed; inset:48px 0 0 0; z-index:1300;
+        flex-direction:column; align-items:stretch; justify-content:center;
+        gap:18px; padding:24px max(20px, env(safe-area-inset-right)) calc(32px + env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+        background:rgba(6,13,4,0.74);                 /* subtle — the map stays visible underneath */
+        backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px);
+        opacity:0; pointer-events:none; transition:opacity .22s ease;
+      }
+      [data-theme="light"] #tz-menu{ background:rgba(244,241,233,0.80); }
+      html.tz-menu-open #tz-menu{ opacity:1; pointer-events:auto; }
+      .tz-menu-btn{
+        display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+        min-height:124px; padding:22px 18px;
+        background:rgba(14,22,8,0.55); border:1px solid var(--gold); border-radius:10px;
+        backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px);
+        cursor:pointer; text-align:center;
+      }
+      [data-theme="light"] .tz-menu-btn{ background:rgba(255,253,247,0.55); }
+      .tz-menu-btn:active{ background:rgba(240,171,0,0.28); }
+      .tz-menu-btn .mb-title{
+        font-family:var(--font-header); font-size:20px; font-weight:700;
+        letter-spacing:.14em; text-transform:uppercase; color:var(--gold); line-height:1.25;
+      }
+      .tz-menu-btn .mb-sub{
+        font-family:var(--font-mono); font-size:10px; letter-spacing:.1em;
+        text-transform:uppercase; color:var(--text-muted);
+      }
+      .tz-menu-cite{
+        align-self:center; margin-top:6px; padding:10px 18px;
+        font-family:var(--font-mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+        color:var(--text-muted); background:none; border:1px solid var(--border-dim);
+        border-radius:4px; cursor:pointer;
+      }
+      .tz-menu-close{
+        position:absolute; top:10px; right:max(12px, env(safe-area-inset-right));
+        width:40px; height:40px; display:flex; align-items:center; justify-content:center;
+        font-size:26px; line-height:1; color:var(--text-muted);
+        background:none; border:none; cursor:pointer;
+      }
+
+      /* ───────── READER: centred scrolling textbox, map visible on the sides ───────── */
+      #tz-reader{
+        display:flex; position:fixed; inset:48px 0 0 0; z-index:1280;
+        flex-direction:column; align-items:center; justify-content:center;
+        padding:14px 0 calc(14px + env(safe-area-inset-bottom));
+        opacity:0; pointer-events:none; transition:opacity .22s ease;
+      }
+      html.tz-reader-open #tz-reader{ opacity:1; pointer-events:auto; }
+      .tz-reader-box{
+        display:flex; flex-direction:column;
+        width:min(560px, calc(100vw - 52px));   /* ~26px of live map on each side */
+        max-height:calc(100% - 8px);
+        background:rgba(6,13,4,0.86); border:1px solid var(--gold); border-radius:10px;
+        backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px);
+        box-shadow:0 14px 50px rgba(0,0,0,0.55); overflow:hidden;
+      }
+      [data-theme="light"] .tz-reader-box{ background:rgba(244,241,233,0.90); }
+      .tz-reader-head{
+        display:flex; align-items:center; justify-content:space-between; gap:8px;
+        padding:12px 14px 10px; border-bottom:1px solid var(--border-dim); flex:none;
+      }
+      .tz-reader-title{
+        font-family:var(--font-header); font-size:13px; font-weight:700;
+        letter-spacing:.16em; text-transform:uppercase; color:var(--gold);
+      }
+      .tz-reader-x{
+        width:32px; height:32px; margin:-6px -6px -6px 0; flex:none;
+        display:flex; align-items:center; justify-content:center;
+        font-size:22px; line-height:1; color:var(--text-muted);
+        background:none; border:none; cursor:pointer;
+      }
+      /* tabs styled like the About bar: plain text, pipes, gold underline when active */
+      .tz-reader-tabs{
+        display:flex; align-items:center; gap:6px; padding:11px 16px 0; flex:none;
+        overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;
+      }
+      .tz-reader-tabs::-webkit-scrollbar{ display:none; }
+      .tz-reader-tab{
+        flex:none; padding:2px 0;
+        font-family:var(--font-header); font-size:11px; font-weight:700;
+        letter-spacing:.08em; text-transform:uppercase;
+        color:var(--text-muted); background:none; border:none; cursor:pointer; white-space:nowrap;
+        transition:color .15s;
+      }
+      .tz-reader-tab.active{ color:var(--gold); border-bottom:1px solid var(--gold); }
+      .tz-reader-sep{ flex:none; color:rgba(155,155,155,0.4); font-size:11px; user-select:none; }
+      [data-theme="light"] .tz-reader-sep{ color:rgba(90,86,72,0.40); }
+      .tz-reader-body{
+        flex:1 1 auto; overflow-y:auto; overscroll-behavior:contain;
+        -webkit-overflow-scrolling:touch; padding:4px 16px 18px;
+        scrollbar-width:thin;
+        scrollbar-color:rgba(240,171,0,0.3) transparent;
+      }
+      .tz-reader-body::-webkit-scrollbar{ width:5px; }
+      .tz-reader-body::-webkit-scrollbar-track{ background:transparent; }
+      .tz-reader-body::-webkit-scrollbar-thumb{ background:rgba(240,171,0,0.3); border-radius:4px; }
+      .tz-reader-body .tnav-drop-content{ padding:12px 0 0; }
+      .tz-reader-body .tnav-drop-scroll{ max-height:none; overflow:visible; padding-right:0; }
+      .tz-reader-body .tnav-dropdown{ all:unset; display:block; }
+      .tz-reader-body .tz-extra{ max-height:none; opacity:1; margin-top:7px; overflow:visible; }  /* no hover on touch — show notes inline */
+      .tz-reader-body .tnav-model-row{ grid-template-columns:1fr 1fr; }
+      .tz-reader-hint{
+        flex:none; margin-top:10px;
+        font-family:var(--font-mono); font-size:9.5px; letter-spacing:.12em; text-transform:uppercase;
+        color:rgba(255,255,255,0.85); text-shadow:0 1px 4px rgba(0,0,0,0.8);
+      }
+      [data-theme="light"] .tz-reader-hint{ color:#3a3424; text-shadow:none; }
+
+      /* when the menu or a reader is open, clear the map overlays */
+      html.tz-menu-open #info-panel,   html.tz-reader-open #info-panel,
+      html.tz-menu-open #tz-orbital,   html.tz-reader-open #tz-orbital,
+      html.tz-menu-open #legend,       html.tz-reader-open #legend,
+      html.tz-menu-open #tz-legend-fab,html.tz-reader-open #tz-legend-fab,
+      html.tz-menu-open #scroll-down-arrow, html.tz-reader-open #scroll-down-arrow,
+      html.tz-menu-open #map-attribution,   html.tz-reader-open #map-attribution{ display:none !important; }
+
+      /* ───────── INFO PANEL teaser → headline + EN|ESP|PT only; blurb reveals on tap-to-pin ───────── */
+      #panel-teaser .teaser-text{
+        max-height:0; overflow:hidden; opacity:0; margin:0;
+        transition:max-height .3s ease, opacity .25s ease;
+      }
+      #info-panel.pinned #panel-teaser .teaser-text{ max-height:220px; opacity:1; margin-top:8px; }
+
+      /* ───────── INFO PANEL → slim single line: "About — EN|ESP|PT" (mobile only) ───────── */
+      #info-panel{
+        left:10px !important; right:auto !important;
+        width:auto !important; max-width:min(88vw, 360px);
+        max-height:none; padding:8px 14px;
+      }
+      #info-panel.pinned{ width:min(88vw, 360px) !important; }
+      /* retitle "Trazo" → "About" without touching the desktop markup */
+      #info-panel h1{ font-size:0; margin:0; line-height:0; }
+      #info-panel h1::before{
+        content:"About"; font-size:13px; line-height:1;
+        letter-spacing:.1em;
+      }
+      #panel-teaser{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
+      #panel-teaser #lang-switcher{ margin:0; gap:5px; }
+      #panel-teaser #lang-switcher::before{
+        content:"—"; color:var(--text-dim); font-size:11px; margin-right:2px;
+      }
+      #panel-teaser .teaser-text{ flex:0 0 100%; }
+      #info-panel p{ font-size:13px; line-height:1.6; }
+      #info-panel:hover #panel-body{ max-height:0; opacity:0; margin-top:0; pointer-events:none; }
+      #info-panel.pinned #panel-body{
+        max-height:52dvh; opacity:1; margin-top:12px;
+        overflow-y:auto; pointer-events:auto;
+      }
+      #panel-pin-hint{ display:none !important; }   /* no "click to pin" on mobile */
+
+      /* ───────── LEAFLET ZOOM → hidden on mobile (pinch / double-tap to zoom) ───────── */
+      .leaflet-control-zoom, .leaflet-top.leaflet-right{ display:none !important; }
+      #zbadge{ display:none !important; }   /* technical z readout — hide on mobile */
+
+      /* ───────── LEGEND → hidden behind a floating "+" ───────── */
+      #legend{
+        left:auto !important; right:12px !important;
+        bottom:calc(78px + env(safe-area-inset-bottom)) !important;
+        min-width:0 !important; width:min(76vw, 250px); max-height:48dvh;
+        padding:14px 16px; display:none !important;
+      }
+      html.tz-legend-open #legend{ display:block !important; }
+      #tz-legend-fab{
+        display:flex; align-items:center; justify-content:center;
+        position:absolute; right:14px; bottom:calc(18px + env(safe-area-inset-bottom));
+        width:48px; height:48px;                       /* invisible tap target — no circle */
+        background:none; border:none; box-shadow:none; border-radius:0;
+        color:#8B6914;                                  /* dark yellow-brown */
+        font-size:34px; line-height:1;
+        font-family:var(--font-header); font-weight:700;
+        text-shadow:0 1px 3px rgba(0,0,0,0.35);
+        z-index:1100; cursor:pointer; padding:0;
+      }
+      [data-theme="light"] #tz-legend-fab{ background:none; color:#6b5210; text-shadow:none; }
+      html.tz-legend-open #tz-legend-fab{ font-size:28px; }
+
+      /* ───────── ORBITAL (Release 1) → smaller still: tighter hub, dots, orbit ───────── */
+      #tz-orbital-stage{ left:50% !important; bottom:138px !important; }
+      .tzo-orbit-ring{ display:none; }                 /* dashed ring is noisy on small screens */
+      .tzo-hub{ width:40px; height:40px; }
+      .tzo-hub .tzo-core{ width:17px; height:17px; }
+      @keyframes tzoPingSm{ 0%{ width:46px;height:46px; opacity:.6 } 80%,100%{ width:84px;height:84px; opacity:0 } }
+      .tzo-hub .tzo-ring{ animation-name:tzoPingSm; }
+      .tzo-hub-label{ top:calc(50% + 28px); font-size:8px; }
+      .tzo-node .tzo-dot{ width:34px; height:34px; }
+      .tzo-node .tzo-dot svg{ width:15px; height:15px; }
+      .tzo-node .tzo-title{ font-size:8.5px; top:21px; }
+      .tzo-card{ display:none !important; }             /* in-node card replaced by shared sheet */
+
+      #tzo-sheet{
+        display:block; position:fixed; left:0; right:0; bottom:0;
+        z-index:1450; background:var(--bg-overlay); pointer-events:auto;
+        border-top:1px solid var(--border); border-radius:16px 16px 0 0;
+        box-shadow:0 -10px 40px rgba(0,0,0,0.45);
+        padding:16px 18px calc(18px + env(safe-area-inset-bottom));
+        max-height:66dvh; overflow-y:auto; overscroll-behavior:contain;
+        transform:translateY(110%); transition:transform .3s ease;
+        -webkit-overflow-scrolling:touch;
+      }
+      [data-theme="light"] #tzo-sheet{ background:rgba(244,241,233,0.99); }
+      #tz-orbital.expanded #tzo-sheet{ transform:translateY(0); }
+      #tz-orbital.expanded .tzo-backdrop{ background:rgba(0,0,0,0.42); }
+      #tzo-sheet .tzo-sheet-grip{
+        width:40px; height:4px; border-radius:3px; background:var(--text-dim);
+        opacity:.5; margin:0 auto 12px;
+      }
+      /* the sheet reuses the orbital card markup */
+      #tzo-sheet .tzo-card{
+        display:block !important; position:static !important; transform:none !important;
+        width:auto !important; max-width:none !important; max-height:none !important;
+        opacity:1 !important; pointer-events:auto !important;
+        background:none !important; border:none !important; box-shadow:none !important;
+        padding:0 !important; overflow:visible !important;
+      }
+
+      /* scroll-down arrow: nudge a touch tighter so it clears the FAB row */
+      #scroll-down-arrow{ bottom:calc(16px + env(safe-area-inset-bottom)); }
+    }
+
+    /* very small / landscape phones: trim the expandable panel height */
+    @media (max-width: 768px) and (max-height: 480px){
+      #info-panel.pinned #panel-body{ max-height:40dvh; }
+      #tzo-sheet{ max-height:78dvh; }
+      #tz-orbital-stage{ bottom:112px !important; }
+    }
   </style>
 </head>
 <body>
@@ -1742,7 +2034,9 @@ loadFile();
     }
     idx = (idx + 1) % seq.length;
   }
-  setTimeout(function() { next(); setInterval(next, 3000); }, 2000);
+  if (!window.matchMedia || !window.matchMedia("(max-width:768px)").matches) {  /* skip auto-flashing on mobile (nav lives behind the Explore menu) */
+    setTimeout(function() { next(); setInterval(next, 3000); }, 2000);
+  }
 })();
 
 </script>
@@ -1833,7 +2127,8 @@ window.TZ = (function(){
   };
 
   var RADIUS = 150, rotation = 0, autoRotate = true, targetRot = null, activeId = null, raf = null;
-  var wrap, stage, nodes = {};
+  var wrap, stage, sheet, nodes = {};
+  function tzMobile(){ return window.matchMedia && window.matchMedia("(max-width:768px)").matches; }
   function idx(id){ return ITEMS.findIndex(function(x){ return x.id === id; }); }
   function item(id){ return ITEMS.find(function(x){ return x.id === id; }); }
 
@@ -1896,14 +2191,20 @@ window.TZ = (function(){
       n.addEventListener("click", function(e){ e.stopPropagation(); (activeId === it.id) ? collapse() : expand(it.id); });
       stage.appendChild(n); nodes[it.id] = n;
     });
-    wrap.appendChild(stage); (document.getElementById('map-screen')||document.body).appendChild(wrap);
+    wrap.appendChild(stage);
+    /* shared bottom-sheet used on mobile instead of the off-to-the-right node cards */
+    sheet = document.createElement("div"); sheet.id = "tzo-sheet";
+    sheet.addEventListener("click", function(e){ e.stopPropagation(); });
+    wrap.appendChild(sheet);
+    (document.getElementById('map-screen')||document.body).appendChild(wrap);
   }
 
   function layout(){
     var total = ITEMS.length;
     ITEMS.forEach(function(it, i){
       var ang = ((i / total) * 360 + rotation) % 360, rad = ang * Math.PI / 180;
-      var x = RADIUS * Math.cos(rad), y = RADIUS * Math.sin(rad);
+      var RR = tzMobile() ? 64 : RADIUS;   /* compact orbit on phones (recomputed live on resize/rotate) */
+      var x = RR * Math.cos(rad), y = RR * Math.sin(rad);
       var z = Math.round(100 + 50 * Math.cos(rad));
       var op = Math.max(0.45, Math.min(1, 0.45 + 0.55 * ((1 + Math.sin(rad)) / 2)));
       var n = nodes[it.id], active = (activeId === it.id);
@@ -1933,6 +2234,12 @@ window.TZ = (function(){
       nodes[it.id].classList.toggle("active", it.id === id);
       nodes[it.id].classList.toggle("related", related.indexOf(it.id) >= 0);
     });
+    if (sheet){   /* fill the mobile bottom-sheet with this node's card (CSS shows it only ≤768px) */
+      sheet.innerHTML = "";
+      var grip = document.createElement("div"); grip.className = "tzo-sheet-grip"; sheet.appendChild(grip);
+      sheet.appendChild(buildCard(item(id)));
+      sheet.scrollTop = 0;
+    }
   }
   function collapse(){
     activeId = null; autoRotate = true; targetRot = null;
@@ -1948,6 +2255,166 @@ window.TZ = (function(){
 })();
 </script>
 
+<!-- ════ MOBILE CONTROLS: pulsing Explore box → full-page menu → reader (no-ops on desktop) ════ -->
+<script id="tz-mobile-js">
+(function(){
+  var root = document.documentElement;
+
+  function build(){
+    if (document.getElementById('tz-explore')) return;
+    var topbar = document.getElementById('topbar');
+    var mapScreen = document.getElementById('map-screen') || document.body;
+    if (!topbar) return;
+
+    /* ── pulsing EXPLORE box in the top bar (replaces the hamburger) ── */
+    var explore = document.createElement('button');
+    explore.id = 'tz-explore'; explore.type = 'button';
+    explore.setAttribute('aria-label', 'Open menu'); explore.setAttribute('aria-expanded', 'false');
+    explore.textContent = 'Explore';
+    topbar.appendChild(explore);
+
+    /* ── full-page menu: two big buttons + a small Cite link ── */
+    var menu = document.createElement('div'); menu.id = 'tz-menu';
+    menu.innerHTML =
+      '<button class="tz-menu-close" type="button" aria-label="Close menu">×</button>' +
+      '<button class="tz-menu-btn" type="button" data-view="tg">' +
+        '<span class="mb-title">Trazo on the Ground</span>' +
+        '<span class="mb-sub">Barriers · Using Fields · Scaling · Feedback</span>' +
+      '</button>' +
+      '<button class="tz-menu-btn" type="button" data-view="r2">' +
+        '<span class="mb-title">Release 2</span>' +
+        '<span class="mb-sub">Coverage · Training Data · Models</span>' +
+      '</button>' +
+      '<button class="tz-menu-cite" type="button" data-view="cite">Cite Trazo</button>';
+    mapScreen.appendChild(menu);
+
+    /* ── reader: centred scrolling textbox, live map visible on either side ── */
+    var reader = document.createElement('div'); reader.id = 'tz-reader';
+    reader.innerHTML =
+      '<div class="tz-reader-box">' +
+        '<div class="tz-reader-head">' +
+          '<span class="tz-reader-title"></span>' +
+          '<button class="tz-reader-x" type="button" aria-label="Close">×</button>' +
+        '</div>' +
+        '<div class="tz-reader-tabs"></div>' +
+        '<div class="tz-reader-body"></div>' +
+      '</div>' +
+      '<div class="tz-reader-hint">tap the map to dismiss</div>';
+    mapScreen.appendChild(reader);
+
+    var rBox   = reader.querySelector('.tz-reader-box');
+    var rTitle = reader.querySelector('.tz-reader-title');
+    var rTabs  = reader.querySelector('.tz-reader-tabs');
+    var rBody  = reader.querySelector('.tz-reader-body');
+
+    /* ── content: cloned out of the (hidden) desktop nav so text lives in one place ── */
+    function dropContent(itemId){
+      var el = document.querySelector('#' + itemId + ' .tnav-drop-content');
+      return el ? el.cloneNode(true) : null;
+    }
+    function triggerLabel(itemId){
+      var t = document.querySelector('#' + itemId + ' .tnav-trigger');
+      return t ? t.textContent.replace(/[▾\u25be]/g, '').trim() : itemId;
+    }
+    var VIEWS = {
+      r2:   { title:'Release 2', items:['tnav-r2-coverage','tnav-r2-training','tnav-r2-models'], tabs:false },
+      tg:   { title:'Trazo on the Ground', items:['tnav-tg-barriers','tnav-tg-using','tnav-tg-scaling','tnav-tg-feedback'], tabs:true },
+      cite: { title:'Cite', items:['tnav-cite'], tabs:false }
+    };
+
+    function openMenu(){
+      closeReader();
+      root.classList.add('tz-menu-open');
+      explore.setAttribute('aria-expanded', 'true');
+    }
+    function closeMenu(){
+      root.classList.remove('tz-menu-open');
+      explore.setAttribute('aria-expanded', 'false');
+    }
+    function closeReader(){ root.classList.remove('tz-reader-open'); }
+    function closeAll(){ closeMenu(); closeReader(); }
+
+    function renderTab(view, idx){
+      rBody.innerHTML = '';
+      var c = dropContent(view.items[idx]);
+      if (c) rBody.appendChild(c);
+      rBody.scrollTop = 0;
+      Array.prototype.forEach.call(rTabs.querySelectorAll('.tz-reader-tab'), function(tab, i){
+        tab.classList.toggle('active', i === idx);
+      });
+    }
+    function openReader(key){
+      var view = VIEWS[key]; if (!view) return;
+      closeMenu();
+      rTitle.textContent = view.title;
+      rTabs.innerHTML = ''; rBody.innerHTML = '';
+      if (view.tabs){
+        rTabs.style.display = '';
+        view.items.forEach(function(id, i){
+          if (i > 0){
+            var sep = document.createElement('span');
+            sep.className = 'tz-reader-sep'; sep.textContent = '|';
+            rTabs.appendChild(sep);
+          }
+          var tab = document.createElement('button');
+          tab.type = 'button'; tab.className = 'tz-reader-tab';
+          tab.textContent = triggerLabel(id);
+          tab.addEventListener('click', function(e){ e.stopPropagation(); renderTab(view, i); });
+          rTabs.appendChild(tab);
+        });
+        renderTab(view, 0);          /* open on the first element */
+      } else {
+        rTabs.style.display = 'none';
+        view.items.forEach(function(id){
+          var c = dropContent(id);
+          if (c) rBody.appendChild(c);
+        });
+        rBody.scrollTop = 0;
+      }
+      root.classList.add('tz-reader-open');
+    }
+
+    explore.addEventListener('click', function(e){
+      e.stopPropagation();
+      if (root.classList.contains('tz-menu-open') || root.classList.contains('tz-reader-open')) closeAll();
+      else openMenu();
+    });
+    menu.querySelector('.tz-menu-close').addEventListener('click', function(e){ e.stopPropagation(); closeMenu(); });
+    Array.prototype.forEach.call(menu.querySelectorAll('[data-view]'), function(btn){
+      btn.addEventListener('click', function(e){ e.stopPropagation(); openReader(btn.getAttribute('data-view')); });
+    });
+    /* tapping the exposed map strip on either side of the textbox dismisses it */
+    reader.addEventListener('click', closeReader);
+    rBox.addEventListener('click', function(e){ e.stopPropagation(); });
+    reader.querySelector('.tz-reader-x').addEventListener('click', function(e){ e.stopPropagation(); closeReader(); });
+
+    /* ── floating legend "+" (unchanged) ── */
+    var fab = document.createElement('button');
+    fab.id = 'tz-legend-fab'; fab.type = 'button';
+    fab.setAttribute('aria-label', 'Show legend'); fab.textContent = '+';
+    mapScreen.appendChild(fab);
+    fab.addEventListener('click', function(e){
+      e.stopPropagation();
+      var open = root.classList.toggle('tz-legend-open');
+      fab.textContent = open ? '×' : '+';
+      fab.setAttribute('aria-label', open ? 'Hide legend' : 'Show legend');
+    });
+
+    var backLink = topbar.querySelector('.tz-back');
+    if (backLink) backLink.addEventListener('click', closeAll);
+    document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeAll(); });
+
+    /* if the viewport grows back to desktop, make sure nothing stays stuck open */
+    var mq = window.matchMedia && window.matchMedia('(max-width:768px)');
+    if (mq && mq.addEventListener) mq.addEventListener('change', function(m){
+      if (!m.matches){ closeAll(); root.classList.remove('tz-legend-open'); fab.textContent = '+'; }
+    });
+  }
+
+  if (document.readyState !== 'loading') build();
+  else document.addEventListener('DOMContentLoaded', build);
+})();
+</script>
 
 </body>
 </html>

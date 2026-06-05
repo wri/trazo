@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <script>document.documentElement.setAttribute("data-theme","light");</script>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
   <title>Trazo — Field Boundaries of South America</title>
 
   <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet"/>
@@ -51,6 +51,17 @@
       --gold-lt:      #ffd04d;
       --max-w:        1240px;
       --gutter:       clamp(20px, 4vw, 56px);
+    }
+
+    /* page scrollbar matches the thin gold scroller used in the panels */
+    html {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(240,171,0,0.3) transparent;
+    }
+    html::-webkit-scrollbar, body::-webkit-scrollbar { width: 5px; }
+    html::-webkit-scrollbar-track, body::-webkit-scrollbar-track { background: transparent; }
+    html::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb {
+      background: rgba(240,171,0,0.3); border-radius: 4px;
     }
 
     body {
@@ -240,6 +251,13 @@
       font-size: 11.5px;
       z-index: 1;
       min-width: 220px; max-height: calc(100vh - 80px); overflow-y: auto; display: none;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(240,171,0,0.3) transparent;
+    }
+    #legend::-webkit-scrollbar { width: 5px; }
+    #legend::-webkit-scrollbar-track { background: transparent; }
+    #legend::-webkit-scrollbar-thumb {
+      background: rgba(240,171,0,0.3); border-radius: 4px;
     }
     #legend h3 {
       font-family: var(--font-header);
@@ -859,6 +877,70 @@
     #landing-cta .lc-btn:hover{ background:var(--gold); color:var(--bg-page); }
     #landing-cta .lc-btn-primary{ background:var(--gold); color:var(--bg-page); }
     #landing-cta .lc-btn-primary:hover{ background:var(--gold-lt); }
+  </style>
+
+  <!-- ════ MOBILE / RESPONSIVE LAYER (≤768px only — desktop untouched) ════ -->
+  <style id="tz-mobile-css">
+    #tz-legend-fab { display:none; }
+
+    @media (max-width: 768px){
+      /* ── hero map: CTA card → small, near-square block on phones ── */
+      #landing-cta{
+        top:12px !important; left:10px !important; right:auto;
+        width:182px !important; max-width:none; padding:12px 12px 10px;
+        border-radius:8px;
+      }
+      #landing-cta .lc-title{ font-size:16px; }
+      #landing-cta .lc-sub{ font-size:10px; margin-top:4px; margin-bottom:8px; line-height:1.35; }
+      #landing-cta .lc-btn{ padding:7px 9px; font-size:9px; gap:6px; margin-top:6px; letter-spacing:.07em; }
+
+      /* taller hero map so it reads on a phone */
+      #map-screen{ height:72vh; }
+
+      /* technical readout hidden; legend behind a "+" ── */
+      #zbadge{ display:none !important; }
+      #legend{
+        left:auto !important; right:12px !important;
+        bottom:calc(78px + env(safe-area-inset-bottom)) !important;
+        min-width:0 !important; width:min(76vw,250px); max-height:46dvh;
+        padding:14px 16px; display:none !important;
+      }
+      html.tz-legend-open #legend{ display:block !important; }
+      #tz-legend-fab{
+        display:flex; align-items:center; justify-content:center;
+        position:absolute; right:14px; bottom:calc(18px + env(safe-area-inset-bottom));
+        width:48px; height:48px;                       /* invisible tap target — no circle */
+        background:none; border:none; box-shadow:none; border-radius:0;
+        color:#8B6914;                                  /* dark yellow-brown */
+        font-size:34px; line-height:1; padding:0;
+        font-family:var(--font-header); font-weight:700;
+        text-shadow:0 1px 3px rgba(0,0,0,0.35);
+        z-index:1100; cursor:pointer;
+      }
+      [data-theme="light"] #tz-legend-fab{ background:none; color:#6b5210; text-shadow:none; }
+      html.tz-legend-open #tz-legend-fab{ font-size:28px; }
+      .leaflet-control-zoom a{ width:40px !important; height:40px !important; line-height:40px !important; font-size:19px !important; }
+
+      /* ── long-form masthead: keep every link reachable as a swipeable strip ── */
+      #index-content .masthead{ padding:12px 0 10px; }
+      #index-content .masthead-inner{ flex-wrap:wrap; gap:10px 16px; }
+      #index-content .mark{ font-size:15px; }
+      #index-content nav.primary{
+        width:100%; gap:16px; font-size:10px; flex-wrap:nowrap; white-space:nowrap;
+        overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding-bottom:2px;
+      }
+      #index-content nav.primary::-webkit-scrollbar{ display:none; }
+      #index-content nav.primary a:not(.nav-cta){ display:inline-block !important; }
+
+      /* ── long-form typography / spacing ── */
+      #index-content .wrap{ padding-left:18px; padding-right:18px; }
+      #index-content .hero{ padding:26px 0 24px; }
+      #index-content h1.hero-title{ font-size:clamp(30px,8.5vw,46px); }
+      #index-content .hero-lede{ font-size:15.5px; }
+      #index-content .section{ padding:38px 0; }
+      #index-content .cta-row{ flex-direction:column; align-items:stretch; gap:9px; }
+      #index-content .cta-row .btn{ justify-content:space-between; }
+    }
   </style>
 </head>
 <body>
@@ -1793,6 +1875,28 @@ window.TZ = (function(){
   window.addEventListener('scroll', onScroll, {passive:true});
   window.addEventListener('resize', onScroll);
   onScroll();
+})();
+</script>
+
+<!-- ════ MOBILE: floating legend "+" (no-op on desktop) ════ -->
+<script id="tz-mobile-js">
+(function(){
+  function build(){
+    if (document.getElementById('tz-legend-fab')) return;
+    var host = document.getElementById('map-screen') || document.getElementById('ui-layer') || document.body;
+    var fab = document.createElement('button');
+    fab.id = 'tz-legend-fab'; fab.type = 'button';
+    fab.setAttribute('aria-label', 'Show legend'); fab.textContent = '+';
+    host.appendChild(fab);
+    fab.addEventListener('click', function(e){
+      e.stopPropagation();
+      var open = document.documentElement.classList.toggle('tz-legend-open');
+      fab.textContent = open ? '×' : '+';
+      fab.setAttribute('aria-label', open ? 'Hide legend' : 'Show legend');
+    });
+  }
+  if (document.readyState !== 'loading') build();
+  else document.addEventListener('DOMContentLoaded', build);
 })();
 </script>
 </body>

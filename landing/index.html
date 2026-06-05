@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8"/>
   <script>document.documentElement.setAttribute("data-theme","light");</script>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>Trazo Private Preview</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+  <title>Trazo — Private Preview</title>
   <link rel="stylesheet" href="https://use.typekit.net/fxq7ozw.css"/>
   <style>
     /* ── RESET ───────────────────────────────────────────────────────────── */
@@ -182,6 +182,23 @@
       content: ""; width: 6px; height: 6px; border-radius: 50%;
       background: var(--gold); flex-shrink: 0;
     }
+
+    /* ── MOBILE / RESPONSIVE (≤768px only — desktop untouched) ── */
+    @media (max-width: 768px){
+      body{
+        padding:16px; align-items:flex-start;
+        padding-top:max(56px, env(safe-area-inset-top));
+        padding-left:max(16px, env(safe-area-inset-left));
+        padding-right:max(16px, env(safe-area-inset-right));
+      }
+      .card{ padding:28px 22px 24px; }
+      .mark{ margin-bottom:20px; }
+      h1{ font-size:30px; }
+      .lede{ font-size:14.5px; }
+      input[type=password]{ font-size:16px; }   /* 16px avoids iOS auto-zoom on focus */
+      button#submit-btn{ padding:14px 18px; }    /* full-width comfortable tap target */
+      #theme-toggle{ top:14px; right:16px; }
+    }
   </style>
 </head>
 <body>
@@ -190,7 +207,7 @@
   <div class="card">
     <div class="mark"><span class="dot"></span>Trazo</div>
     <div class="eyebrow">Private preview</div>
-    <h1><br/></h1>
+    <h1>Field boundaries,<br/>password&#8202;-&#8202;protected.</h1>
     <p class="lede">Trazo is restricted. Enter the access password to continue.</p>
 
     <form id="pw-form">
