@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <script>document.documentElement.setAttribute("data-theme","light");</script>
   <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
-  <title>Trazo — Field Boundaries of South America</title>
+  <title>Trazo - Field Boundaries of South America</title>
 
   <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -92,7 +92,7 @@
     #map { position: absolute; inset: 0; background: #0a0a0a; }
 
     /* ── BASEMAP FILTER ───────────────────────────────────────────────────── */
-    /* Basemap filter — dark green-black. Tint baked in via brightness. */
+    /* Basemap filter - dark green-black. Tint baked in via brightness. */
     .leaflet-tile-pane {
       filter: brightness(0.35) saturate(0.80) hue-rotate(10deg) contrast(1.05);
     }
@@ -125,7 +125,7 @@
       max-height: calc(100vh - 32px);
       width: clamp(280px, 30vw, 400px);
 
-      /* Hard opaque black — isolation ensures nothing from the map bleeds through */
+      /* Hard opaque black - isolation ensures nothing from the map bleeds through */
       background-color: rgba(0,0,0,0.64);
       isolation: isolate;
       border: none;
@@ -555,7 +555,7 @@
     .tzo-orbit-ring{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
       width:300px; height:300px; border-radius:50%; border:1px dashed var(--border); opacity:.45; }
 
-    /* flat, semi-transparent fills — no gradients, no glow */
+    /* flat, semi-transparent fills - no gradients, no glow */
     .tzo-hub{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
       width:58px; height:58px; border-radius:50%; pointer-events:auto; cursor:default; z-index:50;
       background:rgba(240,171,0,0.80); display:flex; align-items:center; justify-content:center; }
@@ -616,7 +616,7 @@
     @keyframes tzoPulse{ 0%,100%{ opacity:1 } 50%{ opacity:.5 } }
   </style>
 
-  <!-- ════ FULL LIGHT / DARK THEME — matches the main Trazo app ═══════════
+  <!-- ════ FULL LIGHT / DARK THEME - matches the main Trazo app ═══════════
        The original styling above is the DARK theme (untouched). data-theme="light"
        restyles every surface to the cream palette and switches the basemap to a
        light hillshade. data-theme="dark" falls back to the base (original) styles. -->
@@ -688,7 +688,7 @@
   <style id="tz-scroll-css">
     /* ===== SCROLL PAGE CHROME ===== */
     html{ scroll-behavior:smooth; }
-    /* PAGE 1 — the map — is now a real, self-contained block (not viewport-fixed).
+    /* PAGE 1 - the map - is now a real, self-contained block (not viewport-fixed).
        It is ~one screen tall minus a small peek so PAGE 2 shows at the bottom on load.
        overflow:hidden keeps the panel / legend / zoom badge / arrow CONTAINED to the
        map page, so they scroll away with it instead of hovering down the whole site. */
@@ -879,7 +879,7 @@
     #landing-cta .lc-btn-primary:hover{ background:var(--gold-lt); }
   </style>
 
-  <!-- ════ MOBILE / RESPONSIVE LAYER (≤768px only — desktop untouched) ════ -->
+  <!-- ════ MOBILE / RESPONSIVE LAYER (≤768px only - desktop untouched) ════ -->
   <style id="tz-mobile-css">
     #tz-legend-fab { display:none; }
 
@@ -909,7 +909,7 @@
       #tz-legend-fab{
         display:flex; align-items:center; justify-content:center;
         position:absolute; right:14px; bottom:calc(18px + env(safe-area-inset-bottom));
-        width:48px; height:48px;                       /* invisible tap target — no circle */
+        width:48px; height:48px;                       /* invisible tap target - no circle */
         background:none; border:none; box-shadow:none; border-radius:0;
         color:#8B6914;                                  /* dark yellow-brown */
         font-size:34px; line-height:1; padding:0;
@@ -958,15 +958,15 @@
 <div id="ui-layer">
 <div id="landing-cta">
   <div class="lc-title">Trazo</div>
-  <div class="lc-sub">Mato Grosso · 2024 field boundaries</div>
+  <div class="lc-sub">Mato Grosso, 2024 field boundaries</div>
   <a class="lc-btn lc-btn-primary" href="map.html">View larger map <span>→</span></a>
   <a class="lc-btn" href="https://source.coop/tristangruppwri/trazofields" target="_blank" rel="noopener">Access field boundaries for 2024 <span>→</span></a>
 </div>
 
 
-<div id="header">mapv6 — Mato Grosso 2024<span>mbmode24 · local file</span></div>
+<div id="header">mapv6 - Mato Grosso 2024<span>mbmode24, local file</span></div>
 <div id="legend"><h3>Crop Type</h3><div class="lsub">mode value of Mapbiomas 2024</div></div>
-<div id="zbadge">z<span id="zval">—</span></div>
+<div id="zbadge">z<span id="zval">-</span></div>
 
 <!-- ── TRAZO INFO PANEL ────────────────────────────────────────────────────── -->
 
@@ -1259,7 +1259,7 @@ async function loadFile() {
     ds.classList.add("fade-out");
     setTimeout(() => ds.style.display = "none", 520);
 
-    // Landing-map center — one of these field locations, chosen fresh on each page load
+    // Landing-map center - one of these field locations, chosen fresh on each page load
     const TZ_LANDING_CENTERS = [
       [-14.294190, -57.451748],
       [-14.756877, -57.110487],
@@ -1276,7 +1276,7 @@ async function loadFile() {
     ];
     const TZ_CENTER = TZ_LANDING_CENTERS[Math.floor(Math.random() * TZ_LANDING_CENTERS.length)];
 
-    // Init Leaflet — open at a randomly chosen field location and the set zoom
+    // Init Leaflet - open at a randomly chosen field location and the set zoom
     const map = L.map("map", {
       center: TZ_CENTER,
       zoom:   10,
@@ -1295,7 +1295,7 @@ async function loadFile() {
     });
     // Drag/explore stays enabled (incl. side-to-side touch-drag on mobile)
     map.dragging.enable();
-    // Theme-aware basemap — light: hillshade terrain · dark: satellite imagery
+    // Theme-aware basemap - light: hillshade terrain, dark: satellite imagery
     var TZ_LIGHT_TILES = "https://server.arcgisonline.com/ArcGIS/rest/services/Elevation/World_Hillshade/MapServer/tile/{z}/{y}/{x}";
     var TZ_DARK_TILES  = "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}";
     function tzIsDark(){ return document.documentElement.getAttribute("data-theme") === "dark"; }
@@ -1307,7 +1307,7 @@ async function loadFile() {
       try { vtLayer.redraw(); } catch(e){}
     });
 
-    // Custom pane for field boundaries — sits ABOVE .leaflet-tile-pane
+    // Custom pane for field boundaries - sits ABOVE .leaflet-tile-pane
     // so the CSS filter (which only targets tile-pane) never affects it
     map.createPane('fieldsPane');
     map.getPane('fieldsPane').style.zIndex = 450;
@@ -1324,7 +1324,7 @@ async function loadFile() {
     vtLayer.addTo(map);
 
     // The map now lives inside a sized block (PAGE 1), so make sure Leaflet
-    // measures its real dimensions — this also keeps drag/pan hit-testing correct.
+    // measures its real dimensions - this also keeps drag/pan hit-testing correct.
     map.dragging.enable();
     setTimeout(function(){ map.invalidateSize(); }, 60);
     setTimeout(function(){ map.invalidateSize(); }, 400);
@@ -1377,13 +1377,13 @@ async function loadFile() {
       const code  = Math.round(found.props.mbmode24 ?? -1);
       const color = COLOR_MAP[code] || "#aaa";
       const area  = found.props.field_area_ha != null
-        ? (+found.props.field_area_ha).toFixed(2) + " ha" : "—";
+        ? (+found.props.field_area_ha).toFixed(2) + " ha" : "-";
       L.popup({ className: "dark-popup" })
         .setLatLng(e.latlng)
         .setContent(`
           <div class="ptitle" style="border-left-color:${color}">${NAME_MAP[code] || "Unknown"}</div>
           <div class="prow"><span class="pk">mbmode24</span><span class="pv">${code}</span></div>
-          <div class="prow"><span class="pk">Field ID</span><span class="pv">${found.props.Id ?? "—"}</span></div>
+          <div class="prow"><span class="pk">Field ID</span><span class="pv">${found.props.Id ?? "-"}</span></div>
           <div class="prow"><span class="pk">Area</span><span class="pv">${area}</span></div>`)
         .openOn(map);
     });
@@ -1402,7 +1402,7 @@ function showError(msg) {
 }
 
 // ── LANGUAGE SWITCHER ────────────────────────────────────────────────────────
-// Language switcher — event delegation
+// Language switcher - event delegation
 document.addEventListener('click', (e) => {
   const btn = e.target.closest('.lang-btn');
   if (!btn) return;
@@ -1418,7 +1418,7 @@ document.addEventListener('click', (e) => {
   });
 });
 
-// Panel pin — click to lock open
+// Panel pin - click to lock open
 const infoPanel = document.getElementById('info-panel');
 const pinHint   = document.getElementById('panel-pin-hint');
 if (infoPanel) {
@@ -1510,7 +1510,7 @@ loadFile();
     </div>
   </header>
 
-  <!-- ═══ HERO (text only — full map lives above) ═══ -->
+  <!-- ═══ HERO (text only - full map lives above) ═══ -->
   <section class="hero" id="top">
     <div class="wrap">
       <div class="hero-grid">
@@ -1548,7 +1548,7 @@ loadFile();
   <!-- ═══ COVERAGE ═══ -->
   <section class="section" id="coverage">
     <div class="wrap">
-      <h2 class="section-num">01 · Coverage</h2>
+      <h2 class="section-num">01 / Coverage</h2>
       <p class="section-lead">The original benchmark included 1,854 field boundaries in South America. Trazo adds <em>46,908</em>.</p>
       <p class="eyebrow" style="margin-bottom: 24px;">46,908 expert annotated fields</p>
       <p class="section-intro">
@@ -1565,7 +1565,7 @@ loadFile();
   <!-- ═══ MODELS ═══ -->
   <section class="section" id="models">
     <div class="wrap">
-      <h2 class="section-num">02 · Models</h2>
+      <h2 class="section-num">02 / Models</h2>
       <p class="section-intro">
         Trazo provides four model checkpoints, each trained on a different
         combination of South American Data and FTW Data for different use cases.
@@ -1632,7 +1632,7 @@ loadFile();
         <a class="model-card model-card-featured" href="https://huggingface.co/worldresourcesinstitute/Trazo3" target="_blank" rel="noopener">
           <div class="model-head">
             <div class="model-name">Trazo3</div>
-            <div class="model-tag">Active learning &middot; recommended</div>
+            <div class="model-tag">Active learning, recommended</div>
           </div>
           <div class="model-body">
             <p class="model-desc">Tuned for Mato Grosso and complex landscapes, with strong object-level recall. Works with <code>median()</code> composite imagery.</p>
@@ -1662,7 +1662,7 @@ loadFile();
   <!-- ═══ PIPELINE ═══ -->
   <section class="section" id="pipeline-section">
     <div class="wrap">
-      <h2 class="section-num">03 · Pipeline</h2>
+      <h2 class="section-num">03 / Pipeline</h2>
       <p class="section-intro">
         A sequence of composable utilities for moving from raw imagery to
         field-boundary predictions. Use the whole pipeline end-to-end, or
@@ -1703,7 +1703,7 @@ loadFile();
   <!-- ═══ RESOURCES / USE ═══ -->
   <section class="section" id="use">
     <div class="wrap">
-      <h2 class="section-num">04 · Use</h2>
+      <h2 class="section-num">04 / Use</h2>
       <p class="section-intro">
         Five open artifacts under CC-BY-4.0, covering the technical
         foundation through to the 10.9-million-field release for the
@@ -1714,7 +1714,7 @@ loadFile();
         <a href="#" class="res-card" data-pending="technote">
           <span class="res-kind">Technical note</span>
           <span class="res-title">Field Boundaries of South America</span>
-          <span class="res-foot"><span>Grupp et al. · WRI · 2026</span><span class="res-arrow">↗</span></span>
+          <span class="res-foot"><span>Grupp et al., WRI, 2026</span><span class="res-arrow">↗</span></span>
         </a>
         <a href="https://source.coop/tristangruppwri/trazotraining" class="res-card" target="_blank" rel="noopener">
           <span class="res-kind">Dataset</span>
@@ -1743,7 +1743,7 @@ loadFile();
   <!-- ═══ CITATION ═══ -->
   <section class="section" id="cite">
     <div class="wrap">
-      <h2 class="section-num">05 · Citation</h2>
+      <h2 class="section-num">05 / Citation</h2>
       <p class="section-intro">
         Cite both the Trazo technical note (Grupp et al. 2026) and the original
         Fields of the World benchmark (Kerner et al. 2025).
@@ -1830,7 +1830,7 @@ loadFile();
         </div>
 
         <div class="small" style="grid-column: 1 / -1;">
-          <span>© World Resources Institute &amp; Kerner Lab at ASU · Released under CC-BY-4.0 where applicable</span>
+          <span>© World Resources Institute &amp; Kerner Lab at ASU. Released under CC-BY-4.0 where applicable</span>
         </div>
       </div>
     </div>
