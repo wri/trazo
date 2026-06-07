@@ -1337,7 +1337,8 @@
 
     /* when a node is selected its circle-icon scales up; push the label down so
        the enlarged icon no longer covers "Coverage" / "Training Data" / etc. */
-    [data-theme="light"] #tz-orbital .tzo-node.active .tzo-title{ transform:translate(-50%,14px) scale(1.15); }
+    [data-theme="light"] #tz-orbital .tzo-node.active .tzo-title,
+    [data-theme="dark"]  #tz-orbital .tzo-node.active .tzo-title{ transform:translate(-50%,14px) scale(1.15); }
 
     /* ════ DESKTOP ONLY: Release 2 + "Trazo on the Ground" panels open as a
        CENTERED modal; the map overlays (Trazo info panel, orbital, legend)
@@ -1361,16 +1362,38 @@
       #tz-modal{ position:absolute; top:50%; left:50%;
         transform:translate(-50%,-47%); width:min(640px,92vw); max-height:82vh;
         display:flex; flex-direction:column; overflow:hidden;
-        background:rgba(255,255,255,0.97); border:1px solid rgba(0,0,0,0.12);
+        background:rgba(255,255,255,0.94); border:1px solid rgba(0,0,0,0.12);
         border-radius:12px; box-shadow:0 28px 80px rgba(0,0,0,0.30);
         opacity:0; transition:opacity .28s ease, transform .28s ease; }
       #tz-modal-overlay.show #tz-modal{ opacity:1; transform:translate(-50%,-50%); }
-      #tz-modal-body{ overflow-y:auto; overflow-x:hidden; padding:34px 36px 30px;
+      /* PINNED HEADER: the section title + description stay fixed at the top of
+         the panel; only the quotes below scroll */
+      #tz-modal-head{ flex:none; padding:30px 48px 14px 36px;
+        border-bottom:1px solid rgba(140,140,130,0.22); }
+      #tz-modal-head .tnav-drop-head{ font-size:13px; margin-bottom:8px; }
+      #tz-modal-head .tz-intro{ font-size:14px; line-height:1.7; color:var(--text-muted); margin:0; }
+      #tz-modal-body{ flex:1 1 auto; overflow-y:auto; overflow-x:hidden; padding:6px 36px 30px;
         scrollbar-width:thin; scrollbar-color:rgba(240,171,0,0.3) transparent; }
       #tz-modal-body::-webkit-scrollbar{ width:6px; }
       #tz-modal-body::-webkit-scrollbar-thumb{ background:rgba(240,171,0,0.3); border-radius:4px; }
-      #tz-modal-body .tnav-drop-head{ font-size:13px; margin-bottom:9px; }
       #tz-modal-body .tnav-drop-scroll{ max-height:none; overflow:visible; }
+      /* paced, digestible reading: larger quote type, roomy spacing, a divider
+         between quotes, and gentle scroll-snap so each quote arrives on its own
+         as you scroll instead of confronting the reader with the whole wall */
+      #tz-modal-body{ scroll-snap-type:y proximity; scroll-padding-top:8px; }
+      #tz-modal-body .tz-quote{
+        scroll-snap-align:start;
+        display:flex; flex-direction:column; justify-content:center;
+        min-height:160px;
+        border-left:none;
+        padding:28px 6px 28px 4px; margin:0;
+      }
+      #tz-modal-body .tz-quote + .tz-quote{ border-top:1px solid rgba(140,140,130,0.20); }
+      #tz-modal-body .tz-q{ font-size:15.5px; line-height:1.8; }
+      #tz-modal-body .tz-cite{ margin-top:11px; font-size:10.5px; letter-spacing:.04em; }
+      #tz-modal-body .tz-extra{ font-size:12.5px; line-height:1.6; }
+      /* the Release 2 panels are short prose, not quote lists, so let them breathe too */
+      #tz-modal-body > .tnav-drop-text{ font-size:14.5px; line-height:1.75; }
       #tz-modal-x{ position:absolute; top:11px; right:13px; width:30px; height:30px;
         display:flex; align-items:center; justify-content:center;
         background:none; border:none; cursor:pointer; padding:0; z-index:2;
@@ -1530,7 +1553,7 @@
           <div class="tnav-pin-hint">click to pin, click again to dismiss</div>
           <div class="tnav-drop-content">
             <div class="tnav-drop-head">Release 2 / Training Data</div>
-            <p class="tnav-drop-text" style="color:var(--text-muted)">Forthcoming. New training data in the Cerrado, with samples of cotton, rice, and coffee from Brazilian national data sources, new pasture field samples, and expanded coverage in other geographies.</p>
+            <p class="tnav-drop-text" style="color:var(--text-muted)">Forthcoming. New training data in the Cerrado, samples of cotton, rice, and coffee from Brazilian national data sources, new pasture field samples, and expanded coverage in other geographies.</p>
           </div>
         </div>
       </div>
@@ -2647,16 +2670,25 @@ window.TZ = (function(){
   var modal    = document.createElement('div'); modal.id    = 'tz-modal';
   var xbtn     = document.createElement('button'); xbtn.id   = 'tz-modal-x';
   xbtn.setAttribute('aria-label','Close'); xbtn.innerHTML = '✕';
+  var head     = document.createElement('div'); head.id     = 'tz-modal-head';
   var body     = document.createElement('div'); body.id     = 'tz-modal-body';
-  modal.appendChild(xbtn); modal.appendChild(body);
+  modal.appendChild(xbtn); modal.appendChild(head); modal.appendChild(body);
   overlay.appendChild(backdrop); overlay.appendChild(modal);
 
   var openId = null, hideT = null;
 
   function open(item){
     if(!overlay.parentNode) document.body.appendChild(overlay);
+    head.innerHTML = ''; body.innerHTML = '';
     var content = item.querySelector('.tnav-drop-content');
-    body.innerHTML = content ? content.innerHTML : '';
+    if(content){
+      var clone = content.cloneNode(true);
+      var h     = clone.querySelector('.tnav-drop-head');
+      var intro = clone.querySelector('.tz-intro');
+      if(h)     head.appendChild(h);       /* pin the title … */
+      if(intro) head.appendChild(intro);   /* … and the description */
+      while(clone.firstChild) body.appendChild(clone.firstChild);  /* quotes scroll */
+    }
     body.scrollTop = 0;
     clearTimeout(hideT);
     document.querySelectorAll('.tnav-item.open').forEach(function(i){ i.classList.remove('open'); });
@@ -2671,7 +2703,7 @@ window.TZ = (function(){
     overlay.classList.remove('show');
     document.body.classList.remove('tz-modal-active');
     openId = null;
-    hideT = setTimeout(function(){ overlay.classList.remove('open'); body.innerHTML = ''; }, 320);
+    hideT = setTimeout(function(){ overlay.classList.remove('open'); body.innerHTML = ''; head.innerHTML = ''; }, 320);
   }
 
   /* capture phase: intercept BEFORE the default pin handler runs */
