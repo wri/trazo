@@ -963,7 +963,7 @@
         backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px);
         opacity:0; pointer-events:none; transition:opacity .22s ease;
       }
-      [data-theme="light"] #tz-menu{ background:rgba(244,241,233,0.80); }
+      [data-theme="light"] #tz-menu{ background:rgba(255,255,255,0.80); }
       html.tz-menu-open #tz-menu{ opacity:1; pointer-events:auto; }
       .tz-menu-btn{
         display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
@@ -972,7 +972,7 @@
         backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px);
         cursor:pointer; text-align:center;
       }
-      [data-theme="light"] .tz-menu-btn{ background:rgba(255,253,247,0.55); }
+      [data-theme="light"] .tz-menu-btn{ background:rgba(255,255,255,0.55); }
       .tz-menu-btn:active{ background:rgba(240,171,0,0.28); }
       .tz-menu-btn .mb-title{
         font-family:var(--font-header); font-size:20px; font-weight:700;
@@ -1011,7 +1011,7 @@
         backdrop-filter:blur(5px); -webkit-backdrop-filter:blur(5px);
         box-shadow:0 14px 50px rgba(0,0,0,0.55); overflow:hidden;
       }
-      [data-theme="light"] .tz-reader-box{ background:rgba(244,241,233,0.90); }
+      [data-theme="light"] .tz-reader-box{ background:rgba(255,255,255,0.83); }
       .tz-reader-head{
         display:flex; align-items:center; justify-content:space-between; gap:8px;
         padding:12px 14px 10px; border-bottom:1px solid var(--border-dim); flex:none;
@@ -1150,7 +1150,7 @@
         transform:translateY(110%); transition:transform .3s ease;
         -webkit-overflow-scrolling:touch;
       }
-      [data-theme="light"] #tzo-sheet{ background:rgba(244,241,233,0.99); }
+      [data-theme="light"] #tzo-sheet{ background:rgba(255,255,255,0.83); }
       #tz-orbital.expanded #tzo-sheet{ transform:translateY(0); }
       #tz-orbital.expanded .tzo-backdrop{ background:rgba(0,0,0,0.42); }
       #tzo-sheet .tzo-sheet-grip{
@@ -1177,6 +1177,220 @@
       #tz-orbital-stage{ bottom:calc(146px + env(safe-area-inset-bottom)) !important; }
     }
   </style>
+  <!-- ══════════════════════════════════════════════════════════════════════
+       WRI SKIN — full restyle of the light theme to match wri.org's editorial
+       look: white ground, near-black ink, #F0AB00 gold accents, the signature
+       thick black rule above section headers, WRI button styling, dark footer.
+       Scoped to [data-theme="light"] so the dark theme is left untouched.
+       ══════════════════════════════════════════════════════════════════════ -->
+  <style id="wri-skin">
+    /* ── TOKENS: WRI light palette ─────────────────────────────────────────── */
+    :root[data-theme="light"]{
+      --gold:      #F0AB00;
+      --gold-lt:   #ffc23d;
+      --black:     #0a0a0a;
+      --grey:      #595650;
+      --lt-grey:   #0a0a0a;
+      --bg-page:     #ffffff;
+      --bg-panel:    #ffffff;
+      --bg-elevated: #f5f5f3;
+      --bg-deep:     #ffffff;
+      --bg-overlay:  rgba(255,255,255,0.90);
+      --border:       rgba(0,0,0,0.16);
+      --border-dim:   rgba(0,0,0,0.10);
+      --border-faint: rgba(0,0,0,0.08);
+      --text:       #0a0a0a;
+      --text-muted: #4d4a44;
+      --text-dim:   #8c8880;
+    }
+
+    /* ── PAGE GROUND ───────────────────────────────────────────────────────── */
+    [data-theme="light"] body          { background:#ffffff; }
+    [data-theme="light"] #map          { background:#eaeae7; }
+    [data-theme="light"] #drop-screen  { background:#ffffff; }
+    [data-theme="light"] #dz-status    { color:#6b6760; }
+
+    /* ── PREVIEW CARD (index.html) ─────────────────────────────────────────── */
+    /* WRI signature: a heavy black rule capping the block (echoes top-border-thick) */
+    [data-theme="light"] .card{
+      background:#ffffff; border:1px solid rgba(0,0,0,0.12);
+      box-shadow:0 0 0 1px rgba(0,0,0,0.04), 0 24px 60px rgba(0,0,0,0.12);
+    }
+    [data-theme="light"] .card::before{ background:#0a0a0a; height:5px; }
+    [data-theme="light"] button#submit-btn{
+      background:var(--gold); border-color:var(--gold); color:#0a0a0a;
+    }
+    [data-theme="light"] button#submit-btn:hover:not(:disabled){
+      background:var(--gold-lt); border-color:var(--gold-lt); color:#0a0a0a;
+    }
+
+    /* ── LONG-FORM SURFACES (landing.html #index-content) ──────────────────── */
+    [data-theme="light"] #index-content{
+      --surface:rgba(0,0,0,0.025);
+      --surface-hover:rgba(240,171,0,0.10);
+      --surface-feat:rgba(240,171,0,0.10);
+      --masthead-bg:rgba(255,255,255,0.94);
+      --footer-bg:#1d2715;
+      --cite-bg:#f6f5f2;
+    }
+
+    /* masthead → white with a hairline rule, black nav ink, gold hover */
+    [data-theme="light"] #index-content .masthead{ border-bottom:1px solid rgba(0,0,0,0.12); }
+    [data-theme="light"] #index-content .mark{ color:#0a0a0a; }
+    [data-theme="light"] #index-content nav.primary a{ color:#0a0a0a; }
+    [data-theme="light"] #index-content nav.primary a:hover{ color:var(--gold); }
+    [data-theme="light"] #index-content nav.primary .nav-cta{ border-color:#0a0a0a; color:#0a0a0a; }
+    [data-theme="light"] #index-content nav.primary .nav-cta:hover{ background:var(--gold); border-color:var(--gold); color:#0a0a0a; }
+
+    /* hero → black condensed headline, gold inline emphasis (à la wri.org hero) */
+    [data-theme="light"] #index-content h1.hero-title{ color:#0a0a0a; }
+    [data-theme="light"] #index-content h1.hero-title em{ color:var(--gold); font-weight:300; }
+
+    /* THE WRI MOVE: heavy black rule above every numbered section header */
+    [data-theme="light"] #index-content .section{ border-top:none; }
+    [data-theme="light"] #index-content h2.section-num{
+      color:#0a0a0a;
+      border-top:6px solid #0a0a0a;
+      padding-top:16px;
+      letter-spacing:.03em;
+      font-size:22px;
+    }
+
+    /* buttons → WRI gold rectangle with dark ink, or black-outlined ghost */
+    [data-theme="light"] #index-content .btn{ border-color:#0a0a0a; color:#0a0a0a; }
+    [data-theme="light"] #index-content .btn:hover{ background:var(--gold); border-color:var(--gold); color:#0a0a0a; }
+    [data-theme="light"] #index-content .btn.primary{ background:var(--gold); border-color:var(--gold); color:#0a0a0a; }
+    [data-theme="light"] #index-content .btn.primary:hover{ background:var(--gold-lt); border-color:var(--gold-lt); color:#0a0a0a; }
+
+    /* footer → WRI dark footer: deep ground, light ink, gold section heads */
+    [data-theme="light"] #index-content footer{ color:#cfcabb; }
+    [data-theme="light"] #index-content .footer-brand-line{ color:#ffffff; }
+    [data-theme="light"] #index-content footer p{ color:#cfcabb; }
+    [data-theme="light"] #index-content footer h6{ color:var(--gold); }
+    [data-theme="light"] #index-content footer ul a{ color:#cfcabb; }
+    [data-theme="light"] #index-content footer ul a:hover{ color:var(--gold); }
+    [data-theme="light"] #index-content footer .small{ color:#8f897a; border-top-color:rgba(255,255,255,0.14); }
+
+    /* ── MAP CHROME (map.html + landing hero map) → white WRI panels ───────── */
+    [data-theme="light"] #info-panel{
+      background-color:rgba(255,255,255,0.83);
+      box-shadow:0 0 0 1px rgba(0,0,0,0.10), 0 8px 40px rgba(0,0,0,0.12),
+                 inset 0 0 0 1px rgba(255,255,255,0.40);
+    }
+    [data-theme="light"] #legend{
+      background-color:rgba(255,255,255,0.83);
+      box-shadow:0 8px 40px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.10);
+    }
+    [data-theme="light"] #topbar{ background:rgba(255,255,255,0.92); border-bottom:1px solid rgba(0,0,0,0.14); }
+    [data-theme="light"] #topbar .tz-back{ color:#0a0a0a; }
+    [data-theme="light"] #topbar .tz-back:hover{ color:var(--gold); }
+    [data-theme="light"] .tnav-dropdown{
+      background:rgba(255,255,255,0.88); border-color:rgba(0,0,0,0.14);
+      box-shadow:0 12px 40px rgba(0,0,0,0.16);
+    }
+    [data-theme="light"] .tnav-model-chip,
+    [data-theme="light"] .tnav-step,
+    [data-theme="light"] .tnav-res,
+    [data-theme="light"] .cov-entry{ background:rgba(0,0,0,0.025); }
+    [data-theme="light"] .tnav-citation{ background:#f6f5f2; }
+
+    /* landing-cta card on the hero map */
+    [data-theme="light"] #landing-cta{
+      background-color:rgba(255,255,255,0.83);
+      box-shadow:0 0 0 1px rgba(0,0,0,0.10), 0 8px 40px rgba(0,0,0,0.12);
+    }
+    [data-theme="light"] #landing-cta .lc-title{ color:var(--gold); }
+    [data-theme="light"] #landing-cta .lc-btn{ border-color:#0a0a0a; color:#0a0a0a; }
+    [data-theme="light"] #landing-cta .lc-btn:hover{ background:var(--gold); border-color:var(--gold); color:#0a0a0a; }
+    [data-theme="light"] #landing-cta .lc-btn-primary{ background:var(--gold); border-color:var(--gold); color:#0a0a0a; }
+    [data-theme="light"] #landing-cta .lc-btn-primary:hover{ background:var(--gold-lt); border-color:var(--gold-lt); color:#0a0a0a; }
+
+    /* popups */
+    [data-theme="light"] .leaflet-popup-content-wrapper{
+      background:rgba(255,255,255,0.87) !important; color:#0a0a0a !important;
+      border:1px solid rgba(240,171,0,0.55) !important;
+      box-shadow:0 6px 24px rgba(0,0,0,0.18) !important;
+    }
+    [data-theme="light"] .leaflet-popup-tip-container .leaflet-popup-tip{ background:rgba(255,255,255,0.87); }
+
+    /* ── REVERT: the radial-orbital selector keeps its ORIGINAL light palette ──
+       (re-pin the original light-theme tokens within the orbital subtree so the
+        WRI skin above does not recolor it) */
+    [data-theme="light"] #tz-orbital{
+      --gold:#8B6914; --gold-lt:#6b4e0a;
+      --bg-overlay:rgba(240,237,230,0.77);
+      --border:rgba(80,70,40,0.22); --border-dim:rgba(80,70,40,0.12);
+      --text:#1e1c16; --text-muted:#5a5648; --text-dim:#9a9488;
+    }
+
+    /* ── orbital text boxes match the "Trazo / en·es·pt" info panel: white
+       ground, WRI gold accents, neutral hairline + soft shadow ── */
+    [data-theme="light"] #tz-orbital .tzo-card{
+      --gold:#F0AB00; --gold-lt:#ffc23d;
+      --bg-overlay:rgba(255,255,255,0.83);
+      --border:rgba(0,0,0,0.16); --border-dim:rgba(0,0,0,0.10);
+      --text:#0a0a0a; --text-muted:#4d4a44; --text-dim:#8c8880;
+      background:rgba(255,255,255,0.83);
+      border-color:rgba(0,0,0,0.10);
+      box-shadow:0 0 0 1px rgba(0,0,0,0.10), 0 14px 44px rgba(0,0,0,0.18);
+    }
+
+    /* when a node is selected its circle-icon scales up; push the label down so
+       the enlarged icon no longer covers "Coverage" / "Training Data" / etc. */
+    [data-theme="light"] #tz-orbital .tzo-node.active .tzo-title{ transform:translate(-50%,14px) scale(1.15); }
+
+    /* ════ DESKTOP ONLY: Release 2 + "Trazo on the Ground" panels open as a
+       CENTERED modal; the map overlays (Trazo info panel, orbital, legend)
+       quick-fade out behind it and fade back in on dismiss ════ */
+    @media (min-width:769px){
+      /* suppress the anchored hover/click dropdown for these items — they go modal */
+      #tnav-r2-coverage .tnav-dropdown, #tnav-r2-training .tnav-dropdown, #tnav-r2-models .tnav-dropdown,
+      #tnav-tg-barriers .tnav-dropdown, #tnav-tg-using .tnav-dropdown,
+      #tnav-tg-scaling .tnav-dropdown, #tnav-tg-feedback .tnav-dropdown{ display:none !important; }
+
+      #info-panel, #tz-orbital, #legend{ transition:opacity .28s ease; }
+      body.tz-modal-active #info-panel,
+      body.tz-modal-active #tz-orbital,
+      body.tz-modal-active #legend{ opacity:0 !important; pointer-events:none !important; }
+
+      #tz-modal-overlay{ position:fixed; inset:0; z-index:3000; display:none; }
+      #tz-modal-overlay.open{ display:block; }
+      #tz-modal-backdrop{ position:absolute; inset:0; background:rgba(20,18,10,0.10);
+        opacity:0; transition:opacity .28s ease; }
+      #tz-modal-overlay.show #tz-modal-backdrop{ opacity:1; }
+      #tz-modal{ position:absolute; top:50%; left:50%;
+        transform:translate(-50%,-47%); width:min(640px,92vw); max-height:82vh;
+        display:flex; flex-direction:column; overflow:hidden;
+        background:rgba(255,255,255,0.97); border:1px solid rgba(0,0,0,0.12);
+        border-radius:12px; box-shadow:0 28px 80px rgba(0,0,0,0.30);
+        opacity:0; transition:opacity .28s ease, transform .28s ease; }
+      #tz-modal-overlay.show #tz-modal{ opacity:1; transform:translate(-50%,-50%); }
+      #tz-modal-body{ overflow-y:auto; overflow-x:hidden; padding:34px 36px 30px;
+        scrollbar-width:thin; scrollbar-color:rgba(240,171,0,0.3) transparent; }
+      #tz-modal-body::-webkit-scrollbar{ width:6px; }
+      #tz-modal-body::-webkit-scrollbar-thumb{ background:rgba(240,171,0,0.3); border-radius:4px; }
+      #tz-modal-body .tnav-drop-head{ font-size:13px; margin-bottom:9px; }
+      #tz-modal-body .tnav-drop-scroll{ max-height:none; overflow:visible; }
+      #tz-modal-x{ position:absolute; top:11px; right:13px; width:30px; height:30px;
+        display:flex; align-items:center; justify-content:center;
+        background:none; border:none; cursor:pointer; padding:0; z-index:2;
+        font-family:var(--font-mono); font-size:19px; line-height:1; color:#8B6914;
+        opacity:.85; transition:opacity .15s, transform .15s, color .15s; }
+      #tz-modal-x:hover{ opacity:1; transform:scale(1.12); color:#6b5210; }
+    }
+    /* dark theme for the centered modal */
+    @media (min-width:769px){
+      [data-theme="dark"] #tz-modal{
+        background:rgba(10,17,7,0.94); border-color:rgba(240,171,0,0.30);
+        box-shadow:0 28px 80px rgba(0,0,0,0.60);
+      }
+      [data-theme="dark"] #tz-modal-backdrop{ background:rgba(0,0,0,0.38); }
+      [data-theme="dark"] #tz-modal-x{ color:#F0AB00; }
+      [data-theme="dark"] #tz-modal-x:hover{ color:#ffd04d; }
+    }
+    @media (max-width:768px){ #tz-modal-overlay{ display:none !important; } }
+  </style>
+
 </head>
 <body>
 
@@ -2202,7 +2416,7 @@ window.TZ = (function(){
     var total = ITEMS.length;
     ITEMS.forEach(function(it, i){
       var ang = ((i / total) * 360 + rotation) % 360, rad = ang * Math.PI / 180;
-      var RR = tzMobile() ? 64 : RADIUS;   /* compact orbit on phones (recomputed live on resize/rotate) */
+      var RR = tzMobile() ? 80 : RADIUS;   /* compact orbit on phones (recomputed live on resize/rotate) */
       var x = RR * Math.cos(rad), y = RR * Math.sin(rad);
       var z = Math.round(100 + 50 * Math.cos(rad));
       var op = Math.max(0.45, Math.min(1, 0.45 + 0.55 * ((1 + Math.sin(rad)) / 2)));
@@ -2412,6 +2626,76 @@ window.TZ = (function(){
 
   if (document.readyState !== 'loading') build();
   else document.addEventListener('DOMContentLoaded', build);
+})();
+</script>
+
+<script>
+/* ════ DESKTOP: centered-modal panels for Release 2 + "Trazo on the Ground" ════
+   On desktop, selecting one of these topbar items opens its text box in the
+   center of the page and quick-fades the map overlays (Trazo info panel, the
+   orbital, the legend) out behind it. An olive X / backdrop / Esc dismisses it
+   and fades those elements back in. Mobile keeps the original behavior. */
+(function(){
+  var TARGETS = {
+    'tnav-r2-coverage':1,'tnav-r2-training':1,'tnav-r2-models':1,
+    'tnav-tg-barriers':1,'tnav-tg-using':1,'tnav-tg-scaling':1,'tnav-tg-feedback':1
+  };
+  function isDesktop(){ return !window.matchMedia || !window.matchMedia('(max-width:768px)').matches; }
+
+  var overlay  = document.createElement('div'); overlay.id  = 'tz-modal-overlay';
+  var backdrop = document.createElement('div'); backdrop.id = 'tz-modal-backdrop';
+  var modal    = document.createElement('div'); modal.id    = 'tz-modal';
+  var xbtn     = document.createElement('button'); xbtn.id   = 'tz-modal-x';
+  xbtn.setAttribute('aria-label','Close'); xbtn.innerHTML = '✕';
+  var body     = document.createElement('div'); body.id     = 'tz-modal-body';
+  modal.appendChild(xbtn); modal.appendChild(body);
+  overlay.appendChild(backdrop); overlay.appendChild(modal);
+
+  var openId = null, hideT = null;
+
+  function open(item){
+    if(!overlay.parentNode) document.body.appendChild(overlay);
+    var content = item.querySelector('.tnav-drop-content');
+    body.innerHTML = content ? content.innerHTML : '';
+    body.scrollTop = 0;
+    clearTimeout(hideT);
+    document.querySelectorAll('.tnav-item.open').forEach(function(i){ i.classList.remove('open'); });
+    overlay.classList.add('open');
+    document.body.classList.add('tz-modal-active');
+    void overlay.offsetWidth;                 /* commit display before transition */
+    overlay.classList.add('show');
+    openId = item.id;
+  }
+  function close(){
+    if(!openId) return;
+    overlay.classList.remove('show');
+    document.body.classList.remove('tz-modal-active');
+    openId = null;
+    hideT = setTimeout(function(){ overlay.classList.remove('open'); body.innerHTML = ''; }, 320);
+  }
+
+  /* capture phase: intercept BEFORE the default pin handler runs */
+  document.addEventListener('click', function(e){
+    var trig = e.target.closest ? e.target.closest('.tnav-trigger') : null;
+    if(trig){
+      var item = trig.closest('.tnav-item');
+      if(item && TARGETS[item.id] && isDesktop()){
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        (openId === item.id) ? close() : open(item);
+      }
+    }
+  }, true);
+
+  backdrop.addEventListener('click', close);
+  xbtn.addEventListener('click', function(e){ e.stopPropagation(); close(); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') close(); });
+
+  if(window.matchMedia){
+    var mq = window.matchMedia('(max-width:768px)');
+    var onMq = function(){ if(mq.matches) close(); };
+    if(mq.addEventListener) mq.addEventListener('change', onMq); else if(mq.addListener) mq.addListener(onMq);
+  }
 })();
 </script>
 

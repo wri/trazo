@@ -942,6 +942,184 @@
       #index-content .cta-row .btn{ justify-content:space-between; }
     }
   </style>
+  <!-- ══════════════════════════════════════════════════════════════════════
+       WRI SKIN — full restyle of the light theme to match wri.org's editorial
+       look: white ground, near-black ink, #F0AB00 gold accents, the signature
+       thick black rule above section headers, WRI button styling, dark footer.
+       Scoped to [data-theme="light"] so the dark theme is left untouched.
+       ══════════════════════════════════════════════════════════════════════ -->
+  <style id="wri-skin">
+    /* ── TOKENS: WRI light palette ─────────────────────────────────────────── */
+    :root[data-theme="light"]{
+      --gold:      #F0AB00;
+      --gold-lt:   #ffc23d;
+      --black:     #0a0a0a;
+      --grey:      #595650;
+      --lt-grey:   #0a0a0a;
+      --bg-page:     #ffffff;
+      --bg-panel:    #ffffff;
+      --bg-elevated: #f5f5f3;
+      --bg-deep:     #ffffff;
+      --bg-overlay:  rgba(255,255,255,0.90);
+      --border:       rgba(0,0,0,0.16);
+      --border-dim:   rgba(0,0,0,0.10);
+      --border-faint: rgba(0,0,0,0.08);
+      --text:       #0a0a0a;
+      --text-muted: #4d4a44;
+      --text-dim:   #8c8880;
+    }
+
+    /* ── PAGE GROUND ───────────────────────────────────────────────────────── */
+    [data-theme="light"] body          { background:#ffffff; }
+    [data-theme="light"] #map          { background:#eaeae7; }
+    [data-theme="light"] #drop-screen  { background:#ffffff; }
+    [data-theme="light"] #dz-status    { color:#6b6760; }
+
+    /* ── PREVIEW CARD (index.html) ─────────────────────────────────────────── */
+    /* WRI signature: a heavy black rule capping the block (echoes top-border-thick) */
+    [data-theme="light"] .card{
+      background:#ffffff; border:1px solid rgba(0,0,0,0.12);
+      box-shadow:0 0 0 1px rgba(0,0,0,0.04), 0 24px 60px rgba(0,0,0,0.12);
+    }
+    [data-theme="light"] .card::before{ background:#0a0a0a; height:5px; }
+    [data-theme="light"] button#submit-btn{
+      background:var(--gold); border-color:var(--gold); color:#0a0a0a;
+    }
+    [data-theme="light"] button#submit-btn:hover:not(:disabled){
+      background:var(--gold-lt); border-color:var(--gold-lt); color:#0a0a0a;
+    }
+
+    /* ── LONG-FORM SURFACES (landing.html #index-content) ──────────────────── */
+    [data-theme="light"] #index-content{
+      --surface:rgba(0,0,0,0.025);
+      --surface-hover:rgba(240,171,0,0.10);
+      --surface-feat:rgba(240,171,0,0.10);
+      --masthead-bg:rgba(255,255,255,0.94);
+      --footer-bg:#000000;
+      --cite-bg:#f6f5f2;
+    }
+
+    /* masthead → white with a hairline rule, black nav ink, gold hover */
+    [data-theme="light"] #index-content .masthead{ border-bottom:1px solid rgba(0,0,0,0.12); }
+    [data-theme="light"] #index-content .mark{ color:#0a0a0a; }
+    [data-theme="light"] #index-content nav.primary a{ color:#0a0a0a; }
+    [data-theme="light"] #index-content nav.primary a:hover{ color:var(--gold); }
+    [data-theme="light"] #index-content nav.primary .nav-cta{ border-color:#0a0a0a; color:#0a0a0a; }
+    [data-theme="light"] #index-content nav.primary .nav-cta:hover{ background:var(--gold); border-color:var(--gold); color:#0a0a0a; }
+
+    /* hero → black condensed headline, gold inline emphasis (à la wri.org hero) */
+    [data-theme="light"] #index-content h1.hero-title{ color:#0a0a0a; }
+    [data-theme="light"] #index-content h1.hero-title em{ color:var(--gold); font-weight:300; }
+
+    /* THE WRI MOVE: heavy black rule above every numbered section header */
+    [data-theme="light"] #index-content .section{ border-top:none; }
+    [data-theme="light"] #index-content h2.section-num{
+      color:#0a0a0a;
+      border-top:6px solid #0a0a0a;
+      padding-top:16px;
+      letter-spacing:.03em;
+      font-size:22px;
+    }
+
+    /* buttons → WRI gold rectangle with dark ink, or black-outlined ghost */
+    [data-theme="light"] #index-content .btn{ border-color:#0a0a0a; color:#0a0a0a; }
+    [data-theme="light"] #index-content .btn:hover{ background:var(--gold); border-color:var(--gold); color:#0a0a0a; }
+    [data-theme="light"] #index-content .btn.primary{ background:var(--gold); border-color:var(--gold); color:#0a0a0a; }
+    [data-theme="light"] #index-content .btn.primary:hover{ background:var(--gold-lt); border-color:var(--gold-lt); color:#0a0a0a; }
+
+    /* footer → WRI dark footer: deep ground, light ink, gold section heads */
+    [data-theme="light"] #index-content footer{ color:#ffffff; }
+    [data-theme="light"] #index-content .footer-brand-line{ color:#ffffff; }
+    [data-theme="light"] #index-content footer p{ color:#ffffff; }
+    [data-theme="light"] #index-content footer h6{ color:var(--gold); }
+    [data-theme="light"] #index-content footer ul a{ color:#ffffff; }
+    [data-theme="light"] #index-content footer ul a:hover{ color:var(--gold); }
+    [data-theme="light"] #index-content footer .small{ color:#8f897a; border-top-color:rgba(255,255,255,0.14); }
+
+    /* ── MAP CHROME (map.html + landing hero map) → white WRI panels ───────── */
+    [data-theme="light"] #info-panel{
+      background-color:rgba(255,255,255,0.93);
+      box-shadow:0 0 0 1px rgba(0,0,0,0.10), 0 8px 40px rgba(0,0,0,0.12),
+                 inset 0 0 0 1px rgba(255,255,255,0.40);
+    }
+    [data-theme="light"] #legend{
+      background-color:rgba(255,255,255,0.93);
+      box-shadow:0 8px 40px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.10);
+    }
+    [data-theme="light"] #topbar{ background:rgba(255,255,255,0.92); border-bottom:1px solid rgba(0,0,0,0.14); }
+    [data-theme="light"] #topbar .tz-back{ color:#0a0a0a; }
+    [data-theme="light"] #topbar .tz-back:hover{ color:var(--gold); }
+    [data-theme="light"] .tnav-dropdown{
+      background:rgba(255,255,255,0.98); border-color:rgba(0,0,0,0.14);
+      box-shadow:0 12px 40px rgba(0,0,0,0.16);
+    }
+    [data-theme="light"] .tnav-model-chip,
+    [data-theme="light"] .tnav-step,
+    [data-theme="light"] .tnav-res,
+    [data-theme="light"] .cov-entry{ background:rgba(0,0,0,0.025); }
+    [data-theme="light"] .tnav-citation{ background:#f6f5f2; }
+
+    /* landing-cta card on the hero map */
+    [data-theme="light"] #landing-cta{
+      background-color:rgba(255,255,255,0.93);
+      box-shadow:0 0 0 1px rgba(0,0,0,0.10), 0 8px 40px rgba(0,0,0,0.12);
+    }
+    [data-theme="light"] #landing-cta .lc-title{ color:var(--gold); }
+    [data-theme="light"] #landing-cta .lc-btn{ border-color:#0a0a0a; color:#0a0a0a; }
+    [data-theme="light"] #landing-cta .lc-btn:hover{ background:var(--gold); border-color:var(--gold); color:#0a0a0a; }
+    [data-theme="light"] #landing-cta .lc-btn-primary{ background:var(--gold); border-color:var(--gold); color:#0a0a0a; }
+    [data-theme="light"] #landing-cta .lc-btn-primary:hover{ background:var(--gold-lt); border-color:var(--gold-lt); color:#0a0a0a; }
+
+    /* popups */
+    [data-theme="light"] .leaflet-popup-content-wrapper{
+      background:rgba(255,255,255,0.97) !important; color:#0a0a0a !important;
+      border:1px solid rgba(240,171,0,0.55) !important;
+      box-shadow:0 6px 24px rgba(0,0,0,0.18) !important;
+    }
+    [data-theme="light"] .leaflet-popup-tip-container .leaflet-popup-tip{ background:rgba(255,255,255,0.97); }
+
+    /* ── REVERT: the radial-orbital selector keeps its ORIGINAL light palette ──
+       (re-pin the original light-theme tokens within the orbital subtree so the
+        WRI skin above does not recolor it) */
+    [data-theme="light"] #tz-orbital{
+      --gold:#8B6914; --gold-lt:#6b4e0a;
+      --bg-overlay:rgba(240,237,230,0.77);
+      --border:rgba(80,70,40,0.22); --border-dim:rgba(80,70,40,0.12);
+      --text:#1e1c16; --text-muted:#5a5648; --text-dim:#9a9488;
+    }
+
+    /* ── CONTINUITY: echo the orbital text-box palette (cream ground, olive-gold
+       accents) in the hero stat panel right below the map, so the floating
+       orbital and the page content read as one system ── */
+    [data-theme="light"] #index-content .hero-meta{ border-top:2px solid #8B6914; }
+    [data-theme="light"] #index-content .hero-meta dt{ color:#8B6914; }
+
+    /* ── orbital text boxes match the "Trazo / en·es·pt" info panel: white
+       ground, WRI gold accents, neutral hairline + soft shadow ── */
+    [data-theme="light"] #tz-orbital .tzo-card{
+      --gold:#F0AB00; --gold-lt:#ffc23d;
+      --bg-overlay:rgba(255,255,255,0.93);
+      --border:rgba(0,0,0,0.16); --border-dim:rgba(0,0,0,0.10);
+      --text:#0a0a0a; --text-muted:#4d4a44; --text-dim:#8c8880;
+      background:rgba(255,255,255,0.93);
+      border-color:rgba(0,0,0,0.10);
+      box-shadow:0 0 0 1px rgba(0,0,0,0.10), 0 14px 44px rgba(0,0,0,0.18);
+    }
+
+    /* ── secondary OLIVE accent (carried from the orbital) on micro-labels and
+       the citation callout, so olive recurs through the page; bright WRI gold
+       stays the link / CTA color ── */
+    [data-theme="light"] #index-content .eyebrow{ color:#8B6914; }
+    [data-theme="light"] #index-content .eyebrow::before{ background:#8B6914; }
+    [data-theme="light"] #index-content .res-kind{ color:#8B6914; }
+    [data-theme="light"] #index-content .cite-toggle summary{ color:#8B6914; border-left-color:#8B6914; }
+    [data-theme="light"] #index-content .cite-toggle .citation{ border-left-color:#8B6914; }
+
+    /* when a node is selected its circle-icon scales up; push the label down so
+       the enlarged icon no longer covers "Coverage" / "Training Data" / etc. */
+    [data-theme="light"] #tz-orbital .tzo-node.active .tzo-title{ transform:translate(-50%,14px) scale(1.15); }
+  </style>
+
 </head>
 <body>
 
