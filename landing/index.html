@@ -337,6 +337,46 @@
     [data-theme="light"] .leaflet-popup-tip-container .leaflet-popup-tip{ background:rgba(255,255,255,0.97); }
   </style>
 
+  <!-- ══ THEME PACK — extra switchable aesthetics (warm/prototype/datalab/schematic) ══ -->
+  <style id="theme-pack">
+    :root[data-theme="warm"]{
+      --bg-page:#ece8e0; --bg-panel:#f4f1ea; --bg-elevated:#e2ddd1;
+      --text:#2a2722; --text-muted:#5e584d; --text-dim:#9a9384;
+      --gold:#a8741f; --gold-lt:#c68a28; --accent2:#b4532a;
+      --border:rgba(70,58,40,0.22); --border-dim:rgba(70,58,40,0.14); --border-faint:rgba(70,58,40,0.09);
+      --surface:rgba(70,58,40,0.05); --surface-hover:rgba(168,116,31,0.10);
+    }
+    :root[data-theme="prototype"]{
+      --bg-page:#fbfbf8; --bg-panel:#ffffff; --bg-elevated:#f1f0ea;
+      --text:#1b1b1a; --text-muted:#5f5e58; --text-dim:#9a9890;
+      --gold:#c2901a; --gold-lt:#e8b21f; --accent2:#2f6df0;
+      --border:rgba(20,20,18,0.55); --border-dim:rgba(20,20,18,0.30); --border-faint:rgba(20,20,18,0.12);
+      --surface:rgba(20,20,18,0.04); --surface-hover:rgba(20,20,18,0.07);
+    }
+    :root[data-theme="datalab"]{
+      --bg-page:#f4f6f7; --bg-panel:#ffffff; --bg-elevated:#eef1f3;
+      --text:#10161c; --text-muted:#566370; --text-dim:#8a97a3;
+      --gold:#0e7c86; --gold-lt:#16a3b0; --accent2:#d8772b;
+      --border:rgba(20,40,55,0.16); --border-dim:rgba(20,40,55,0.10); --border-faint:rgba(20,40,55,0.06);
+      --surface:rgba(20,40,55,0.04); --surface-hover:rgba(14,124,134,0.08);
+    }
+    :root[data-theme="schematic"]{
+      --bg-page:#0c2230; --bg-panel:#0f2a3b; --bg-elevated:#103246;
+      --text:#dceaf2; --text-muted:#8fb3c6; --text-dim:#5d8298;
+      --gold:#5fd0e6; --gold-lt:#8fe3f2; --accent2:#f2b441;
+      --border:rgba(150,200,225,0.30); --border-dim:rgba(150,200,225,0.16); --border-faint:rgba(150,200,225,0.10);
+      --surface:rgba(150,200,225,0.05); --surface-hover:rgba(95,208,230,0.12);
+    }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) body{ background:var(--bg-page); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) .card{ background:var(--bg-panel); border:1px solid var(--border); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) .card::before{ background:var(--gold); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) .mark{ color:var(--text); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) h1{ color:var(--text); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) button#submit-btn{ background:var(--gold); border-color:var(--gold); color:var(--bg-page); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) button#submit-btn:hover:not(:disabled){ background:var(--gold-lt); border-color:var(--gold-lt); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) .eyebrow{ color:var(--accent2); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) .foot .lockline::before{ background:var(--accent2); }
+  </style>
 </head>
 <body>
   <button id="theme-toggle" type="button" aria-label="Toggle light or dark theme">Dark mode</button>
@@ -429,5 +469,49 @@
       }
     });
   </script>
+<script>
+/* ════ SIX-THEME SWITCHER (warm · light · dark · prototype · schematic · datalab) ════ */
+(function(){
+  var THEMES = ['warm','light','dark','prototype','schematic','datalab'];
+  var LABELS = { warm:'Warm', light:'Light', dark:'Dark', prototype:'Prototype', schematic:'Schematic', datalab:'Data Lab' };
+  var KEY = 'trazo-theme6';
+  var root = document.documentElement;
+  var TOGGLES = '.theme-toggle-idx, #theme-toggle, #topbar #theme-toggle, [data-theme-cycle]';
+  function cur(){ var t = root.getAttribute('data-theme'); return THEMES.indexOf(t) >= 0 ? t : 'light'; }
+  function relabel(t){
+    document.querySelectorAll(TOGGLES).forEach(function(el){
+      el.textContent = LABELS[t] + ' ◑';
+      el.setAttribute('title', 'Theme: ' + LABELS[t] + ' (click to cycle)');
+    });
+  }
+  function apply(t){
+    if(THEMES.indexOf(t) < 0) t = 'light';
+    root.setAttribute('data-theme', t);
+    try { localStorage.setItem(KEY, t); } catch(e){}
+    relabel(t);
+    try { document.dispatchEvent(new CustomEvent('tztheme', { detail:t })); } catch(e){}
+    return t;
+  }
+  function next(){ var i = THEMES.indexOf(cur()); return apply(THEMES[(i + 1) % THEMES.length]); }
+  function onToggleClick(e){
+    var hit = e.target.closest && e.target.closest(TOGGLES);
+    if(!hit) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    next();
+  }
+  function hookTZ(){
+    if(window.TZ){ window.TZ.toggle = next; window.TZ.set = apply; window.TZ.current = cur; window.TZ.dark = function(){ return cur() === 'dark'; }; }
+  }
+  var stored = null; try { stored = localStorage.getItem(KEY); } catch(e){}
+  apply(stored || cur());
+  document.addEventListener('click', onToggleClick, true);
+  function ready(){ relabel(cur()); hookTZ(); }
+  if(document.readyState !== 'loading') ready();
+  else document.addEventListener('DOMContentLoaded', ready);
+  window.TZ6 = { cycle: next, set: apply, current: cur, themes: THEMES };
+})();
+</script>
+
 </body>
 </html>

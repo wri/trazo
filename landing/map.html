@@ -1052,7 +1052,7 @@
       .tz-reader-body::-webkit-scrollbar-track{ background:transparent; }
       .tz-reader-body::-webkit-scrollbar-thumb{ background:rgba(240,171,0,0.3); border-radius:4px; }
       .tz-reader-body .tnav-drop-content{ padding:12px 0 0; }
-      .tz-reader-body .tz-intro{ font-size:18.75px; line-height:1.5; }   /* 1.5x the mobile quote size */
+      .tz-reader-body .tz-intro{ font-size:15.6px; line-height:1.5; }   /* 1.25x the mobile quote size */
       .tz-reader-body .tnav-drop-scroll{ max-height:none; overflow:visible; padding-right:0; }
       .tz-reader-body .tnav-dropdown{ all:unset; display:block; }
       .tz-reader-body .tz-extra{ max-height:none; opacity:1; margin-top:7px; overflow:visible; }  /* no hover on touch - show notes inline */
@@ -1372,7 +1372,7 @@
       #tz-modal-head{ flex:none; padding:30px 48px 14px 36px;
         border-bottom:1px solid rgba(140,140,130,0.22); }
       #tz-modal-head .tnav-drop-head{ font-size:13px; margin-bottom:8px; }
-      #tz-modal-head .tz-intro{ font-size:23px; line-height:1.45; color:var(--text-muted); margin:0; }
+      #tz-modal-head .tz-intro{ font-size:19.4px; line-height:1.5; color:var(--text-muted); margin:0; }
       #tz-modal-body{ flex:1 1 auto; overflow-y:auto; overflow-x:hidden; padding:6px 36px 30px;
         scrollbar-width:thin; scrollbar-color:rgba(240,171,0,0.3) transparent; }
       #tz-modal-body::-webkit-scrollbar{ width:6px; }
@@ -1415,6 +1415,133 @@
     @media (max-width:768px){ #tz-modal-overlay{ display:none !important; } }
   </style>
 
+  <!-- ══════════════════════════════════════════════════════════════════════
+       THEME PACK — four additional switchable aesthetics on top of the
+       existing light (WRI) and dark themes. Token-driven: each theme sets a
+       palette; one shared :is() block maps those tokens onto every surface.
+       Themes: warm · prototype · datalab (light-like) · schematic (dark-like).
+       ══════════════════════════════════════════════════════════════════════ -->
+  <style id="theme-pack">
+
+    /* ── WARM · neutral greige ground, ochre + terracotta/clay second color ── */
+    :root[data-theme="warm"]{
+      --bg-page:#ece8e0; --bg-panel:#f4f1ea; --bg-elevated:#e2ddd1;
+      --text:#2a2722; --text-muted:#5e584d; --text-dim:#9a9384;
+      --gold:#a8741f; --gold-lt:#c68a28;
+      --accent2:#b4532a; --accent2-lt:#cc6a3e;
+      --border:rgba(70,58,40,0.22); --border-dim:rgba(70,58,40,0.14); --border-faint:rgba(70,58,40,0.09);
+      --xsurf:rgba(70,58,40,0.05); --xsurfh:rgba(168,116,31,0.10);
+      --chrome-bg:rgba(244,241,234,0.88); --chrome-shadow:0 8px 40px rgba(50,40,20,0.14), 0 0 0 1px rgba(70,58,40,0.18);
+      --backdrop:rgba(50,40,25,0.12);
+      --xmast:rgba(236,232,224,0.94); --xfoot:#2b2622; --footer-text:#d8cdbb; --footer-brand:#f3ede0;
+      --map-filter:sepia(0.16) saturate(0.96) brightness(1.02);
+      --section-tint:rgba(180,83,42,0.055);
+    }
+
+    /* ── PROTOTYPE · paper, marker-yellow highlight, ink-pen blue ── */
+    :root[data-theme="prototype"]{
+      --bg-page:#fbfbf8; --bg-panel:#ffffff; --bg-elevated:#f1f0ea;
+      --text:#1b1b1a; --text-muted:#5f5e58; --text-dim:#9a9890;
+      --gold:#c2901a; --gold-lt:#e8b21f;
+      --accent2:#2f6df0; --accent2-lt:#558bf5;
+      --border:rgba(20,20,18,0.55); --border-dim:rgba(20,20,18,0.30); --border-faint:rgba(20,20,18,0.12);
+      --xsurf:rgba(20,20,18,0.04); --xsurfh:rgba(20,20,18,0.07);
+      --chrome-bg:rgba(255,255,255,0.92); --chrome-shadow:0 6px 30px rgba(0,0,0,0.16), 0 0 0 1.5px rgba(20,20,18,0.65);
+      --backdrop:rgba(20,20,18,0.12);
+      --xmast:rgba(251,251,248,0.94); --xfoot:#16160f; --footer-text:#d9d6c7; --footer-brand:#f4f1df;
+      --map-filter:grayscale(0.2) contrast(1.05) brightness(1.02);
+      --section-tint:rgba(232,178,31,0.08);
+    }
+
+    /* ── DATALAB · cool graphite, single signal-teal accent ── */
+    :root[data-theme="datalab"]{
+      --bg-page:#f4f6f7; --bg-panel:#ffffff; --bg-elevated:#eef1f3;
+      --text:#10161c; --text-muted:#566370; --text-dim:#8a97a3;
+      --gold:#0e7c86; --gold-lt:#16a3b0;
+      --accent2:#d8772b; --accent2-lt:#e88e44;
+      --border:rgba(20,40,55,0.16); --border-dim:rgba(20,40,55,0.10); --border-faint:rgba(20,40,55,0.06);
+      --xsurf:rgba(20,40,55,0.04); --xsurfh:rgba(14,124,134,0.08);
+      --chrome-bg:rgba(255,255,255,0.90); --chrome-shadow:0 8px 40px rgba(20,40,55,0.14), 0 0 0 1px rgba(20,40,55,0.16);
+      --backdrop:rgba(16,22,28,0.14);
+      --xmast:rgba(244,246,247,0.94); --xfoot:#0e161b; --footer-text:#aebcc6; --footer-brand:#eef3f5;
+      --map-filter:grayscale(0.35) brightness(1.02) contrast(1.02);
+      --section-tint:rgba(14,124,134,0.05);
+    }
+
+    /* ── SCHEMATIC · blueprint navy, cyan linework, amber callout ── */
+    :root[data-theme="schematic"]{
+      --bg-page:#0c2230; --bg-panel:#0f2a3b; --bg-elevated:#103246;
+      --text:#dceaf2; --text-muted:#8fb3c6; --text-dim:#5d8298;
+      --gold:#5fd0e6; --gold-lt:#8fe3f2;
+      --accent2:#f2b441; --accent2-lt:#f7c869;
+      --border:rgba(150,200,225,0.30); --border-dim:rgba(150,200,225,0.16); --border-faint:rgba(150,200,225,0.10);
+      --xsurf:rgba(150,200,225,0.05); --xsurfh:rgba(95,208,230,0.12);
+      --chrome-bg:rgba(13,36,50,0.82); --chrome-shadow:0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(150,200,225,0.25);
+      --backdrop:rgba(4,12,18,0.45);
+      --xmast:rgba(12,34,48,0.92); --xfoot:#081722; --footer-text:#9fc0d2; --footer-brand:#dceaf2;
+      --map-filter:brightness(0.42) saturate(0.7) hue-rotate(150deg) contrast(1.05);
+      --section-tint:rgba(95,208,230,0.05);
+    }
+
+    /* ════ SHARED MAPPING — one block drives all four themes via tokens ════ */
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) body{ background:var(--bg-page); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #map{ background:var(--bg-elevated); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #drop-screen{ background:var(--bg-page); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #dz-status{ color:var(--text-muted); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) .leaflet-tile-pane{ filter:var(--map-filter); }
+
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #index-content{
+      --surface:var(--xsurf); --surface-hover:var(--xsurfh); --surface-feat:var(--xsurfh);
+      --masthead-bg:var(--xmast); --footer-bg:var(--xfoot); --cite-bg:var(--bg-elevated);
+    }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #index-content .masthead{ border-bottom:1px solid var(--border); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #index-content .mark{ color:var(--text); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #index-content nav.primary a{ color:var(--text); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #index-content nav.primary a:hover{ color:var(--gold); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #index-content nav.primary .nav-cta{ border-color:var(--gold); color:var(--gold); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #index-content nav.primary .nav-cta:hover{ background:var(--gold); border-color:var(--gold); color:var(--bg-page); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #index-content h1.hero-title{ color:var(--text); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #index-content h1.hero-title em{ color:var(--gold); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #index-content h2.section-num{ color:var(--gold); border-top:none; padding-top:0; }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #index-content .eyebrow{ color:var(--accent2); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #index-content .eyebrow::before{ background:var(--accent2); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #index-content .res-kind{ color:var(--accent2); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #index-content .btn{ border-color:var(--gold); color:var(--text); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #index-content .btn:hover{ background:var(--gold); border-color:var(--gold); color:var(--bg-page); }
+
+    /* map chrome */
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #info-panel,
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #legend,
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #landing-cta{ background-color:var(--chrome-bg); box-shadow:var(--chrome-shadow); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #topbar{ background:var(--chrome-bg); border-bottom:1px solid var(--border); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #topbar .tz-back{ color:var(--text); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #topbar .tz-back:hover{ color:var(--gold); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) .tnav-dropdown{ background:var(--chrome-bg); border-color:var(--border); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) .tnav-model-chip,
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) .tnav-step,
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) .tnav-res,
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) .cov-entry{ background:var(--xsurf); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) .tnav-citation{ background:var(--bg-elevated); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #landing-cta .lc-title{ color:var(--gold); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #landing-cta .lc-btn{ border-color:var(--gold); color:var(--text); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #landing-cta .lc-btn:hover{ background:var(--gold); border-color:var(--gold); color:var(--bg-page); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #landing-cta .lc-btn-primary{ background:var(--gold); border-color:var(--gold); color:var(--bg-page); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #landing-cta .lc-btn-primary:hover{ background:var(--gold-lt); }
+
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) .leaflet-popup-content-wrapper{ background:var(--chrome-bg) !important; color:var(--text) !important; border:1px solid var(--gold) !important; }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) .leaflet-popup-tip-container .leaflet-popup-tip{ background:var(--chrome-bg); }
+
+    /* orbital, modal (incl. pinned head), mobile sheets */
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #tz-orbital .tzo-card{ background:var(--chrome-bg); border-color:var(--border); --bg-overlay:var(--chrome-bg); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #tz-modal{ background:var(--chrome-bg); border-color:var(--border); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #tz-modal-head{ border-bottom-color:var(--border); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #tz-modal-backdrop{ background:var(--backdrop); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #tz-modal-x{ color:var(--accent2); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #tzo-sheet{ background:var(--chrome-bg); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #tz-menu{ background:var(--chrome-bg); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) .tz-menu-btn{ background:var(--xsurf); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) .tz-reader-box{ background:var(--chrome-bg); }
+  </style>
 </head>
 <body>
 
@@ -2729,6 +2856,52 @@ window.TZ = (function(){
     var onMq = function(){ if(mq.matches) close(); };
     if(mq.addEventListener) mq.addEventListener('change', onMq); else if(mq.addListener) mq.addListener(onMq);
   }
+})();
+</script>
+
+<script>
+/* ════ SIX-THEME SWITCHER ════════════════════════════════════════════════════
+   Flips through warm · light · dark · prototype · schematic · datalab. */
+(function(){
+  var THEMES = ['warm','light','dark','prototype','schematic','datalab'];
+  var LABELS = { warm:'Warm', light:'Light', dark:'Dark', prototype:'Prototype', schematic:'Schematic', datalab:'Data Lab' };
+  var KEY = 'trazo-theme6';
+  var root = document.documentElement;
+  var TOGGLES = '.theme-toggle-idx, #theme-toggle, #topbar #theme-toggle, [data-theme-cycle]';
+
+  function cur(){ var t = root.getAttribute('data-theme'); return THEMES.indexOf(t) >= 0 ? t : 'light'; }
+  function relabel(t){
+    document.querySelectorAll(TOGGLES).forEach(function(el){
+      el.textContent = LABELS[t] + ' ◑';
+      el.setAttribute('title', 'Theme: ' + LABELS[t] + ' (click to cycle)');
+    });
+  }
+  function apply(t){
+    if(THEMES.indexOf(t) < 0) t = 'light';
+    root.setAttribute('data-theme', t);
+    try { localStorage.setItem(KEY, t); } catch(e){}
+    relabel(t);
+    try { document.dispatchEvent(new CustomEvent('tztheme', { detail:t })); } catch(e){}
+    return t;
+  }
+  function next(){ var i = THEMES.indexOf(cur()); return apply(THEMES[(i + 1) % THEMES.length]); }
+  function onToggleClick(e){
+    var hit = e.target.closest && e.target.closest(TOGGLES);
+    if(!hit) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    next();
+  }
+  function hookTZ(){
+    if(window.TZ){ window.TZ.toggle = next; window.TZ.set = apply; window.TZ.current = cur; window.TZ.dark = function(){ return cur() === 'dark'; }; }
+  }
+  var stored = null; try { stored = localStorage.getItem(KEY); } catch(e){}
+  apply(stored || cur());
+  document.addEventListener('click', onToggleClick, true);
+  function ready(){ relabel(cur()); hookTZ(); }
+  if(document.readyState !== 'loading') ready();
+  else document.addEventListener('DOMContentLoaded', ready);
+  window.TZ6 = { cycle: next, set: apply, current: cur, themes: THEMES };
 })();
 </script>
 
