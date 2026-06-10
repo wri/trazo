@@ -1541,6 +1541,13 @@
     :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #tz-menu{ background:var(--chrome-bg); }
     :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) .tz-menu-btn{ background:var(--xsurf); }
     :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) .tz-reader-box{ background:var(--chrome-bg); }
+
+    /* orbital dots + zoom-level badge read --bg-overlay; give the light themes a
+       light overlay (and schematic a navy one) so they match the map, not dark */
+    :root[data-theme="warm"]     { --bg-overlay:rgba(244,241,234,0.88); }
+    :root[data-theme="prototype"]{ --bg-overlay:rgba(255,255,255,0.92); }
+    :root[data-theme="datalab"]  { --bg-overlay:rgba(255,255,255,0.90); }
+    :root[data-theme="schematic"]{ --bg-overlay:rgba(13,36,50,0.82); }
   </style>
 </head>
 <body>

@@ -1273,6 +1273,13 @@
       border-bottom:1px solid var(--border); padding-bottom:8px; }
     [data-theme="schematic"] #index-content h2.section-num{ display:inline-block; border-bottom:1px solid var(--gold);
       padding-bottom:8px; letter-spacing:.1em; }
+
+    /* orbital dots + zoom-level badge read --bg-overlay; light overlay for the
+       light themes (navy for schematic) so they match the map, not dark */
+    :root[data-theme="warm"]     { --bg-overlay:rgba(244,241,234,0.88); }
+    :root[data-theme="prototype"]{ --bg-overlay:rgba(255,255,255,0.92); }
+    :root[data-theme="datalab"]  { --bg-overlay:rgba(255,255,255,0.90); }
+    :root[data-theme="schematic"]{ --bg-overlay:rgba(13,36,50,0.82); }
   </style>
 </head>
 <body>
