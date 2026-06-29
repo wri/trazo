@@ -1,7 +1,7 @@
 # Build the site with Jekyll (same engine as classic Pages) and deploy to
 # GitHub Pages. Reproduces the current site — README.md renders as the
 # homepage and web/ (the map) keeps its URL — while _config.yml scopes the
-# build to the web-facing content and landing/ adds the password-gated page.
+# build to the web-facing content and landing/ adds the public landing page.
 #
 # Requires the repo's Pages source to be set to "GitHub Actions"
 # (Settings → Pages → Build and deployment → Source).

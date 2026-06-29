@@ -1564,7 +1564,7 @@
 <!-- ── UI OVERLAY: sits in DOM after #map, forced above all Leaflet canvases ── -->
 <div id="ui-layer">
 <div id="topbar">
-  <a class="tz-back" href="landing.html">← Trazo</a>
+  <a class="tz-back" href="./">← Trazo</a>
   <nav id="topbar-nav">
 
     <!-- RELEASE 1 -->
@@ -1653,11 +1653,11 @@
             <div class="tnav-drop-head">04 / Use</div>
             <p class="tnav-drop-text">Five open artifacts under CC-BY-4.0, covering the technical foundation through to the 10.9-million-field release for the 2023–2024 planting season.</p>
             <div class="tnav-resources">
-              <a href="#" class="tnav-res"><span class="res-kind">Technical note</span><span class="res-title">Field Boundaries of South America, Grupp et al., WRI, 2026</span><span class="res-arr">↗</span></a>
-              <a href="https://source.coop/tristangruppwri/trazotraining" class="tnav-res" target="_blank" rel="noopener"><span class="res-kind">Dataset</span><span class="res-title">46,908 training + 7,453 test annotations across 17 ecoregions</span><span class="res-arr">↗</span></a>
+              <a href="https://www.wri.org/research/field-boundaries-south-america-technical-note" class="tnav-res" target="_blank" rel="noopener"><span class="res-kind">Technical note</span><span class="res-title">Field Boundaries of South America, Grupp et al., WRI, 2026</span><span class="res-arr">↗</span></a>
+              <a href="https://source.coop/wri-data-lab/trazoannotations" class="tnav-res" target="_blank" rel="noopener"><span class="res-kind">Dataset</span><span class="res-title">46,908 training + 7,453 test annotations across 17 ecoregions</span><span class="res-arr">↗</span></a>
               <a href="https://huggingface.co/collections/worldresourcesinstitute/trazo-models" class="tnav-res" target="_blank" rel="noopener"><span class="res-kind">Models</span><span class="res-title">Four checkpoints: Trazo1, TrazoSA, Trazo2, Trazo3</span><span class="res-arr">↗</span></a>
               <a href="https://github.com/wri/trazo" class="tnav-res" target="_blank" rel="noopener"><span class="res-kind">Pipeline</span><span class="res-title">Inference and fine-tuning pipeline configured by MGRS tile ID</span><span class="res-arr">↗</span></a>
-              <a href="https://source.coop/tristangruppwri/trazofields" class="tnav-res" target="_blank" rel="noopener"><span class="res-kind">Field boundaries</span><span class="res-title">10,935,129 AI-generated boundaries across South America</span><span class="res-arr">↗</span></a>
+              <a href="https://source.coop/wri-data-lab/trazofields" class="tnav-res" target="_blank" rel="noopener"><span class="res-kind">Field boundaries</span><span class="res-title">10,935,129 AI-generated boundaries across South America</span><span class="res-arr">↗</span></a>
             </div>
           </div>
         </div>
@@ -1789,7 +1789,7 @@
       <div class="tnav-dropdown" style="min-width:480px;left:auto;right:0">
         <div class="tnav-pin-hint">click to pin, click again to dismiss</div>
         <div class="tnav-drop-content">
-          <div class="tnav-drop-head">05 / Citation</div>
+          <div class="tnav-drop-head">Citation</div>
           <p class="tnav-drop-text">Cite both the Trazo technical note (Grupp et al. 2026) and the original Fields of the World benchmark (Kerner et al. 2025).</p>
           <div class="tnav-citation">@techreport{grupp2026trazo,
   title  = {Field Boundaries of South America},
@@ -1801,7 +1801,7 @@
   year   = {2026},
   month  = apr,
   institution = {World Resources Institute and Arizona State University},
-  url    = {https://github.com/wri/trazo}
+  url    = {https://www.wri.org/research/field-boundaries-south-america-technical-note}
 }
 
 @inproceedings{kerner2025ftw,
@@ -2476,11 +2476,11 @@ window.TZ = (function(){
     { id:5, title:"Use", tag:"04 / Use", icon:"use", related:[1,3,4],
       html:"Five open artifacts under CC-BY-4.0, covering the technical foundation through to the 10.9-million-field release for the 2023\u20132024 planting season.",
       links:[
-        { kind:"Tech note",  title:"Field Boundaries of South America, Grupp et al., WRI, 2026", href:"#" },
-        { kind:"Dataset",    title:"46,908 training + 7,453 test annotations across 17 ecoregions",            href:"https://source.coop/tristangruppwri/trazotraining" },
+        { kind:"Tech note",  title:"Field Boundaries of South America, Grupp et al., WRI, 2026", href:"https://www.wri.org/research/field-boundaries-south-america-technical-note" },
+        { kind:"Dataset",    title:"46,908 training + 7,453 test annotations across 17 ecoregions",            href:"https://source.coop/wri-data-lab/trazoannotations" },
         { kind:"Models",     title:"Four checkpoints: Trazo1, TrazoSA, Trazo2, Trazo3",                        href:"https://huggingface.co/collections/worldresourcesinstitute/trazo-models" },
         { kind:"Pipeline",   title:"Inference and fine-tuning pipeline configured by MGRS tile ID",           href:"GH" },
-        { kind:"Boundaries", title:"10,935,129 AI-generated boundaries across South America",                 href:"https://source.coop/tristangruppwri/trazofields" }
+        { kind:"Boundaries", title:"10,935,129 AI-generated boundaries across South America",                 href:"https://source.coop/wri-data-lab/trazofields" }
       ] }
   ];
   // expand href shorthands
@@ -2870,8 +2870,8 @@ window.TZ = (function(){
 /* ════ SIX-THEME SWITCHER ════════════════════════════════════════════════════
    Flips through warm · light · dark · prototype · schematic · datalab. */
 (function(){
-  var THEMES = ['warm','light','dark','prototype','schematic','datalab'];
-  var LABELS = { warm:'Warm', light:'Light', dark:'Dark', prototype:'Prototype', schematic:'Schematic', datalab:'Data Lab' };
+  var THEMES = ['light','dark','prototype','schematic','datalab'];
+  var LABELS = { light:'Light', dark:'Dark', prototype:'Prototype', schematic:'Schematic', datalab:'Data Lab' };
   var KEY = 'trazo-theme6';
   var root = document.documentElement;
   var TOGGLES = '.theme-toggle-idx, #theme-toggle, #topbar #theme-toggle, [data-theme-cycle]';
@@ -2902,8 +2902,9 @@ window.TZ = (function(){
   function hookTZ(){
     if(window.TZ){ window.TZ.toggle = next; window.TZ.set = apply; window.TZ.current = cur; window.TZ.dark = function(){ return cur() === 'dark'; }; }
   }
-  var stored = null; try { stored = localStorage.getItem(KEY); } catch(e){}
-  apply(stored || cur());
+  /* Always default to light on load (ignore any previously stored theme). */
+  try { localStorage.removeItem(KEY); } catch(e){}
+  apply('light');
   document.addEventListener('click', onToggleClick, true);
   function ready(){ relabel(cur()); hookTZ(); }
   if(document.readyState !== 'loading') ready();
