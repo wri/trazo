@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="simple">
 <head>
   <meta charset="UTF-8"/>
-  <script>document.documentElement.setAttribute("data-theme","light");</script>
+  <script>document.documentElement.setAttribute("data-theme","simple");</script>
   <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
   <title>Trazo Interactive Map</title>
 
@@ -41,9 +41,9 @@
       --text-muted: #9B9B9B;
       --text-dim:   #666666;
       /* Fonts */
-      --font-header: 'acumin-pro', 'Acumin Pro', 'Arial Narrow', Arial, sans-serif;
-      --font-body:   'adobe-caslon-pro', 'Adobe Caslon Pro', Georgia, 'Times New Roman', serif;
-      --font-mono:   'Courier New', Courier, monospace;
+      --font-header: 'Gill Sans', 'Segoe UI', sans-serif;
+      --font-body:   'Segoe UI', Calibri, sans-serif;
+      --font-mono:   'Courier New', monospace;
       /* long-form / index tokens */
       --bg-page:      #050c03;
       --bg-elevated:  #0d160a;
@@ -529,7 +529,7 @@
       60%  { background: rgba(240,171,0,0.22); color: #FFD700; text-shadow: 0 0 4px rgba(240,171,0,0.4); }
       100% { background: transparent; color: var(--text-muted); text-shadow: none; }
     }
-    .tnav-trigger.nav-lit { animation: navHighlight 2.4s ease forwards; }
+    .tnav-trigger.nav-lit { animation: none; }
     /* offset map for topbar */
     #map { top: 42px !important; }
     #info-panel { top: 54px !important; }
@@ -572,7 +572,7 @@
       background:var(--bg-overlay); color:var(--gold); border:2px solid var(--border);
       transition:background .3s,color .3s,border-color .3s,transform .3s; }
     .tzo-node .tzo-dot svg{ width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
-    .tzo-node .tzo-title{ position:absolute; left:50%; top:26px; transform:translateX(-50%); white-space:nowrap;
+    .tzo-node .tzo-title{ position:absolute; left:50%; top:34px; transform:translateX(-50%); white-space:nowrap;
       font-family:var(--font-header); font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
       color:var(--text-muted); transition:color .3s,transform .3s; pointer-events:none; }
     .tzo-node.related .tzo-dot{ border-color:var(--gold); animation:tzoPulse 1.4s ease-in-out infinite; }
@@ -1339,6 +1339,7 @@
     /* when a node is selected its circle-icon scales up; push the label down so
        the enlarged icon no longer covers "Coverage" / "Training Data" / etc. */
     [data-theme="light"] #tz-orbital .tzo-node.active .tzo-title,
+    [data-theme="simple"] #tz-orbital .tzo-node.active .tzo-title,
     [data-theme="dark"]  #tz-orbital .tzo-node.active .tzo-title{ transform:translate(-50%,14px) scale(1.15); }
 
     /* ════ DESKTOP ONLY: Release 2 + "Trazo on the Ground" panels open as a
@@ -1483,64 +1484,111 @@
       --section-tint:rgba(95,208,230,0.05);
     }
 
-    /* ════ SHARED MAPPING — one block drives all four themes via tokens ════ */
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) body{ background:var(--bg-page); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #map{ background:var(--bg-elevated); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #drop-screen{ background:var(--bg-page); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #dz-status{ color:var(--text-muted); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) .leaflet-tile-pane{ filter:var(--map-filter); }
+    /* ── SIMPLE · minimalist monochrome — paper ground, ink text, one restrained accent ── */
+    :root[data-theme="simple"]{
+      --bg-page:#fcfcfb; --bg-panel:#ffffff; --bg-elevated:#f4f4f2;
+      --text:#1a1a1a; --text-muted:#5c5c5a; --text-dim:#9a9a96;
+      --gold:#2b2b29; --gold-lt:#1a1a1a;            /* chrome is neutral ink; colour added back only where it counts */
+      --accent2:#4f4d49; --accent2-lt:#6e6c66;
+      --border:rgba(20,20,18,0.13); --border-dim:rgba(20,20,18,0.07); --border-faint:rgba(20,20,18,0.045);
+      --xsurf:rgba(20,20,18,0.03); --xsurfh:rgba(20,20,18,0.06);
+      --chrome-bg:rgba(255,255,255,0.94); --chrome-shadow:0 4px 22px rgba(0,0,0,0.06), 0 0 0 1px rgba(20,20,18,0.07);
+      --backdrop:rgba(20,20,18,0.10);
+      --xmast:rgba(252,252,251,0.95); --xfoot:#fcfcfb; --footer-text:#5c5c5a; --footer-brand:#1a1a1a;
+      --map-filter:grayscale(1) contrast(1.02) brightness(1.04);
+      --section-tint:rgba(20,20,18,0.022);
+    }
+    /* zoom (z) badge: drop the heavy black ground for a light, unobtrusive chip */
+    [data-theme="simple"] #zbadge{ background:rgba(252,252,251,0.80); color:var(--text-muted); border-color:var(--border-dim); }
+    /* judicious colour — soy yellow only on the brand mark dot and the primary call-to-action */
+    [data-theme="simple"] #index-content .mark .dot,
+    [data-theme="simple"] #index-content .footer-brand-line .dot{ background:#F0AB00; }
+    [data-theme="simple"] #landing-cta .lc-btn-primary{ background:transparent !important; border-color:rgba(20,20,18,0.55) !important; color:var(--text) !important; }
+    [data-theme="simple"] #landing-cta .lc-btn-primary:hover{ background:var(--xsurf) !important; border-color:var(--text) !important; color:var(--text) !important; }
+    /* temporary-crop orange, used sparingly — only on the author's inline emphasis */
+    [data-theme="simple"] #index-content .hero-title em,
+    [data-theme="simple"] #index-content .section-lead em,
+    [data-theme="simple"] #index-content .section-intro em,
+    [data-theme="simple"] #index-content .tnav-drop-text em{ color:#EB8026; }
+    /* lighter, thinner dividing lines for the minimalist theme */
+    [data-theme="simple"] #index-content .hero-meta{ border-top:1px solid var(--border); }
+    [data-theme="simple"] #index-content .cite-toggle summary{ border-left-width:2px; border-left-color:var(--border); }
 
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #index-content{
+    /* simple orbital — drawn like pasture field boundaries: grey/black outlines, no fill colour */
+    [data-theme="simple"] #tz-orbital{ --gold:#3a3a38; --gold-lt:#1a1a1a;
+      --bg-overlay:rgba(252,252,251,0.86);
+      --border:rgba(20,20,18,0.26); --border-dim:rgba(20,20,18,0.12);
+      --text:#1a1a1a; --text-muted:#55534e; --text-dim:#9a9a96; }
+    [data-theme="simple"] #tz-orbital .tzo-hub{ background:transparent; border:1px solid rgba(20,20,18,0.32); }
+    [data-theme="simple"] #tz-orbital .tzo-hub .tzo-core{ background:rgba(20,20,18,0.40); }
+    [data-theme="simple"] #tz-orbital .tzo-hub .tzo-ring{ border-color:rgba(20,20,18,0.18); }
+    [data-theme="simple"] #tz-orbital .tzo-hub-label{ color:#55534e; }
+    [data-theme="simple"] #tz-orbital .tzo-node .tzo-dot{ background:transparent; color:#2a2a28; border-width:1px; border-color:rgba(20,20,18,0.34); }
+    [data-theme="simple"] #tz-orbital .tzo-node.related .tzo-dot{ border-color:rgba(20,20,18,0.46); }
+    [data-theme="simple"] #tz-orbital .tzo-node.active .tzo-dot{ background:transparent; color:#1a1a1a; border-color:rgba(20,20,18,0.6); }
+    [data-theme="simple"] #tz-orbital .tzo-card-k,
+    [data-theme="simple"] #tz-orbital .tzo-card-b em,
+    [data-theme="simple"] #tz-orbital .tzo-fact b,
+    [data-theme="simple"] #tz-orbital .tzo-link-kind{ color:#3a3a38; }
+
+    /* ════ SHARED MAPPING — one block drives all themes via tokens ════ */
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) body{ background:var(--bg-page); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #map{ background:var(--bg-elevated); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #drop-screen{ background:var(--bg-page); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #dz-status{ color:var(--text-muted); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) .leaflet-tile-pane{ filter:var(--map-filter); }
+
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #index-content{
       --surface:var(--xsurf); --surface-hover:var(--xsurfh); --surface-feat:var(--xsurfh);
       --masthead-bg:var(--xmast); --footer-bg:var(--xfoot); --cite-bg:var(--bg-elevated);
     }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #index-content .masthead{ border-bottom:1px solid var(--border); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #index-content .mark{ color:var(--text); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #index-content nav.primary a{ color:var(--text); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #index-content nav.primary a:hover{ color:var(--gold); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #index-content nav.primary .nav-cta{ border-color:var(--gold); color:var(--gold); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #index-content nav.primary .nav-cta:hover{ background:var(--gold); border-color:var(--gold); color:var(--bg-page); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #index-content h1.hero-title{ color:var(--text); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #index-content h1.hero-title em{ color:var(--gold); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #index-content h2.section-num{ color:var(--gold); border-top:none; padding-top:0; }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #index-content .eyebrow{ color:var(--accent2); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #index-content .eyebrow::before{ background:var(--accent2); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #index-content .res-kind{ color:var(--accent2); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #index-content .btn{ border-color:var(--gold); color:var(--text); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #index-content .btn:hover{ background:var(--gold); border-color:var(--gold); color:var(--bg-page); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #index-content .masthead{ border-bottom:1px solid var(--border); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #index-content .mark{ color:var(--text); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #index-content nav.primary a{ color:var(--text); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #index-content nav.primary a:hover{ color:var(--gold); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #index-content nav.primary .nav-cta{ border-color:var(--gold); color:var(--gold); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #index-content nav.primary .nav-cta:hover{ background:var(--gold); border-color:var(--gold); color:var(--bg-page); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #index-content h1.hero-title{ color:var(--text); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #index-content h1.hero-title em{ color:var(--gold); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #index-content h2.section-num{ color:var(--gold); border-top:none; padding-top:0; }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #index-content .eyebrow{ color:var(--accent2); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #index-content .eyebrow::before{ background:var(--accent2); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #index-content .res-kind{ color:var(--accent2); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #index-content .btn{ border-color:var(--gold); color:var(--text); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #index-content .btn:hover{ background:var(--gold); border-color:var(--gold); color:var(--bg-page); }
 
     /* map chrome */
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #info-panel,
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #legend,
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #landing-cta{ background-color:var(--chrome-bg); box-shadow:var(--chrome-shadow); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #topbar{ background:var(--chrome-bg); border-bottom:1px solid var(--border); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #topbar .tz-back{ color:var(--text); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #topbar .tz-back:hover{ color:var(--gold); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) .tnav-dropdown{ background:var(--chrome-bg); border-color:var(--border); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) .tnav-model-chip,
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) .tnav-step,
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) .tnav-res,
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) .cov-entry{ background:var(--xsurf); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) .tnav-citation{ background:var(--bg-elevated); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #landing-cta .lc-title{ color:var(--gold); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #landing-cta .lc-btn{ border-color:var(--gold); color:var(--text); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #landing-cta .lc-btn:hover{ background:var(--gold); border-color:var(--gold); color:var(--bg-page); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #landing-cta .lc-btn-primary{ background:var(--gold); border-color:var(--gold); color:var(--bg-page); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #landing-cta .lc-btn-primary:hover{ background:var(--gold-lt); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #info-panel,
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #legend,
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #landing-cta{ background-color:var(--chrome-bg); box-shadow:var(--chrome-shadow); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #topbar{ background:var(--chrome-bg); border-bottom:1px solid var(--border); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #topbar .tz-back{ color:var(--text); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #topbar .tz-back:hover{ color:var(--gold); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) .tnav-dropdown{ background:var(--chrome-bg); border-color:var(--border); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) .tnav-model-chip,
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) .tnav-step,
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) .tnav-res,
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) .cov-entry{ background:var(--xsurf); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) .tnav-citation{ background:var(--bg-elevated); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #landing-cta .lc-title{ color:var(--gold); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #landing-cta .lc-btn{ border-color:var(--gold); color:var(--text); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #landing-cta .lc-btn:hover{ background:var(--gold); border-color:var(--gold); color:var(--bg-page); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #landing-cta .lc-btn-primary{ background:var(--gold); border-color:var(--gold); color:var(--bg-page); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #landing-cta .lc-btn-primary:hover{ background:var(--gold-lt); }
 
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) .leaflet-popup-content-wrapper{ background:var(--chrome-bg) !important; color:var(--text) !important; border:1px solid var(--gold) !important; }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) .leaflet-popup-tip-container .leaflet-popup-tip{ background:var(--chrome-bg); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) .leaflet-popup-content-wrapper{ background:var(--chrome-bg) !important; color:var(--text) !important; border:1px solid var(--gold) !important; }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) .leaflet-popup-tip-container .leaflet-popup-tip{ background:var(--chrome-bg); }
 
     /* orbital, modal (incl. pinned head), mobile sheets */
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #tz-orbital .tzo-card{ background:var(--chrome-bg); border-color:var(--border); --bg-overlay:var(--chrome-bg); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #tz-modal{ background:var(--chrome-bg); border-color:var(--border); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #tz-modal-head{ border-bottom-color:var(--border); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #tz-modal-backdrop{ background:var(--backdrop); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #tz-modal-x{ color:var(--accent2); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #tzo-sheet{ background:var(--chrome-bg); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) #tz-menu{ background:var(--chrome-bg); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) .tz-menu-btn{ background:var(--xsurf); }
-    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"]) .tz-reader-box{ background:var(--chrome-bg); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #tz-orbital .tzo-card{ background:var(--chrome-bg); border-color:var(--border); --bg-overlay:var(--chrome-bg); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #tz-modal{ background:var(--chrome-bg); border-color:var(--border); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #tz-modal-head{ border-bottom-color:var(--border); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #tz-modal-backdrop{ background:var(--backdrop); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #tz-modal-x{ color:var(--accent2); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #tzo-sheet{ background:var(--chrome-bg); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #tz-menu{ background:var(--chrome-bg); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) .tz-menu-btn{ background:var(--xsurf); }
+    :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) .tz-reader-box{ background:var(--chrome-bg); }
 
     /* orbital dots + zoom-level badge read --bg-overlay; give the light themes a
        light overlay (and schematic a navy one) so they match the map, not dark */
@@ -1865,9 +1913,9 @@
 
     <p>Visualized on this map are fields generated by the Trazo2 model from 2024 in Mato Grosso, Brazil. Each field is tagged with the mode Mapbiomas land cover value.</p>
 
-    <p>Read the technical note, <a href="">&ldquo;Field Boundaries of South America&rdquo;</a> to learn about Trazo.</p>
+    <p>Read the technical note, <a href="https://www.wri.org/research/field-boundaries-south-america-technical-note" target="_blank" rel="noopener">&ldquo;Field Boundaries of South America&rdquo;</a> to learn about Trazo.</p>
 
-    <p>Trazo includes <a href="">training data</a>, <a href="">model checkpoints produced from the training data</a>, and <a href="">field boundaries produced by Trazo models</a>.</p>
+    <p>Trazo includes <a href="https://source.coop/wri-data-lab/trazoannotations" target="_blank" rel="noopener">training data</a>, <a href="https://huggingface.co/collections/worldresourcesinstitute/trazo-models" target="_blank" rel="noopener">model checkpoints produced from the training data</a>, and <a href="https://source.coop/wri-data-lab/trazofields" target="_blank" rel="noopener">field boundaries produced by Trazo models</a>.</p>
 
     <p>The Github for Trazo can be found <a href="https://github.com/wri/trazo/">here</a> and the FTW repository can be found <a href="https://github.com/fieldsoftheworld/">here</a>.</p>
 
@@ -1884,9 +1932,9 @@
 
     <p>En este mapa se visualizan los campos generados por el modelo Trazo2 en 2024, en Mato Grosso, Brasil. Cada campo está etiquetado con el valor modal de cobertura del suelo según MapBiomas.</p>
 
-    <p>Lea la nota técnica <a href="">«Field Boundaries of South America» (Límites de campos de América del Sur)</a> para obtener más información sobre Trazo.</p>
+    <p>Lea la nota técnica <a href="https://www.wri.org/research/field-boundaries-south-america-technical-note" target="_blank" rel="noopener">«Field Boundaries of South America» (Límites de campos de América del Sur)</a> para obtener más información sobre Trazo.</p>
 
-    <p>Trazo incluye <a href="">datos de entrenamiento</a>, <a href="">puntos de control del modelo generados a partir de dichos datos</a> y <a href="">los límites de campos producidos por los modelos Trazo</a>.</p>
+    <p>Trazo incluye <a href="https://source.coop/wri-data-lab/trazoannotations" target="_blank" rel="noopener">datos de entrenamiento</a>, <a href="https://huggingface.co/collections/worldresourcesinstitute/trazo-models" target="_blank" rel="noopener">puntos de control del modelo generados a partir de dichos datos</a> y <a href="https://source.coop/wri-data-lab/trazofields" target="_blank" rel="noopener">los límites de campos producidos por los modelos Trazo</a>.</p>
 
     <p>El repositorio de GitHub para Trazo se puede encontrar <a href="https://github.com/wri/trazo/">aquí</a> y el repositorio de FTW se puede encontrar <a href="https://github.com/fieldsoftheworld/">aquí</a>.</p>
 
@@ -1903,9 +1951,9 @@
 
     <p>Neste mapa, estão visualizados os campos gerados pelo modelo Trazo2 em 2024, no estado de Mato Grosso, Brasil. Cada campo está identificado com o valor modal de cobertura do solo do MapBiomas.</p>
 
-    <p>Leia a nota técnica <a href="">"Field Boundaries of South America" (Limites de Campos da América do Sul)</a> para saber mais sobre o Trazo.</p>
+    <p>Leia a nota técnica <a href="https://www.wri.org/research/field-boundaries-south-america-technical-note" target="_blank" rel="noopener">"Field Boundaries of South America" (Limites de Campos da América do Sul)</a> para saber mais sobre o Trazo.</p>
 
-    <p>O Trazo inclui <a href="">dados de treinamento</a>, <a href=""><em>checkpoints</em> do modelo gerados a partir desses dados</a> e <a href="">os limites dos campos produzidos pelos modelos Trazo</a>.</p>
+    <p>O Trazo inclui <a href="https://source.coop/wri-data-lab/trazoannotations" target="_blank" rel="noopener">dados de treinamento</a>, <a href="https://huggingface.co/collections/worldresourcesinstitute/trazo-models" target="_blank" rel="noopener"><em>checkpoints</em> do modelo gerados a partir desses dados</a> e <a href="https://source.coop/wri-data-lab/trazofields" target="_blank" rel="noopener">os limites dos campos produzidos pelos modelos Trazo</a>.</p>
 
     <p>O repositório do GitHub para o Trazo pode ser encontrado <a href="https://github.com/wri/trazo/">aqui</a> e o repositório do FTW pode ser encontrado <a href="https://github.com/fieldsoftheworld/">aqui</a>.</p>
 
@@ -2870,13 +2918,13 @@ window.TZ = (function(){
 /* ════ SIX-THEME SWITCHER ════════════════════════════════════════════════════
    Flips through warm · light · dark · prototype · schematic · datalab. */
 (function(){
-  var THEMES = ['light','dark','prototype','schematic','datalab'];
-  var LABELS = { light:'Light', dark:'Dark', prototype:'Prototype', schematic:'Schematic', datalab:'Data Lab' };
+  var THEMES = ['simple','light','dark','prototype','schematic','datalab'];
+  var LABELS = { simple:'Simple', light:'Light', dark:'Dark', prototype:'Prototype', schematic:'Schematic', datalab:'Data Lab' };
   var KEY = 'trazo-theme6';
   var root = document.documentElement;
   var TOGGLES = '.theme-toggle-idx, #theme-toggle, #topbar #theme-toggle, [data-theme-cycle]';
 
-  function cur(){ var t = root.getAttribute('data-theme'); return THEMES.indexOf(t) >= 0 ? t : 'light'; }
+  function cur(){ var t = root.getAttribute('data-theme'); return THEMES.indexOf(t) >= 0 ? t : 'simple'; }
   function relabel(t){
     document.querySelectorAll(TOGGLES).forEach(function(el){
       el.textContent = LABELS[t] + ' ◑';
@@ -2884,7 +2932,7 @@ window.TZ = (function(){
     });
   }
   function apply(t){
-    if(THEMES.indexOf(t) < 0) t = 'light';
+    if(THEMES.indexOf(t) < 0) t = 'simple';
     root.setAttribute('data-theme', t);
     try { localStorage.setItem(KEY, t); } catch(e){}
     relabel(t);
@@ -2902,9 +2950,9 @@ window.TZ = (function(){
   function hookTZ(){
     if(window.TZ){ window.TZ.toggle = next; window.TZ.set = apply; window.TZ.current = cur; window.TZ.dark = function(){ return cur() === 'dark'; }; }
   }
-  /* Always default to light on load (ignore any previously stored theme). */
+  /* Always default to the simple theme on load (ignore any previously stored theme). */
   try { localStorage.removeItem(KEY); } catch(e){}
-  apply('light');
+  apply('simple');
   document.addEventListener('click', onToggleClick, true);
   function ready(){ relabel(cur()); hookTZ(); }
   if(document.readyState !== 'loading') ready();
