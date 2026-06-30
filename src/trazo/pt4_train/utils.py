@@ -1,8 +1,30 @@
 from __future__ import annotations
 
+import hashlib
+import os
 from typing import Optional
 
 import torch
+
+
+def compute_md5(file_path: str, chunk_size: int = 65536) -> str:
+    """Compute the MD5 hash of a file.
+
+    Args:
+        file_path: Path to the file.
+        chunk_size: Number of bytes to read at a time.
+
+    Returns:
+        Hex-encoded MD5 digest string, or empty string if the file cannot be read.
+    """
+    h = hashlib.md5()
+    try:
+        with open(file_path, "rb") as f:
+            for chunk in iter(lambda: f.read(chunk_size), b""):
+                h.update(chunk)
+        return h.hexdigest()
+    except (OSError, IOError):
+        return ""
 
 
 @torch.no_grad()
@@ -58,10 +80,7 @@ def compute_corner_consensus_from_model(
     crops = [tl_img, tr_img, bl_img, br_img]
     batch = torch.stack(crops, dim=0).to(device)  # (4, [T], C, patch_side, patch_side)
     # If fcsiam_mode: model expects (B,T,C,H,W); else (B,C,H,W)
-    if fcsiam_mode:
-        # batch is (4,T,C,H,W) already suitable
-        pass
-    else:
+    if not fcsiam_mode:
         # Remove the artificial temporal dim we added
         batch = batch.squeeze(1)  # (4,C,H,W)
     with torch.inference_mode():
@@ -152,6 +171,6 @@ def validate_checksums(checksum_file: str, root_directory: str) -> bool:
         current_checksum = compute_md5(file_path)
 
         if current_checksum != stored_checksum:
-            print("Checksum mismatch: {file_path}")
+            print(f"Checksum mismatch: {file_path}")
             return False
     return True

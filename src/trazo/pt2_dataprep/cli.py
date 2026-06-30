@@ -15,83 +15,74 @@ Subcommands:
   export-zarr   Export FTW-style Zarr files from windows and masks
 """
 
-import argparse
 import sys
 
+_USAGE = """\
+usage: trazo-pt2-dataprep {pair-stacks,resize-256,chips-bboxes,make-masks,chips-parquet,scale-u16,export-hkl,export-zarr} [args ...]
 
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        prog="trazo-pt2-dataprep",
-        description="Step 2: Data preparation utilities (chips, masks, parquet).",
-    )
-    subparsers = parser.add_subparsers(dest="command", help="Subcommands for Step 2.")
+Step 2: Data preparation utilities (chips, masks, parquet).
 
-    subparsers.add_parser("pair-stacks", help="Pair window_a and window_b into 8 band stacks.")
-    subparsers.add_parser("resize-256", help="Resize 8 band stacks to 256x256 into sized256.")
-    subparsers.add_parser("chips-bboxes", help="Create 256x256 chip bounding box GeoJSONs.")
-    subparsers.add_parser("make-masks", help="Create window_a/b and instance and semantic masks.")
-    subparsers.add_parser("chips-parquet", help="Build per chip GeoParquet metadata.")
-    subparsers.add_parser("scale-u16", help="Scale chips to uint16 in [0,10000].")
-    subparsers.add_parser("export-hkl", help="Export FTW-style .hkl files from windows and masks.")
-    subparsers.add_parser("export-zarr", help="Export FTW-style Zarr files from windows and masks.")
+Subcommands:
+  pair-stacks   Pair window_a and window_b into 8-band stacks.
+                Run: trazo-pt2-dataprep pair-stacks --help
+  resize-256    Resize 8-band stacks to 256x256.
+                Run: trazo-pt2-dataprep resize-256 --help
+  chips-bboxes  Create 256x256 chip bounding box GeoJSONs.
+                Run: trazo-pt2-dataprep chips-bboxes --help
+  make-masks    Create window_a/b, instance and semantic masks.
+                Run: trazo-pt2-dataprep make-masks --help
+  chips-parquet Build per-chip GeoParquet metadata.
+                Run: trazo-pt2-dataprep chips-parquet --help
+  scale-u16     Scale chips to uint16 in [0, 10000].
+                Run: trazo-pt2-dataprep scale-u16 --help
+  export-hkl    Export FTW-style .hkl files from windows and masks.
+                Run: trazo-pt2-dataprep export-hkl --help
+  export-zarr   Export FTW-style Zarr files from windows and masks.
+                Run: trazo-pt2-dataprep export-zarr --help
+"""
 
-    return parser
+_DISPATCH = {
+    "pair-stacks":   lambda: _run("pair_stacks"),
+    "resize-256":    lambda: _run("resize_chips_256"),
+    "chips-bboxes":  lambda: _run("chips_to_bboxes"),
+    "make-masks":    lambda: _run("make_masks_and_windows"),
+    "chips-parquet": lambda: _run("build_chips_parquet"),
+    "scale-u16":     lambda: _run("scale_uint16"),
+    "export-hkl":    lambda: _run("export_hkl"),
+    "export-zarr":   lambda: _run("export_zarr"),
+}
 
 
-def main(argv=None) -> None:
-    if argv is None:
-        argv = sys.argv[1:]
+def _run(module_name):
+    import importlib, inspect
+    mod = importlib.import_module("trazo.pt2_dataprep." + module_name)
+    sig = inspect.signature(mod.main)
+    if sig.parameters:
+        mod.main(sys.argv[1:])
+    else:
+        mod.main()
 
-    parser = build_parser()
-    args, remaining = parser.parse_known_args(argv)
 
-    if not args.command:
-        parser.print_help()
+def main(argv=None):
+    if argv is not None:
+        sys.argv = [sys.argv[0]] + list(argv)
+
+    args = sys.argv[1:]
+
+    if not args or args[0] in ("-h", "--help"):
+        print(_USAGE)
         return
 
-    if args.command == "pair-stacks":
-        from . import pair_stacks as mod
-        mod.main(remaining)
-        return
+    cmd, rest = args[0], args[1:]
 
-    if args.command == "resize-256":
-        from . import resize_chips_256 as mod
-        mod.main(remaining)
-        return
+    if cmd not in _DISPATCH:
+        print("error: unknown subcommand '" + cmd + "'\n")
+        print(_USAGE)
+        sys.exit(1)
 
-    if args.command == "chips-bboxes":
-        from . import chips_to_bboxes as mod
-        mod.main(remaining)
-        return
-
-    if args.command == "make-masks":
-        from . import make_masks_and_windows as mod
-        mod.main(remaining)
-        return
-
-    if args.command == "chips-parquet":
-        from . import build_chips_parquet as mod
-        mod.main(remaining)
-        return
-
-    if args.command == "scale-u16":
-        from . import scale_uint16 as mod
-        mod.main(remaining)
-        return
-
-    if args.command == "export-hkl":
-        from . import export_hkl as mod
-        mod.main(remaining)
-        return
-
-    if args.command == "export-zarr":
-        from . import create_zarr as mod
-        mod.main(remaining)
-        return
+    sys.argv = [sys.argv[0]] + rest
+    _DISPATCH[cmd]()
 
 
 if __name__ == "__main__":
     main()
-
-
-

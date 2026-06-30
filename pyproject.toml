@@ -17,8 +17,25 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-pt1 = ["pystac-client>=0.8", "odc-stac>=0.3", "planetary-computer>=1.0"]
-pt2 = ["rasterio", "geopandas", "shapely", "pyproj", "rtree", "pyarrow"]
+pt1 = ["pystac-client>=0.8", "odc-stac>=0.3", "planetary-computer>=1.0", "python-dateutil", "rasterio", "rioxarray", "tqdm", "odc-stac>=0.3"]
+pt2 = ["rasterio", "geopandas", "shapely", "pyproj", "rtree", "pyarrow", "zarr", "hickle", "tqdm"]
+pt4 = [
+    "torch>=2.0",
+    "lightning>=2.0",
+    "torchgeo>=0.5",
+    "segmentation-models-pytorch",
+    "ultralytics",
+    "kornia",
+    "einops",
+    "torchmetrics",
+    "click",
+    "pyyaml",
+    "matplotlib",
+    "hickle",
+    "rasterio>=1.3",
+    "geopandas",
+    "ftw-tools",
+]
 pt5 = ["ftw-tools"]  # whatever package provides `ftw`
 # Active-learning sampling from a model checkpoint.
 # Install with: pip install "trazo[active]"
@@ -30,14 +47,14 @@ active = [
     "tqdm",
     "shapely",
 ]
-all = ["tkt[pt1,pt2,pt5,active]"]
+all = ["trazo[pt1,pt2,pt4,pt5,active]"]
 
 [project.scripts]
-trazo-pt1-create = "tkt.pt1_createdata.cli:main"
-trazo-pt2-dataprep = "tkt.pt2_dataprep.cli:main"
-trazo-pt3-finetune    = "tkt.pt3_finetune.cli:main"
-trazo-pt4-train       = "tkt.pt4_train.cli:main"
-trazo-pt5-infer = "tkt.pt5_inference.cli:main"
+trazo-pt1-create = "trazo.pt1_createdata.cli:main"
+trazo-pt2-dataprep = "trazo.pt2_dataprep.cli:main"
+trazo-pt3-finetune    = "trazo.pt3_finetune.cli:main"
+trazo-pt4-train       = "trazo.pt4_train.cli:model"
+trazo-pt5-infer = "trazo.pt5_inference.cli:main"
 trazo-active-sample = "trazo.pt1_createdata.active_sample:main"
 
 [tool.setuptools]

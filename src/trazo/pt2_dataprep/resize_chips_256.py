@@ -43,7 +43,7 @@ As a module:
 
 From CLI:
 
-    python -m tkt.pt2_dataprep.resize_chips_256 \
+    python -m trazo.pt2_dataprep.resize_chips_256 \
         --folder /data/stacked \
         --folder /other/stacked \
         --bands-required 8 \
@@ -409,7 +409,7 @@ def process_one_tif(
 
 
 def resize_folder_to_256(
-    base-folder: Path,
+    base_folder: Path,
     bands_required: int = 8,
     crop_width: int = 256,
     crop_height: int = 256,
@@ -425,11 +425,11 @@ def resize_folder_to_256(
 
     Outputs are written into "<folder>/sized256".
     """
-    if not base-folder.exists() or not base-folder.is_dir():
-        print(f"[WARN] Missing or not a directory: {base-folder}")
+    if not base_folder.exists() or not base_folder.is_dir():
+        print(f"[WARN] Missing or not a directory: {base_folder}")
         return
 
-    out_dir = base-folder / "sized256"
+    out_dir = base_folder / "sized256"
     safe_mkdir(out_dir)
 
     seen = 0
@@ -442,7 +442,7 @@ def resize_folder_to_256(
     skipped_bands = 0
     skipped_exists = 0
 
-    for entry in sorted(base-folder.iterdir()):
+    for entry in sorted(base_folder.iterdir()):
         if not entry.is_file():
             continue
         if entry.suffix.lower() not in (".tif", ".tiff"):
@@ -482,7 +482,7 @@ def resize_folder_to_256(
         except Exception as e:
             print(f"[ERROR] {entry} -> {e}")
 
-    print(f"\n=== {base-folder} ===")
+    print(f"\n=== {base_folder} ===")
     print(
         f"Seen TIFF files: {seen}\n"
         f"Processed: {processed} | Kept: {kept} | Fill only: {filled} | "
@@ -565,11 +565,11 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
 def main(argv: Optional[List[str]] = None) -> None:
     args = parse_args(argv)
 
-    folders = [Path(f).expanduser().resolve() for f in args.folder]
+    folders = [Path(f).expanduser().resolve() for f in args.base_folder]
 
     for folder in folders:
         resize_folder_to_256(
-            folder=base-folder,
+            base_folder=folder,
             bands_required=args.bands_required,
             crop_width=args.crop_width,
             crop_height=args.crop_height,
