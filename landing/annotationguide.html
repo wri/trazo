@@ -731,15 +731,15 @@
     try{ return geom(); }catch(e){ return []; }
   }
   function toPath(rings){
-    var mnX=1/0,mnY=1/0,mxX=-1/0,mxY=-1/0,k,j;
-    for(k=0;k<rings.length;k++) for(j=0;j<rings[k].length;j++){ var p=rings[k][j];
+    var mnX=1/0,mnY=1/0,mxX=-1/0,mxY=-1/0,k,j,p;
+    for(k=0;k<rings.length;k++) for(j=0;j<rings[k].length;j++){ p=rings[k][j];
       if(p[0]<mnX)mnX=p[0]; if(p[0]>mxX)mxX=p[0]; if(p[1]<mnY)mnY=p[1]; if(p[1]>mxY)mxY=p[1]; }
     var w=mxX-mnX,h=mxY-mnY; if(!(w>0)||!(h>0)) return null;
-    var d='';
+    var s=100/Math.max(w,h), d='';   /* scale longest side to 100 so lon/lat detail survives rounding */
     for(k=0;k<rings.length;k++){ var r=rings[k]; if(r.length<3) continue;
-      for(var i=0;i<r.length;i++){ var x=(r[i][0]-mnX),y=(mxY-r[i][1]);
+      for(var i=0;i<r.length;i++){ var x=(r[i][0]-mnX)*s, y=(mxY-r[i][1])*s;
         d+=(i?'L':'M')+x.toFixed(2)+' '+y.toFixed(2); } d+='Z'; }
-    return d ? {d:d, vb:'0 0 '+w.toFixed(2)+' '+h.toFixed(2)} : null;
+    return d ? {d:d, vb:'0 0 '+(w*s).toFixed(2)+' '+(h*s).toFixed(2)} : null;
   }
   function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t; } return a; }
   function mkSvg(){ var s=document.createElementNS('http://www.w3.org/2000/svg','svg');
@@ -762,18 +762,39 @@
       for(var i=0;i<kv.length;i++){ if(kv[i].key==='geo'){ var j=JSON.parse(kv[i].value); if(j&&j.primary_column) return j.primary_column; } } }catch(e){}
     return 'geometry';
   }
+  /* the GEOMETRY logical type comes back as parsed GeoJSON (lon/lat); take the
+     largest sub-polygon so the mark is a single clean field, not a dense cluster */
+  function pickRings(g){
+    if(!g||!g.coordinates) return null;
+    if(g.type==='Polygon') return g.coordinates;
+    if(g.type==='MultiPolygon'){
+      var c=g.coordinates, best=null, ba=-1;
+      for(var i=0;i<c.length;i++){ var ring=c[i][0]||[], mnx=1/0,mny=1/0,mxx=-1/0,mxy=-1/0;
+        for(var j=0;j<ring.length;j++){ var p=ring[j];
+          if(p[0]<mnx)mnx=p[0]; if(p[0]>mxx)mxx=p[0]; if(p[1]<mny)mny=p[1]; if(p[1]>mxy)mxy=p[1]; }
+        var a=(mxx-mnx)*(mxy-mny); if(a>ba){ ba=a; best=c[i]; } }
+      return best;
+    }
+    return null;
+  }
   async function load(){
     var hp=await import('https://cdn.jsdelivr.net/npm/hyparquet/+esm');
     var file=await hp.asyncBufferFromUrl({url:PARQUET_URL});
     var meta=await hp.parquetMetadataAsync(file);
     var col=geoColumn(meta);
     var total=Number(meta && meta.num_rows)||0;
-    var start=(total>WANT) ? Math.floor(Math.random()*(total-WANT)) : 0;   /* random window each load */
-    var rows=await hp.parquetReadObjects({file:file,metadata:meta,columns:[col],rowStart:start,rowEnd:start+WANT});
-    var out=[];
-    for(var i=0;i<rows.length;i++){ var g=rows[i] && rows[i][col]; if(!g) continue;
-      var bytes = g instanceof Uint8Array ? g : (g && g.buffer ? new Uint8Array(g.buffer,g.byteOffset||0,g.byteLength) : null);
-      if(!bytes) continue; var po=toPath(decodeWKB(bytes)); if(po) out.push(po); }
+    var out=[], tries=0;
+    while(out.length<WANT && tries<6){     /* many tiles have no fields (null geom); sample random windows until we have 100 */
+      tries++;
+      var span=Math.min(280, total||280);
+      var start=(total>span) ? Math.floor(Math.random()*(total-span)) : 0;
+      var rows=await hp.parquetReadObjects({file:file,metadata:meta,columns:[col],rowStart:start,rowEnd:start+span});
+      for(var i=0;i<rows.length && out.length<WANT;i++){
+        var g=rows[i] && rows[i][col]; if(!g) continue;
+        var rings=pickRings(g); if(!rings) continue;
+        var po=toPath(rings); if(po) out.push(po);
+      }
+    }
     return shuffle(out);
   }
   function init(){
