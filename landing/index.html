@@ -1196,7 +1196,7 @@
       --accent2:#4f4d49; --accent2-lt:#6e6c66;
       --border:rgba(20,20,18,0.13); --border-dim:rgba(20,20,18,0.07); --border-faint:rgba(20,20,18,0.045);
       --xsurf:rgba(20,20,18,0.03); --xsurfh:rgba(20,20,18,0.06);
-      --chrome-bg:rgba(255,255,255,0.94); --chrome-shadow:0 4px 22px rgba(0,0,0,0.06), 0 0 0 1px rgba(20,20,18,0.07);
+      --chrome-bg:rgba(255,255,255,0.79); --chrome-shadow:0 4px 22px rgba(0,0,0,0.06), 0 0 0 1px rgba(20,20,18,0.07);
       --backdrop:rgba(20,20,18,0.10);
       --xmast:rgba(252,252,251,0.95); --xfoot:#fcfcfb; --footer-text:#5c5c5a; --footer-brand:#1a1a1a;
       --map-filter:grayscale(1) contrast(1.02) brightness(1.04);
@@ -1208,6 +1208,8 @@
     [data-theme="simple"] #index-content footer ul a{ color:var(--text-muted); }
     [data-theme="simple"] #index-content .footer-brand-line{ color:var(--text); }
     [data-theme="simple"] #index-content footer .small{ color:var(--text-dim); border-top-color:var(--border-faint); }
+    /* zoom (z) badge: drop the heavy dark ground for a light, unobtrusive chip (matches map.html) */
+    [data-theme="simple"] #zbadge{ background:rgba(252,252,251,0.65); color:var(--text-muted); border-color:var(--border-dim); }
     /* judicious colour — soy yellow only on the brand mark dot and the primary call-to-action */
     [data-theme="simple"] #index-content .mark .dot,
     [data-theme="simple"] #index-content .footer-brand-line .dot{ background:#F0AB00; }
@@ -1225,22 +1227,10 @@
     [data-theme="simple"] #index-content .hero-meta{ border-top:1px solid var(--border); }
     [data-theme="simple"] #index-content .cite-toggle summary{ border-left-width:2px; border-left-color:var(--border); }
 
-    /* simple orbital — drawn like pasture field boundaries: grey/black outlines, no fill colour */
-    [data-theme="simple"] #tz-orbital{ --gold:#3a3a38; --gold-lt:#1a1a1a;
-      --bg-overlay:rgba(252,252,251,0.86);
-      --border:rgba(20,20,18,0.26); --border-dim:rgba(20,20,18,0.12);
-      --text:#1a1a1a; --text-muted:#55534e; --text-dim:#9a9a96; }
-    [data-theme="simple"] #tz-orbital .tzo-hub{ background:transparent; border:1px solid rgba(20,20,18,0.32); }
-    [data-theme="simple"] #tz-orbital .tzo-hub .tzo-core{ background:rgba(20,20,18,0.40); }
-    [data-theme="simple"] #tz-orbital .tzo-hub .tzo-ring{ border-color:rgba(20,20,18,0.18); }
-    [data-theme="simple"] #tz-orbital .tzo-hub-label{ color:#55534e; }
-    [data-theme="simple"] #tz-orbital .tzo-node .tzo-dot{ background:transparent; color:#2a2a28; border-width:1px; border-color:rgba(20,20,18,0.34); }
-    [data-theme="simple"] #tz-orbital .tzo-node.related .tzo-dot{ border-color:rgba(20,20,18,0.46); }
-    [data-theme="simple"] #tz-orbital .tzo-node.active .tzo-dot{ background:transparent; color:#1a1a1a; border-color:rgba(20,20,18,0.6); }
-    [data-theme="simple"] #tz-orbital .tzo-card-k,
-    [data-theme="simple"] #tz-orbital .tzo-card-b em,
-    [data-theme="simple"] #tz-orbital .tzo-fact b,
-    [data-theme="simple"] #tz-orbital .tzo-link-kind{ color:#3a3a38; }
+    /* simple orbital — bright yellow accents matching the soy field-boundary color (#F0AB00),
+       same styling dark mode uses for the orbital */
+    [data-theme="simple"] #tz-orbital{ --gold:#F0AB00; --gold-lt:#ffd04d;
+      --border:rgba(240,171,0,0.30); --border-dim:rgba(240,171,0,0.12); }
 
     /* ════ SHARED MAPPING — one block drives all themes via tokens ════ */
     :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) body{ background:var(--bg-page); }
@@ -1291,6 +1281,8 @@
     :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #info-panel,
     :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #legend,
     :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #landing-cta{ background-color:var(--chrome-bg); box-shadow:var(--chrome-shadow); }
+    /* pin to the exact same literal opacity map.html's hover/info boxes use under simple, so the two pages match exactly */
+    [data-theme="simple"] #landing-cta{ background-color:rgba(255,255,255,0.79) !important; }
     :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #topbar{ background:var(--chrome-bg); border-bottom:1px solid var(--border); }
     :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #topbar .tz-back{ color:var(--text); }
     :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #topbar .tz-back:hover{ color:var(--gold); }
@@ -1985,7 +1977,6 @@ loadFile();
         <a href="#use">Use</a>
         <span class="nav-div" aria-hidden="true"></span>
         <a href="#cite">Cite</a>
-        <button class="theme-toggle-idx" onclick="window.TZ&&window.TZ.toggle();return false;" title="Toggle light / dark theme">Theme ◑</button>
       </nav>
     </div>
   </header>

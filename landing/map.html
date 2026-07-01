@@ -893,7 +893,7 @@
     .tnav-drop-scroll::-webkit-scrollbar-thumb{ background:rgba(240,171,0,0.3); border-radius:4px; }
     .tz-intro{ font-family:var(--font-body); font-size:12.5px; line-height:1.55; color:var(--text-muted); margin-top:2px; }
     .tz-quote{ display:block; border-left:2px solid var(--border); padding:2px 0 2px 12px; margin-top:12px; }
-    .tz-q{ display:block; font-family:var(--font-body); font-size:12.5px; line-height:1.5; color:var(--text); font-style:italic; }
+    .tz-q{ display:block; font-family:var(--font-body); font-size:12.5px; line-height:1.5; color:var(--text); font-style:normal; }
     .tz-cite{ display:block; margin-top:5px; font-family:var(--font-header); font-size:9.5px; font-weight:700;
       letter-spacing:.07em; text-transform:uppercase; color:var(--gold); }
     .tz-cite a{ color:var(--gold); text-decoration:underline; text-underline-offset:2px; }
@@ -916,7 +916,7 @@
       transition:max-height .3s ease, opacity .25s ease, margin-top .25s ease;
       font-family:var(--font-body); font-size:11px; line-height:1.5; color:var(--text-muted); }
     .tz-quote:hover .tz-extra{ max-height:320px; opacity:1; margin-top:7px; }
-    .tz-extra .oq{ font-style:italic; }
+    .tz-extra .oq{ font-style:normal; color:var(--text-muted); }
     /* ── back-link dot (yellow placeholder, replaced by animated field boundary) ── */
     .tz-back .dot{ display:inline-block; width:0.6em; height:0.6em; border-radius:50%;
       background:#F0AB00; margin:0 8px; flex-shrink:0; vertical-align:middle; }
@@ -1411,8 +1411,8 @@
          the panel; only the quotes below scroll */
       #tz-modal-head{ flex:none; padding:30px 48px 14px 36px;
         border-bottom:1px solid rgba(140,140,130,0.22); }
-      #tz-modal-head .tnav-drop-head{ font-size:13px; margin-bottom:8px; }
-      #tz-modal-head .tz-intro{ font-size:19.4px; line-height:1.5; color:var(--text-muted); margin:0; }
+      #tz-modal-head .tnav-drop-head{ font-size:22px; letter-spacing:.08em; margin-bottom:10px; }
+      #tz-modal-head .tz-intro{ font-size:15px; line-height:1.55; color:var(--text-muted); margin:0; }
       #tz-modal-body{ flex:1 1 auto; overflow-y:auto; overflow-x:hidden; padding:6px 36px 30px;
         scrollbar-width:thin; scrollbar-color:rgba(240,171,0,0.3) transparent; }
       #tz-modal-body::-webkit-scrollbar{ width:6px; }
@@ -1426,8 +1426,8 @@
         scroll-snap-align:start;
         display:flex; flex-direction:column; justify-content:center;
         min-height:160px;
-        border-left:none;
-        padding:28px 6px 28px 4px; margin:0;
+        border-left:3px solid var(--border);
+        padding:28px 6px 28px 18px; margin:0;
       }
       #tz-modal-body .tz-quote + .tz-quote{ border-top:1px solid rgba(140,140,130,0.20); }
       #tz-modal-body .tz-q{ font-size:15.5px; line-height:1.8; }
@@ -1531,14 +1531,14 @@
       --accent2:#4f4d49; --accent2-lt:#6e6c66;
       --border:rgba(20,20,18,0.13); --border-dim:rgba(20,20,18,0.07); --border-faint:rgba(20,20,18,0.045);
       --xsurf:rgba(20,20,18,0.03); --xsurfh:rgba(20,20,18,0.06);
-      --chrome-bg:rgba(255,255,255,0.94); --chrome-shadow:0 4px 22px rgba(0,0,0,0.06), 0 0 0 1px rgba(20,20,18,0.07);
+      --chrome-bg:rgba(255,255,255,0.79); --chrome-shadow:0 4px 22px rgba(0,0,0,0.06), 0 0 0 1px rgba(20,20,18,0.07);
       --backdrop:rgba(20,20,18,0.10);
       --xmast:rgba(252,252,251,0.95); --xfoot:#fcfcfb; --footer-text:#5c5c5a; --footer-brand:#1a1a1a;
       --map-filter:grayscale(1) contrast(1.02) brightness(1.04);
       --section-tint:rgba(20,20,18,0.022);
     }
     /* zoom (z) badge: drop the heavy black ground for a light, unobtrusive chip */
-    [data-theme="simple"] #zbadge{ background:rgba(252,252,251,0.80); color:var(--text-muted); border-color:var(--border-dim); }
+    [data-theme="simple"] #zbadge{ background:rgba(252,252,251,0.65); color:var(--text-muted); border-color:var(--border-dim); }
     /* judicious colour — soy yellow only on the brand mark dot and the primary call-to-action */
     [data-theme="simple"] #index-content .mark .dot,
     [data-theme="simple"] #index-content .footer-brand-line .dot{ background:#F0AB00; }
@@ -1901,7 +1901,6 @@
     </div>
 
   </nav>
-  <a id="theme-toggle" href="#" onclick="window.TZ.toggle();return false;" title="Toggle light / dark theme">Dark ◗</a>
 </div>
 
 <div id="header">mapv6 - Mato Grosso 2024<span>mbmode24, local file</span></div>

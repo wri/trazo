@@ -131,17 +131,17 @@
 
     /* ── HERO ───────────────────────────────────────────────────────────────── */
     .hero{ padding:68px 0 30px; border-bottom:1px solid var(--border-faint); }
-    .eyebrow{ font-family:var(--font-header); font-size:12.5px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:var(--gold); margin-bottom:18px; }
+    .eyebrow{ font-family:var(--font-header); font-size:13px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:var(--gold); margin-bottom:18px; }
     .hero h1{ font-family:var(--font-header); font-weight:700; font-size:clamp(34px,5vw,58px); line-height:1.04; letter-spacing:-0.01em; max-width:18ch; }
     .hero .lede{ margin-top:22px; font-size:clamp(18px,2vw,21px); line-height:1.55; color:var(--text-muted); max-width:62ch; }
-    .hero .meta-line{ margin-top:24px; font-family:var(--font-mono); font-size:12px; letter-spacing:.04em; color:var(--text-dim); }
+    .hero .meta-line{ margin-top:24px; font-family:var(--font-mono); font-size:12px; letter-spacing:.04em; color:var(--text-muted); }
     .hero .meta-line a{ color:var(--gold); }
 
     /* ── TABLE OF CONTENTS ──────────────────────────────────────────────────── */
     .toc{ padding:26px 0; border-bottom:1px solid var(--border-faint); }
     .toc ol{ list-style:none; counter-reset:toc; display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:8px 26px; }
     .toc li{ counter-increment:toc; }
-    .toc a{ display:flex; gap:10px; text-decoration:none; color:var(--text-muted); font-family:var(--font-header); font-size:14.5px; padding:5px 0; border-bottom:1px solid transparent; transition:color .15s; }
+    .toc a{ display:flex; gap:10px; text-decoration:none; color:var(--text-muted); font-family:var(--font-header); font-size:14px; padding:5px 0; border-bottom:1px solid transparent; transition:color .15s; }
     .toc a:hover{ color:var(--gold); }
     .toc a::before{ content:counter(toc); color:var(--gold); font-family:var(--font-mono); font-size:12px; min-width:18px; }
 
@@ -201,9 +201,9 @@
     figure img{ display:block; width:100%; height:auto; border:1px solid var(--border); border-radius:8px; background:var(--bg-elevated); }
     img.zoom{ cursor:zoom-in; transition:filter .15s; }
     img.zoom:hover{ filter:brightness(1.04); }
-    figcaption{ margin-top:10px; font-size:14px; line-height:1.5; color:var(--text-muted); }
+    figcaption{ margin-top:10px; font-size:13px; line-height:1.5; color:var(--text-muted); }
     figcaption .lbl{ font-family:var(--font-header); font-weight:700; color:var(--gold); letter-spacing:.02em; }
-    .zoom-hint{ font-family:var(--font-header); font-size:11px; letter-spacing:.04em; color:var(--text-dim); }
+    .zoom-hint{ font-family:var(--font-header); font-size:11px; letter-spacing:.04em; color:var(--text-muted); }
 
     /* prominent feature figures (1a, 1b) — quiet neutral lift, no coloured outline */
     figure.fig-feature img{ border:1px solid var(--border); box-shadow:0 6px 22px rgba(0,0,0,0.08); }
@@ -225,7 +225,7 @@
     .fig-grid.two{ grid-template-columns:repeat(2,1fr); }
     .fig-grid.four{ grid-template-columns:repeat(4,1fr); }
     .fig-grid figure{ margin:0; }
-    .fig-grid figcaption{ font-size:12.5px; }
+    
     @media (max-width:780px){ .fig-grid.two,.fig-grid.four{ grid-template-columns:1fr 1fr; } }
     @media (max-width:480px){ .fig-grid.two,.fig-grid.four{ grid-template-columns:1fr; } }
 
@@ -242,8 +242,7 @@
     /* prominent burn examples (3a, 3b) raised above the rest */
     .fig-burn-top{ margin-bottom:18px; }
     .fig-burn-top .xfade{ border:1px solid var(--border); box-shadow:0 6px 22px rgba(0,0,0,0.08); }
-    .fig-burn-top figcaption{ font-size:13.5px; }
-    .fig-burn-rest{ margin-top:0; }
+        .fig-burn-rest{ margin-top:0; }
 
     /* ── TABLES ─────────────────────────────────────────────────────────────── */
     .table-wrap{ overflow-x:auto; margin:22px 0; border-top:3px solid var(--text); }
@@ -255,7 +254,7 @@
     tbody tr:hover{ background:var(--surface); }
     td.num, th.num{ font-family:var(--font-mono); }
     tr.summary td{ font-weight:700; border-top:1px solid var(--border); }
-    .tnote{ font-size:12px; color:var(--text-dim); margin-top:8px; max-width:74ch; }
+    .tnote{ font-size:12px; color:var(--text-muted); margin-top:8px; max-width:74ch; }
 
     /* ── METRIC STRIP ───────────────────────────────────────────────────────── */
     .metrics{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin:24px 0; }
@@ -278,13 +277,13 @@
     footer .footer-brand-line{ font-family:var(--font-header); font-size:16px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--footer-brand); margin-bottom:12px; display:inline-flex; align-items:center; gap:9px; }
     footer .footer-brand-line .dot{ display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--gold); }
     footer p{ font-family:var(--font-body); font-size:13.5px; line-height:1.65; color:var(--footer-text); max-width:42ch; }
-    footer h6{ font-family:var(--font-header); font-size:10px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:var(--gold); margin-bottom:13px; }
+    footer h6{ font-family:var(--font-header); font-size:11px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:var(--gold); margin-bottom:13px; }
     footer ul{ list-style:none; }
     footer ul li{ margin-bottom:7px; font-size:13.5px; }
     footer ul a{ color:var(--footer-text); text-decoration:none; transition:color .15s; }
     footer ul a:hover{ color:var(--gold); }
-    footer ul.proj a{ text-transform:none; letter-spacing:.03em; font-size:12.5px; }
-    footer .small{ grid-column:1 / -1; border-top:1px solid var(--border-faint); margin-top:16px; padding-top:18px; font-family:var(--font-mono); font-size:10px; color:var(--footer-text); opacity:.8; letter-spacing:.08em; }
+    footer ul.proj a{ text-transform:none; letter-spacing:.03em; font-size:13.5px; }
+    footer .small{ grid-column:1 / -1; border-top:1px solid var(--border-faint); margin-top:16px; padding-top:18px; font-family:var(--font-mono); font-size:10px; color:var(--footer-text); letter-spacing:.08em; }
   </style>
 </head>
 <body>
@@ -305,7 +304,6 @@
         <a href="#validation">Validation</a>
         <span class="nav-div" aria-hidden="true"></span>
         <a href="index.html#cite">Cite</a>
-        <button class="theme-toggle-idx" type="button" title="Cycle theme">Theme ◑</button>
       </nav>
     </div>
   </header>
