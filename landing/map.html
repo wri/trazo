@@ -883,9 +883,9 @@
   <style id="tz-split-css">
     .tz-back{ display:flex; align-items:center; padding:0 14px; font-family:var(--font-header);
       font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
-      color:var(--text-muted); text-decoration:none; border-right:1px solid var(--border-dim);
-      transition:color .15s, background .15s; pointer-events:auto; white-space:nowrap; }
-    .tz-back:hover{ color:var(--gold); background:rgba(240,171,0,0.06); }
+      color:var(--text-muted); text-decoration:none;
+      transition:color .15s; pointer-events:auto; white-space:nowrap; }
+    .tz-back:hover{ color:var(--gold); }
     /* Trazo on the Ground - quote lists + hover notes */
     .tnav-drop-scroll{ max-height:min(72vh,580px); overflow-y:auto; overflow-x:hidden;
       padding-right:12px; scrollbar-width:thin; scrollbar-color:rgba(240,171,0,0.3) transparent; }
@@ -1591,6 +1591,7 @@
     :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #topbar{ background:var(--chrome-bg); border-bottom:1px solid var(--border); }
     :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #topbar .tz-back{ color:var(--text); }
     :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #topbar .tz-back:hover{ color:var(--gold); }
+    [data-theme="simple"] #topbar .tz-back:hover{ color:var(--text); }
     :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) .tnav-dropdown{ background:var(--chrome-bg); border-color:var(--border); }
     :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) .tnav-model-chip,
     :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) .tnav-step,
