@@ -562,10 +562,12 @@
       width:58px; height:58px; border-radius:50%; pointer-events:auto; cursor:default; z-index:50;
       background:rgba(240,171,0,0.80); display:flex; align-items:center; justify-content:center; }
     [data-theme="light"] .tzo-hub{ background:rgba(139,105,20,0.80); }
+    [data-theme="simple"] .tzo-hub{ background:rgba(168,116,31,0.80); }
     .tzo-hub .tzo-core{ width:26px; height:26px; border-radius:50%; background:rgba(255,255,255,0.85); }
     .tzo-hub .tzo-ring{ position:absolute; border-radius:50%; border:1px solid rgba(240,171,0,0.40);
       animation:tzoPing 2.6s cubic-bezier(0,0,0.2,1) infinite; }
     [data-theme="light"] .tzo-hub .tzo-ring{ border-color:rgba(139,105,20,0.40); }
+    [data-theme="simple"] .tzo-hub .tzo-ring{ border-color:rgba(168,116,31,0.40); }
     .tzo-hub .tzo-ring.r2{ animation-delay:.7s; }
     .tzo-hub-label{ position:absolute; left:50%; top:calc(50% + 44px); transform:translateX(-50%);
       font-family:var(--font-mono); font-size:9px; letter-spacing:.22em; text-transform:uppercase;
@@ -576,6 +578,7 @@
       display:flex; align-items:center; justify-content:center;
       background:rgba(240,171,0,0.12); color:#D49500; border:2px solid rgba(240,171,0,0.48);
       transition:background .3s,color .3s,border-color .3s,transform .3s; }
+    [data-theme="simple"] .tzo-node .tzo-dot{ background:rgba(168,116,31,0.12); color:#8f6019; border-color:rgba(168,116,31,0.48); }
     .tzo-node .tzo-dot svg{ width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
     .tzo-node .tzo-title{ position:absolute; left:50%; top:34px; transform:translateX(-50%); white-space:nowrap;
       font-family:var(--font-header); font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
@@ -584,6 +587,7 @@
     .tzo-node.active  .tzo-dot{ background:rgba(240,171,0,0.85); color:#fff; border-color:var(--gold);
       transform:translate(-50%,-50%) scale(1.4); }
     [data-theme="light"] .tzo-node.active .tzo-dot{ background:rgba(139,105,20,0.85); }
+    [data-theme="simple"] .tzo-node.active .tzo-dot{ background:rgba(168,116,31,0.85); }
     .tzo-node.active  .tzo-title{ color:var(--text); transform:translateX(-50%) scale(1.15); }
 
     /* card opens to the RIGHT of the node; rotation freezes on click (expand) */
@@ -605,6 +609,7 @@
     .tzo-links{ margin-top:11px; padding-top:9px; border-top:1px solid var(--border-dim); display:flex; flex-direction:column; gap:2px; }
     .tzo-link{ display:flex; align-items:baseline; gap:8px; text-decoration:none; padding:5px 7px; border-radius:6px; transition:background .15s; }
     .tzo-link:hover{ background:rgba(139,105,20,0.09); }
+    [data-theme="simple"] .tzo-link:hover{ background:rgba(168,116,31,0.09); }
     .tzo-link-kind{ flex:none; min-width:60px; font-family:var(--font-mono); font-size:8.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--gold); }
     .tzo-link-title{ flex:1; font-family:var(--font-body); font-size:11px; line-height:1.36; color:var(--text); }
 
@@ -1229,8 +1234,8 @@
 
     /* simple orbital — bright yellow accents matching the soy field-boundary color (#F0AB00),
        same styling dark mode uses for the orbital */
-    [data-theme="simple"] #tz-orbital{ --gold:#F0AB00; --gold-lt:#ffd04d;
-      --border:rgba(240,171,0,0.30); --border-dim:rgba(240,171,0,0.12); }
+    [data-theme="simple"] #tz-orbital{ --gold:#a8741f; --gold-lt:#c68a28;
+      --border:rgba(168,116,31,0.30); --border-dim:rgba(168,116,31,0.12); }
 
     /* ════ SHARED MAPPING — one block drives all themes via tokens ════ */
     :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) body{ background:var(--bg-page); }
