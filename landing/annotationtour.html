@@ -55,6 +55,11 @@
       background-repeat:no-repeat; background-position:right 10px center;
     }
     #ds-select:hover { border-color:var(--gold); }
+    .tb-left { display:flex; align-items:center; gap:22px; }
+    #topbar-nav { display:flex; align-items:center; gap:2px; }
+    #topbar-nav a { font-family:var(--font-header); font-size:13px; font-weight:400; letter-spacing:0.02em; color:var(--muted); text-decoration:none; padding:0 7px; transition:color .15s; white-space:nowrap; }
+    #topbar-nav a:hover { color:var(--gold); }
+    @media (max-width:720px){ #topbar-nav { display:none; } }
 
     /* ── CARD ── */
     #card {
@@ -152,7 +157,14 @@
 <div id="explore-note">Exploring full dataset. Resumes 6s after you stop.</div>
 
 <div id="topbar">
-  <a class="brand" href="index.html"><span class="dot animfield"></span> Trazo</a>
+  <div class="tb-left">
+    <a class="brand" href="index.html"><span class="dot animfield"></span> Trazo</a>
+    <nav id="topbar-nav">
+      <a href="map.html">Map</a>
+      <a href="annotationguide.html">Annotation</a>
+      <a href="https://www.wri.org/research/field-boundaries-south-america-technical-note" target="_blank" rel="noopener">Technical Note</a>
+    </nav>
+  </div>
   <div class="ds-wrap">
     <label for="ds-select">Dataset</label>
     <select id="ds-select"></select>
