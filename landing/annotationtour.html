@@ -112,7 +112,7 @@
     /* explore hint */
     #explore-note {
       position:absolute; top:56px; left:50%; transform:translateX(-50%); z-index:900; display:none;
-      background:rgba(255,255,255,0.94); border:1px solid var(--border); border-radius:20px;
+      background:rgba(255,255,255,0.55); border:1px solid var(--border-dim); border-radius:20px; backdrop-filter:blur(7px);
       padding:6px 14px; font-family:var(--font-mono); font-size:11px; color:var(--muted); box-shadow:0 3px 14px rgba(0,0,0,0.08);
     }
     #explore-note.show { display:block; }
@@ -130,22 +130,29 @@
     #tload .spin { width:14px; height:14px; }
     #attrib { position:absolute; bottom:5px; left:50%; transform:translateX(-50%); z-index:900; font-family:var(--font-mono); font-size:9px; color:var(--dim); pointer-events:none; white-space:nowrap; }
     @media (max-width:640px){ #ds-select{ max-width:150px; } #card{ width:calc(100vw - 32px); max-height:52vh; } }
+    /* animated field-boundary brand mark (as on map.html / index.html) */
+    .tz-geo{ position:relative; display:inline-block; width:0.95em; height:0.95em; margin:0; vertical-align:-0.13em; flex:0 0 auto; }
+    .tz-geo svg{ position:absolute; inset:0; width:100%; height:100%; opacity:0; transition:opacity .3s ease; overflow:visible; }
+    .tz-geo svg.tz-on{ opacity:1; }
+    .tz-geo svg path{ fill:#F0AB00; fill-rule:evenodd; stroke:none; }
+    #load .b{ display:flex; align-items:center; justify-content:center; gap:9px; }
+    @media (prefers-reduced-motion:reduce){ .tz-geo svg{ transition:none; } }
   </style>
 </head>
 <body>
 
 <div id="load">
-  <div class="b"><span class="dot"></span>Trazo</div>
+  <div class="b"><span class="dot animfield"></span>Trazo</div>
   <div class="spin"></div>
   <div class="msg">Loading annotation tour…</div>
 </div>
 
 <div id="map"></div>
 <div id="tload"><span class="spin"></span><span>Loading chip &amp; annotations…</span></div>
-<div id="explore-note">Exploring full dataset — pauses; resumes 6s after you stop</div>
+<div id="explore-note">Exploring full dataset. Resumes 6s after you stop.</div>
 
 <div id="topbar">
-  <a class="brand" href="index.html"><span class="dot"></span> Trazo</a>
+  <a class="brand" href="index.html"><span class="dot animfield"></span> Trazo</a>
   <div class="ds-wrap">
     <label for="ds-select">Dataset</label>
     <select id="ds-select"></select>
@@ -511,6 +518,109 @@
   }
   start().catch(err=>{ document.querySelector("#load .msg").textContent = "Could not start: " + (err && err.message ? err.message : err); });
 
+})();
+</script>
+<script>
+(function(){
+  var PARQUET_URL='https://wri-datalab-sandbox.s3.us-east-1.amazonaws.com/trazofields/release1annotations.parquet';
+  var hosts=[], paths=[], idx=0, timer=null;
+  var WANT=100;
+  var HOLD_MS=2000, FRAME_MS=850;
+  var ov=null, ovLayers=null, hoverTimer=null, playTimer=null, ovIdx=0;
+  function decodeWKB(buf){
+    var dv=new DataView(buf.buffer,buf.byteOffset,buf.byteLength), pos=0;
+    function geom(){
+      var le=dv.getUint8(pos)===1; pos+=1;
+      var type=dv.getUint32(pos,le); pos+=4;
+      if(type & 0x20000000) pos+=4;
+      var base=(type & 0xffff)%1000;
+      var hasZ=((type & 0xffff)>=1000) || !!(type & 0x80000000);
+      var rings=[];
+      function ring(){ var n=dv.getUint32(pos,le); pos+=4; var r=[];
+        for(var i=0;i<n;i++){ var x=dv.getFloat64(pos,le); pos+=8; var y=dv.getFloat64(pos,le); pos+=8; if(hasZ) pos+=8; r.push([x,y]); }
+        return r; }
+      if(base===3){ var nr=dv.getUint32(pos,le); pos+=4; for(var i=0;i<nr;i++) rings.push(ring()); }
+      else if(base===6){ var np=dv.getUint32(pos,le); pos+=4; for(var p=0;p<np;p++) rings=rings.concat(geom()); }
+      else if(base===2){ rings.push(ring()); }
+      else if(base===1){ pos+=16; }
+      else if(base===4||base===5||base===7){ var ng=dv.getUint32(pos,le); pos+=4; for(var g=0;g<ng;g++) rings=rings.concat(geom()); }
+      return rings;
+    }
+    try{ return geom(); }catch(e){ return []; }
+  }
+  function toPath(rings){
+    var mnX=1/0,mnY=1/0,mxX=-1/0,mxY=-1/0,k,j,p;
+    for(k=0;k<rings.length;k++) for(j=0;j<rings[k].length;j++){ p=rings[k][j];
+      if(p[0]<mnX)mnX=p[0]; if(p[0]>mxX)mxX=p[0]; if(p[1]<mnY)mnY=p[1]; if(p[1]>mxY)mxY=p[1]; }
+    var w=mxX-mnX,h=mxY-mnY; if(!(w>0)||!(h>0)) return null;
+    var s=100/Math.max(w,h), d='';
+    for(k=0;k<rings.length;k++){ var r=rings[k]; if(r.length<3) continue;
+      for(var i=0;i<r.length;i++){ var x=(r[i][0]-mnX)*s, y=(mxY-r[i][1])*s;
+        d+=(i?'L':'M')+x.toFixed(2)+' '+y.toFixed(2); } d+='Z'; }
+    return d ? {d:d, vb:'0 0 '+(w*s).toFixed(2)+' '+(h*s).toFixed(2)} : null;
+  }
+  function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t; } return a; }
+  function mkSvg(){ var s=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    s.setAttribute('preserveAspectRatio','xMidYMid meet');
+    s.appendChild(document.createElementNS('http://www.w3.org/2000/svg','path')); return s; }
+  function geoColumn(meta){
+    try{ var kv=(meta&&meta.key_value_metadata)||[];
+      for(var i=0;i<kv.length;i++){ if(kv[i].key==='geo'){ var j=JSON.parse(kv[i].value); if(j&&j.primary_column) return j.primary_column; } } }catch(e){}
+    return 'geometry';
+  }
+  function pickRings(g){
+    if(!g||!g.coordinates) return null;
+    if(g.type==='Polygon') return g.coordinates;
+    if(g.type==='MultiPolygon'){
+      var c=g.coordinates, best=null, ba=-1;
+      for(var i=0;i<c.length;i++){ var ring=c[i][0]||[], mnx=1/0,mny=1/0,mxx=-1/0,mxy=-1/0;
+        for(var j=0;j<ring.length;j++){ var p=ring[j];
+          if(p[0]<mnx)mnx=p[0]; if(p[0]>mxx)mxx=p[0]; if(p[1]<mny)mny=p[1]; if(p[1]>mxy)mxy=p[1]; }
+        var a=(mxx-mnx)*(mxy-mny); if(a>ba){ ba=a; best=c[i]; } }
+      return best;
+    }
+    return null;
+  }
+  function setLayer(svg,po){ svg.setAttribute('viewBox',po.vb); svg.firstChild.setAttribute('d',po.d); }
+  function render(po){ for(var i=0;i<hosts.length;i++){ var H=hosts[i], nx=H.cur^1;
+    setLayer(H.l[nx],po); H.l[nx].classList.add('tz-on'); H.l[H.cur].classList.remove('tz-on'); H.cur=nx; } }
+  function tick(){ if(!paths.length) return; idx=(idx+1)%paths.length; render(paths[idx]); }
+  function start(){ if(paths.length){ render(paths[idx%paths.length]); if(!timer) timer=setInterval(tick,1000); } }
+  function build(){
+    var dots=document.querySelectorAll('.animfield');
+    for(var i=0;i<dots.length;i++){ var d=dots[i];
+      var host=document.createElement('span'); host.className='tz-geo'; host.setAttribute('aria-hidden','true');
+      var a=mkSvg(),b=mkSvg(); host.appendChild(a); host.appendChild(b);
+      d.parentNode.replaceChild(host,d); hosts.push({host:host,l:[a,b],cur:0}); }
+  }
+  async function load(){
+    var hp=await import('https://cdn.jsdelivr.net/npm/hyparquet/+esm');
+    var file=await hp.asyncBufferFromUrl({url:PARQUET_URL});
+    var meta=await hp.parquetMetadataAsync(file);
+    var col=geoColumn(meta);
+    var total=Number(meta && meta.num_rows)||0;
+    var out=[], tries=0;
+    while(out.length<WANT && tries<6){
+      tries++;
+      var span=Math.min(280, total||280);
+      var start=(total>span) ? Math.floor(Math.random()*(total-span)) : 0;
+      var rows=await hp.parquetReadObjects({file:file,metadata:meta,columns:[col],rowStart:start,rowEnd:start+span});
+      for(var i=0;i<rows.length && out.length<WANT;i++){
+        var g=rows[i] && rows[i][col]; if(!g) continue;
+        var rings=pickRings(g); if(!rings) continue;
+        var po=toPath(rings); if(po) out.push(po);
+      }
+    }
+    return shuffle(out);
+  }
+  function init(){
+    load().then(function(list){
+      if(!list || !list.length) return;
+      paths=list; idx=0; build(); if(!hosts.length) return; start();
+    }).catch(function(){});
+  }
+  if(document.readyState!=='loading') init();
+  else document.addEventListener('DOMContentLoaded', init);
 })();
 </script>
 </body>

@@ -2038,7 +2038,10 @@ loadFile();
       <div class="train-hover-line">
         <span class="hover-term">Hover to view<span class="hover-pop hover-pop--train">
           <video src="https://storage.googleapis.com/trazovis/trazo_training_animation_square.mp4" autoplay loop muted playsinline></video>
-        </span></span> the boundaries that trained Trazo models. <a href="annotationtour.html">Tour and view</a> the field boundaries.
+        </span></span> the boundaries that trained Trazo models.
+      </div>
+      <div class="train-hover-line">
+        <a href="https://wri.github.io/trazo/landing/annotationtour.html">Tour and view</a> the field boundaries.
       </div>
     </div>
   </section>
@@ -2520,46 +2523,4 @@ window.TZ = (function(){
   var PARQUET_URL='https://wri-datalab-sandbox.s3.us-east-1.amazonaws.com/trazofields/release1annotations.parquet';
   var hosts=[], paths=[], idx=0, timer=null;
   var HOLD_MS=2000, FRAME_MS=850;
-  var ov=null, ovLayers=null, hoverTimer=null, playTimer=null, ovIdx=0;
-  var WANT=100;   /* load 100 random field boundaries from the parquet per page load */
-  function decodeWKB(buf){
-    var dv=new DataView(buf.buffer,buf.byteOffset,buf.byteLength), pos=0;
-    function geom(){
-      var le=dv.getUint8(pos)===1; pos+=1;
-      var type=dv.getUint32(pos,le); pos+=4;
-      if(type & 0x20000000) pos+=4;                 /* EWKB SRID */
-      var base=(type & 0xffff)%1000;
-      var hasZ=((type & 0xffff)>=1000) || !!(type & 0x80000000);
-      var rings=[];
-      function ring(){ var n=dv.getUint32(pos,le); pos+=4; var r=[];
-        for(var i=0;i<n;i++){ var x=dv.getFloat64(pos,le); pos+=8; var y=dv.getFloat64(pos,le); pos+=8; if(hasZ) pos+=8; r.push([x,y]); }
-        return r; }
-      if(base===3){ var nr=dv.getUint32(pos,le); pos+=4; for(var i=0;i<nr;i++) rings.push(ring()); }
-      else if(base===6){ var np=dv.getUint32(pos,le); pos+=4; for(var p=0;p<np;p++) rings=rings.concat(geom()); }
-      else if(base===2){ rings.push(ring()); }
-      else if(base===1){ pos+=16; }
-      else if(base===4||base===5||base===7){ var ng=dv.getUint32(pos,le); pos+=4; for(var g=0;g<ng;g++) rings=rings.concat(geom()); }
-      return rings;
-    }
-    try{ return geom(); }catch(e){ return []; }
-  }
-  function toPath(rings){
-    var mnX=1/0,mnY=1/0,mxX=-1/0,mxY=-1/0,k,j,p;
-    for(k=0;k<rings.length;k++) for(j=0;j<rings[k].length;j++){ p=rings[k][j];
-      if(p[0]<mnX)mnX=p[0]; if(p[0]>mxX)mxX=p[0]; if(p[1]<mnY)mnY=p[1]; if(p[1]>mxY)mxY=p[1]; }
-    var w=mxX-mnX,h=mxY-mnY; if(!(w>0)||!(h>0)) return null;
-    var s=100/Math.max(w,h), d='';
-    for(k=0;k<rings.length;k++){ var r=rings[k]; if(r.length<3) continue;
-      for(var i=0;i<r.length;i++){ var x=(r[i][0]-mnX)*s, y=(mxY-r[i][1])*s;
-        d+=(i?'L':'M')+x.toFixed(2)+' '+y.toFixed(2); } d+='Z'; }
-    return d ? {d:d, vb:'0 0 '+(w*s).toFixed(2)+' '+(h*s).toFixed(2)} : null;
-  }
-  function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t; } return a; }
-  function mkSvg(){ var s=document.createElementNS('http://www.w3.org/2000/svg','svg');
-    s.setAttribute('preserveAspectRatio','xMidYMid meet');
-    s.appendChild(document.createElementNS('http://www.w3.org/2000/svg','path')); return s; }
-  function geoColumn(meta){
-    try{ var kv=(meta&&meta.key_value_metadata)||[];
-      for(var i=0;i<kv.length;i++){ if(kv[i].key==='geo'){ var j=JSON.parse(kv[i].value); if(j&&j.primary_column) return j.primary_column; } } }catch(e){}
-    return 'geometry';
- 
+  var ov=null, ovLayers=null, hoverTimer=null, playT
