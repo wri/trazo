@@ -5,6 +5,9 @@
   <script>document.documentElement.setAttribute("data-theme","simple");</script>
   <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
   <title>Trazo Field Boundary Annotation Guide</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://use.typekit.net/fxq7ozw.css"/>
   <style>
     *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
@@ -19,7 +22,7 @@
       --surface:rgba(255,255,255,0.035); --surface-hover:rgba(255,255,255,0.07);
       --chrome-bg:rgba(7,16,5,0.88); --footer-bg:#03070a; --footer-text:#9fb0a4; --footer-brand:#e7e6e6;
       --section-tint:rgba(240,171,0,0.04);
-      --font-header:'Gill Sans','Segoe UI',sans-serif;
+      --font-header:'Archivo','Segoe UI',sans-serif;
       --font-body:'Segoe UI',Calibri,sans-serif;
       --font-mono:'Courier New',monospace;
       --max-w:1180px; --gutter:clamp(20px,4vw,56px);
@@ -53,8 +56,7 @@
     /* judicious colour — soy yellow only on the brand dots */
     [data-theme="simple"] .mark .dot,
     [data-theme="simple"] .footer-brand-line .dot{ background:#F0AB00; }
-    /* temporary-crop orange, used sparingly — only on the author's inline emphasis */
-    [data-theme="simple"] em.gold{ color:#EB8026; }
+    /* inline emphasis now renders in soy yellow (var(--gold)) in every theme, including simple */
     /* lighter, thinner dividing lines for the minimalist theme */
     [data-theme="simple"] .table-wrap{ border-top:1px solid var(--border); }
 
@@ -108,29 +110,38 @@
     .masthead-inner{ display:flex; align-items:center; gap:22px; height:60px; }
     .mark{ display:flex; align-items:center; gap:9px; text-decoration:none; color:var(--text); font-family:var(--font-header); font-weight:700; letter-spacing:.08em; font-size:18px; text-transform:uppercase; }
     .mark .dot{ width:10px; height:10px; border-radius:50%; background:var(--gold); }
-    .primary{ margin-left:auto; display:flex; align-items:center; gap:20px; }
-    .primary a{ color:var(--text-muted); text-decoration:none; font-family:var(--font-header); font-size:14px; letter-spacing:.02em; transition:color .15s; }
+    .primary{ margin-left:auto; display:flex; align-items:center; gap:18px; }
+    .primary a{ color:var(--text-muted); text-decoration:none; font-family:var(--font-header); font-size:13px; letter-spacing:.02em; transition:color .15s; white-space:nowrap; }
     .primary a:hover{ color:var(--gold); }
-    .theme-toggle-idx{
-      font-family:var(--font-header); font-size:12.5px; letter-spacing:.04em;
-      color:var(--text-muted); background:var(--surface); border:1px solid var(--border-dim);
-      padding:6px 12px; border-radius:20px; cursor:pointer; transition:all .15s;
+    .primary .nav-div{ display:inline-block; width:1px; height:14px; background:var(--border); flex:none; }
+    @media (max-width:760px){
+      .masthead-inner{ flex-wrap:wrap; gap:10px 16px; height:auto; padding:10px 0; }
+      .primary{
+        width:100%; gap:14px; font-size:10px; flex-wrap:nowrap; white-space:nowrap;
+        overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding-bottom:2px;
+      }
+      .primary::-webkit-scrollbar{ display:none; }
     }
-    .theme-toggle-idx:hover{ color:var(--gold); border-color:var(--border); }
+    .theme-toggle-idx{
+      background:none; border:none; cursor:pointer; font-family:var(--font-mono);
+      font-size:9.5px; letter-spacing:.14em; text-transform:uppercase;
+      color:var(--text-dim); padding:0; transition:color .15s;
+    }
+    .theme-toggle-idx:hover{ color:var(--gold); }
 
     /* ── HERO ───────────────────────────────────────────────────────────────── */
     .hero{ padding:68px 0 30px; border-bottom:1px solid var(--border-faint); }
-    .eyebrow{ font-family:var(--font-header); font-size:12.5px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:var(--gold); margin-bottom:18px; }
+    .eyebrow{ font-family:var(--font-header); font-size:13px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:var(--gold); margin-bottom:18px; }
     .hero h1{ font-family:var(--font-header); font-weight:700; font-size:clamp(34px,5vw,58px); line-height:1.04; letter-spacing:-0.01em; max-width:18ch; }
     .hero .lede{ margin-top:22px; font-size:clamp(18px,2vw,21px); line-height:1.55; color:var(--text-muted); max-width:62ch; }
-    .hero .meta-line{ margin-top:24px; font-family:var(--font-mono); font-size:12px; letter-spacing:.04em; color:var(--text-dim); }
+    .hero .meta-line{ margin-top:24px; font-family:var(--font-mono); font-size:12px; letter-spacing:.04em; color:var(--text-muted); }
     .hero .meta-line a{ color:var(--gold); }
 
     /* ── TABLE OF CONTENTS ──────────────────────────────────────────────────── */
     .toc{ padding:26px 0; border-bottom:1px solid var(--border-faint); }
     .toc ol{ list-style:none; counter-reset:toc; display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:8px 26px; }
     .toc li{ counter-increment:toc; }
-    .toc a{ display:flex; gap:10px; text-decoration:none; color:var(--text-muted); font-family:var(--font-header); font-size:14.5px; padding:5px 0; border-bottom:1px solid transparent; transition:color .15s; }
+    .toc a{ display:flex; gap:10px; text-decoration:none; color:var(--text-muted); font-family:var(--font-header); font-size:14px; padding:5px 0; border-bottom:1px solid transparent; transition:color .15s; }
     .toc a:hover{ color:var(--gold); }
     .toc a::before{ content:counter(toc); color:var(--gold); font-family:var(--font-mono); font-size:12px; min-width:18px; }
 
@@ -146,6 +157,28 @@
     a.inline{ color:var(--gold); }
     strong{ font-weight:700; }
     em.gold{ font-style:normal; color:var(--gold); }
+    /* ── INLINE DEFINITION TOOLTIP ──────────────────────────────────────────── */
+    .tip{ position:relative; cursor:help; border-bottom:1px dotted var(--text-dim); }
+    .tip::after{
+      content:attr(data-tip);
+      position:absolute; left:50%; bottom:calc(100% + 10px); transform:translateX(-50%) translateY(4px);
+      width:300px; max-width:80vw; padding:12px 14px; border-radius:8px;
+      background:var(--bg-elevated); border:1px solid var(--border); color:var(--text);
+      font-family:var(--font-body); font-size:12.5px; font-style:normal; line-height:1.5; letter-spacing:normal; text-transform:none;
+      box-shadow:0 10px 30px rgba(0,0,0,0.18);
+      opacity:0; visibility:hidden; pointer-events:none; transition:opacity .15s ease, transform .15s ease;
+      z-index:60;
+    }
+    .tip::before{
+      content:""; position:absolute; left:50%; bottom:calc(100% + 4px); transform:translateX(-50%) translateY(4px);
+      border:6px solid transparent; border-top-color:var(--border);
+      opacity:0; visibility:hidden; pointer-events:none; transition:opacity .15s ease, transform .15s ease; z-index:60;
+    }
+    .tip:hover::after, .tip:hover::before,
+    .tip:focus::after, .tip:focus::before{ opacity:1; visibility:visible; transform:translateX(-50%) translateY(0); }
+    @media (max-width:600px){ .tip::after{ width:240px; left:0; transform:translateX(0) translateY(4px); }
+      .tip:hover::after, .tip:focus::after{ transform:translateX(0) translateY(0); }
+      .tip::before{ left:20px; } }
 
     ul.rules, ul.bul{ list-style:none; max-width:74ch; margin:8px 0 18px; }
     ul.rules > li, ul.bul > li{ position:relative; padding-left:22px; margin-bottom:10px; color:var(--text); }
@@ -168,9 +201,9 @@
     figure img{ display:block; width:100%; height:auto; border:1px solid var(--border); border-radius:8px; background:var(--bg-elevated); }
     img.zoom{ cursor:zoom-in; transition:filter .15s; }
     img.zoom:hover{ filter:brightness(1.04); }
-    figcaption{ margin-top:10px; font-size:14px; line-height:1.5; color:var(--text-muted); }
+    figcaption{ margin-top:10px; font-size:13px; line-height:1.5; color:var(--text-muted); }
     figcaption .lbl{ font-family:var(--font-header); font-weight:700; color:var(--gold); letter-spacing:.02em; }
-    .zoom-hint{ font-family:var(--font-header); font-size:11px; letter-spacing:.04em; color:var(--text-dim); }
+    .zoom-hint{ font-family:var(--font-header); font-size:11px; letter-spacing:.04em; color:var(--text-muted); }
 
     /* prominent feature figures (1a, 1b) — quiet neutral lift, no coloured outline */
     figure.fig-feature img{ border:1px solid var(--border); box-shadow:0 6px 22px rgba(0,0,0,0.08); }
@@ -180,11 +213,19 @@
     .fig-feature-pair figure{ margin:0; }
     @media (max-width:820px){ .fig-feature-pair{ grid-template-columns:1fr; } }
 
+    /* smaller, centered figure for the conversion example (Figure 2) */
+    .fig-compact{ max-width:70%; margin-left:auto; margin-right:auto; }
+    @media (max-width:780px){ .fig-compact{ max-width:100%; } }
+
+    /* smaller, centered grids for the burn-pattern examples (Figure 3a-3d) */
+    .fig-burn-top, .fig-burn-rest{ max-width:78%; margin-left:auto; margin-right:auto; }
+    @media (max-width:780px){ .fig-burn-top, .fig-burn-rest{ max-width:100%; } }
+
     .fig-grid{ display:grid; gap:14px; margin:26px 0; }
     .fig-grid.two{ grid-template-columns:repeat(2,1fr); }
     .fig-grid.four{ grid-template-columns:repeat(4,1fr); }
     .fig-grid figure{ margin:0; }
-    .fig-grid figcaption{ font-size:12.5px; }
+    
     @media (max-width:780px){ .fig-grid.two,.fig-grid.four{ grid-template-columns:1fr 1fr; } }
     @media (max-width:480px){ .fig-grid.two,.fig-grid.four{ grid-template-columns:1fr; } }
 
@@ -201,8 +242,7 @@
     /* prominent burn examples (3a, 3b) raised above the rest */
     .fig-burn-top{ margin-bottom:18px; }
     .fig-burn-top .xfade{ border:1px solid var(--border); box-shadow:0 6px 22px rgba(0,0,0,0.08); }
-    .fig-burn-top figcaption{ font-size:13.5px; }
-    .fig-burn-rest{ margin-top:0; }
+        .fig-burn-rest{ margin-top:0; }
 
     /* ── TABLES ─────────────────────────────────────────────────────────────── */
     .table-wrap{ overflow-x:auto; margin:22px 0; border-top:3px solid var(--text); }
@@ -214,7 +254,7 @@
     tbody tr:hover{ background:var(--surface); }
     td.num, th.num{ font-family:var(--font-mono); }
     tr.summary td{ font-weight:700; border-top:1px solid var(--border); }
-    .tnote{ font-size:12px; color:var(--text-dim); margin-top:8px; max-width:74ch; }
+    .tnote{ font-size:12px; color:var(--text-muted); margin-top:8px; max-width:74ch; }
 
     /* ── METRIC STRIP ───────────────────────────────────────────────────────── */
     .metrics{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin:24px 0; }
@@ -229,15 +269,21 @@
     #lightbox .x{ position:absolute; top:18px; right:24px; color:#fff; font-family:var(--font-header); font-size:30px; line-height:1; cursor:pointer; opacity:.8; }
     #lightbox .x:hover{ opacity:1; }
 
-    /* ── FOOTER ─────────────────────────────────────────────────────────────── */
-    footer{ background:var(--footer-bg); color:var(--footer-text); padding:40px 0; }
-    footer .inner{ display:flex; flex-wrap:wrap; gap:18px 40px; align-items:baseline; }
-    footer .footer-brand-line{ font-family:var(--font-header); font-weight:700; color:var(--footer-brand); display:flex; align-items:center; gap:8px; font-size:16px; }
-    footer .footer-brand-line .dot{ width:9px; height:9px; border-radius:50%; background:var(--gold); }
-    footer a{ color:var(--gold); text-decoration:none; }
-    footer p{ color:var(--footer-text); font-size:14px; max-width:60ch; }
-    footer .links{ margin-left:auto; display:flex; gap:22px; font-family:var(--font-header); font-size:14px; }
-    footer .small{ width:100%; font-size:12px; color:var(--footer-text); opacity:.8; border-top:1px solid rgba(255,255,255,0.12); padding-top:16px; margin-top:8px; }
+    /* ── FOOTER (matches index.html's end section) ────────────────────────────── */
+    footer{ background:var(--footer-bg); color:var(--footer-text); padding:48px 0 32px; border-top:1px solid var(--border-dim); }
+    footer .inner{ display:grid; grid-template-columns:1.6fr 1fr 1fr 1fr; gap:32px; }
+    @media (max-width:880px){ footer .inner{ grid-template-columns:1fr 1fr; gap:24px; } }
+    @media (max-width:480px){ footer .inner{ grid-template-columns:1fr; } }
+    footer .footer-brand-line{ font-family:var(--font-header); font-size:16px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--footer-brand); margin-bottom:12px; display:inline-flex; align-items:center; gap:9px; }
+    footer .footer-brand-line .dot{ display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--gold); }
+    footer p{ font-family:var(--font-body); font-size:13.5px; line-height:1.65; color:var(--footer-text); max-width:42ch; }
+    footer h6{ font-family:var(--font-header); font-size:11px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:var(--gold); margin-bottom:13px; }
+    footer ul{ list-style:none; }
+    footer ul li{ margin-bottom:7px; font-size:13.5px; }
+    footer ul a{ color:var(--footer-text); text-decoration:none; transition:color .15s; }
+    footer ul a:hover{ color:var(--gold); }
+    footer ul.proj a{ text-transform:none; letter-spacing:.03em; font-size:13.5px; }
+    footer .small{ grid-column:1 / -1; border-top:1px solid var(--border-faint); margin-top:16px; padding-top:18px; font-family:var(--font-mono); font-size:10px; color:var(--footer-text); letter-spacing:.08em; }
   </style>
 </head>
 <body>
@@ -247,12 +293,17 @@
     <div class="wrap masthead-inner">
       <a class="mark" href="index.html"><span class="dot"></span><span>Trazo</span></a>
       <nav class="primary">
-        <a href="index.html">Overview</a>
         <a href="map.html">Map</a>
+        <a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">Annotation</a>
+        <a href="https://www.wri.org/research/field-boundaries-south-america-technical-note" target="_blank" rel="noopener">Technical Note</a>
+        <span class="nav-div" aria-hidden="true"></span>
+        <a href="#field">Definition</a>
+        <a href="#approach">Method</a>
         <a href="#guidelines">Guidelines</a>
+        <a href="#review">Quality</a>
         <a href="#validation">Validation</a>
-        <a class="nav-cta" href="https://www.wri.org/research/field-boundaries-south-america-technical-note" target="_blank" rel="noopener">Tech note ↗</a>
-        <button class="theme-toggle-idx" type="button" title="Cycle theme">Theme ◑</button>
+        <span class="nav-div" aria-hidden="true"></span>
+        <a href="index.html#cite">Cite</a>
       </nav>
     </div>
   </header>
@@ -260,7 +311,6 @@
   <!-- ═══ HERO ═══ -->
   <section class="hero">
     <div class="wrap">
-      <div class="eyebrow">Field Boundary Annotation</div>
       <h1>A guide to annotating agricultural fields</h1>
       <p class="lede">
         The standard, protocols, and quality-assurance procedures used to hand-annotate
@@ -268,7 +318,7 @@
         defined, how boundaries are drawn, the decision rules for ambiguous cases, and
         how the annotation procedure itself was validated against ground truth and across annotators.
       </p>
-      <p class="meta-line">Adapted from the Trazo technical note (Grupp et al. 2026), Methodology and Appendix A · <a href="https://www.wri.org/research/field-boundaries-south-america-technical-note" target="_blank" rel="noopener">Read the full note ↗</a></p>
+      <p class="meta-line">Adapted from the Trazo technical note (Grupp et al. 2026), Methodology and Appendix A · <a href="https://www.wri.org/research/field-boundaries-south-america-technical-note" target="_blank" rel="noopener">Read the full note</a></p>
     </div>
   </section>
 
@@ -301,7 +351,7 @@
         <p>A field includes farms, pastures with discernible management, and plantations of tree crops whose pattern is distinguishable in Sentinel-2 imagery. In manual annotation, the goal is to delineate the <em class="gold">idealized boundaries</em> of such fields, in the manner we would want an AI model to automatically delineate them.</p>
       </div>
 
-      <p>Boundaries are produced <strong>without concern for crop type</strong>. While annotating in the Chiquitania and Mato Grosso, it proved nearly impossible to reliably differentiate among annual crops, and even pasture or cover crops were often hard to separate from annual crops, by visual inspection, even with temporally coincident very-high-resolution imagery. We therefore took a <em class="gold">field-inclusive</em> approach: annotators trace every field that shows clear signs of human management, without identifying the crop type.</p>
+      <p>Boundaries are produced <strong>without concern for crop type</strong>. While annotating in the Chiquitania and Mato Grosso, it proved nearly impossible to reliably differentiate among annual crops, and even pasture or cover crops were often hard to separate from annual crops, by visual inspection, even with temporally coincident very-high-resolution imagery. We therefore took a <em class="gold">field-inclusive</em> approach: annotators trace every field that shows <em class="gold">clear signs of human management</em>.</p>
     </div>
   </section>
 
@@ -356,7 +406,7 @@
   <!-- ═══ 3. COMPLETE GUIDELINES ═══ -->
   <section class="block" id="guidelines">
     <div class="wrap">
-      <h2 class="section-num">3 Reference</h2>
+      <h2 class="section-num">3 Guidelines</h2>
       <div class="h2-title">Complete annotation guidelines</div>
       <p class="lead">The full set of guidelines for manually annotating field boundaries.</p>
 
@@ -438,7 +488,7 @@
         <li><strong>Manager evaluation:</strong> a project data scientist reviewed the final set of annotations from every annotator to ensure accuracy and consistency across the team.</li>
       </ul>
 
-      <p class="muted">Consensus labeling and quality assurance are key to accelerating performance gains in model development, especially for active learning, where informative but challenging samples are selected for targeted annotation (Estes et al. 2022). Newly onboarded annotators always label the calibration set first, before contributing to the corpus.</p>
+      <p class="muted">Consensus labeling and quality assurance are key to accelerating performance gains in model development, especially for active learning, where informative but challenging samples are selected for targeted annotation (<a class="inline" href="https://www.frontiersin.org/journals/artificial-intelligence/articles/10.3389/frai.2021.744863/full" target="_blank" rel="noopener">Estes et al. 2022</a>). Newly onboarded annotators always label the calibration set first, before contributing to the corpus.</p>
     </div>
   </section>
 
@@ -451,7 +501,7 @@
 
       <p>Annotators <strong>include fields present in the later time period that were created by the conversion of nature</strong> between the planting and harvest windows. These recent conversions are annotated when they have a discernible management pattern and can be represented as a field object, even though they are absent from the earlier window. Trazo models thereby encode recent conversion.</p>
 
-      <figure>
+      <figure class="fig-compact">
         <img class="zoom" src="https://wri-datalab-sandbox.s3.us-east-1.amazonaws.com/trazofields/annotation-assets/figA1-conversion.png" alt="Sample chips where conversion occurred between the planting and harvest time windows, with pink burn scars marking newly opened fields" loading="lazy"/>
         <figcaption><span class="lbl">Figure 2.</span> Samples where conversion occurred between the two time windows. Row 1: two chips from the same area and year, one in planting and one in harvest, from the Mato Grosso low-confidence active-learning set. In the harvest season, new fields were opened by burning, visible as pink burn scars; these are labeled despite their absence in the earlier window. Row 2: a second example. Recent conversions are annotated when they show a discernible management pattern. Imagery: Sentinel-2.</figcaption>
       </figure>
@@ -537,10 +587,10 @@
     <div class="wrap">
       <h2 class="section-num">8 Validation</h2>
       <div class="h2-title">Validating the annotation procedure</div>
-      <p class="lead">Two complementary studies tested whether the annotation procedure produces accurate, consistent boundaries: comparison against in-situ-informed ground truth, and an inter-annotator calibration. Click any figure to enlarge it.</p>
+      <p class="lead">Two complementary studies tested whether the annotation procedure produces accurate, consistent boundaries: comparison against <span class="tip" tabindex="0" data-tip="In situ-informed ground truth: Satellite imagery annotations produced following direct field visits, where on-the-ground observation informs the delineation of field boundaries. Distinguished from standard ground truth in that annotator judgment is calibrated by firsthand landscape knowledge rather than remote interpretation alone.">in-situ-informed ground truth</span>, and an inter-annotator calibration. Click any figure to enlarge it.</p>
 
       <h3>8.1 Consistency with ground truth</h3>
-      <p>Manual annotations were compared with the Cerrado in-situ-informed ground-truth dataset of Oldoni et al. (2020), the 1,854 Brazilian fields included in the Fields of the World benchmark. Consistency is defined as similar overall size, object shape, and overlap. A single point was sampled at random <em class="gold">within</em> each field, rather than at its center, to avoid biasing annotators with morphology cues; 300 of the 1,854 points were then randomly selected, and annotators were asked whether a field boundary existed at each point and, if so, to draw it.</p>
+      <p>Manual annotations were compared with the Cerrado in-situ-informed ground-truth dataset of <a class="inline" href="https://www.sciencedirect.com/science/article/pii/S2352340920314359?via%3Dihub" target="_blank" rel="noopener">Oldoni et al. (2020)</a>, the 1,854 Brazilian fields included in the Fields of the World benchmark. Consistency is defined as similar overall size, object shape, and overlap. A single point was sampled at random within each field, rather than at its center, to avoid biasing annotators with morphology cues; 300 of the 1,854 points were then randomly selected, and annotators were asked whether a field boundary existed at each point and, if so, to draw it.</p>
 
       <figure>
         <img class="zoom" src="https://wri-datalab-sandbox.s3.us-east-1.amazonaws.com/trazofields/annotation-assets/fig4-manual-vs-gt.png" alt="Examples of manually annotated samples (dotted lines) compared to ground truth samples (orange)" loading="lazy"/>
@@ -574,7 +624,7 @@
         </figure>
       </div>
 
-      <h3>8.2 Inter-annotator agreement</h3>
+      <h3 id="inter-annotator">8.2 Inter-annotator agreement</h3>
       <p>When new annotators join the project, after completing their training they annotate a fixed calibration set: all fields they identify within <strong>50 chips</strong> from one Sentinel-2 tile in Mato Grosso. These first annotations are compared against reference annotations drawn by the project data scientist who developed the criteria, calibrating new annotators to the project standard.</p>
 
       <div class="metrics">
@@ -600,7 +650,7 @@
       </div>
       <p class="tnote">Polygons were matched via spatial intersection and mutual best-IoU matching, using the reference annotator as the common comparison point. IoU = intersection over union; BLR = boundary length ratio.</p>
 
-      <p>Total field counts ranged from 203 to 250 across annotators (reference: 215), differences of up to about 20 percent on a first attempt with only brief training. Even so, a median IoU of 0.91 represents near-perfect polygon overlap. For context, this is well above the 0.786 human inter-annotator benchmark reported for the Cityscapes dataset, and far above the mean IoU of 0.54 observed between expert medical-image annotators; industry standards broadly treat IoU above 0.8 as strong agreement. These results indicate that the annotation rules and guidelines produce consistent boundaries across annotators.</p>
+      <p>Total field counts ranged from 203 to 250 across annotators (reference: 215), differences of up to about 20 percent on a first attempt with only brief training. Even so, a median IoU of 0.91 represents near-perfect polygon overlap. For context, this is well above the 0.786 human inter-annotator benchmark reported for the <a class="inline" href="https://www.cityscapes-dataset.com/" target="_blank" rel="noopener">Cityscapes dataset</a>, and far above the mean IoU of 0.54 observed between expert medical-image annotators; industry standards broadly treat IoU above 0.8 as strong agreement. These results indicate that the annotation rules and guidelines produce consistent boundaries across annotators.</p>
 
       <div class="fig-grid two">
         <figure>
@@ -621,14 +671,47 @@
       <div class="inner">
         <div>
           <div class="footer-brand-line"><span class="dot"></span>Trazo</div>
-          <p>Field boundary annotation guidelines, adapted from the Trazo technical note (Grupp et al. 2026). A direct extension of <a href="https://fieldsofthe.world/">Fields of the World</a>, produced with WRI and the Kerner Lab at Arizona State University.</p>
+          <p>
+            A framework for creating fields in new geographies, supporting more
+            sustainable, traceable agriculture. A direct extension of
+            <a href="https://fieldsofthe.world/">Fields of the World</a>,
+            produced with WRI and the Kerner Lab at Arizona State University.
+          </p>
         </div>
-        <div class="links">
-          <a href="index.html">Overview</a>
-          <a href="map.html">Map</a>
-          <a href="https://www.wri.org/research/field-boundaries-south-america-technical-note" target="_blank" rel="noopener">Tech note ↗</a>
-          <a href="https://github.com/wri/trazo" target="_blank" rel="noopener">GitHub ↗</a>
+
+        <div>
+          <h6>Project</h6>
+          <ul class="proj">
+            <li><a href="https://www.wri.org/research/field-boundaries-south-america-technical-note" target="_blank" rel="noopener">Technical Note</a></li>
+            <li><a href="https://github.com/wri/trazo">Github Repo</a></li>
+            <li><a href="map.html">Trazo Map</a></li>
+            <li><a href="annotationguide.html">Annotation Guide</a></li>
+            <li><a href="index.html#pipeline-section">Pipeline</a></li>
+            <li><a href="index.html#cite">Cite</a></li>
+          </ul>
         </div>
+
+        <div>
+          <h6>Related</h6>
+          <ul>
+            <li><a href="https://fieldsofthe.world/" target="_blank" rel="noopener">Fields of the World (FTW)</a></li>
+            <li><a href="https://github.com/fieldsoftheworld" target="_blank" rel="noopener">FTW GitHub</a></li>
+            <li><a href="https://www.wri.org/initiatives/land-carbon-lab" target="_blank" rel="noopener">Land &amp; Carbon Lab</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h6>Partners</h6>
+          <ul>
+            <li><a href="https://www.wri.org" target="_blank" rel="noopener">WRI</a></li>
+            <li><a href="https://www.asu.edu" target="_blank" rel="noopener">ASU</a></li>
+            <li><a href="https://landcarbonlab.org" target="_blank" rel="noopener">Land &amp; Carbon Lab</a></li>
+            <li><a href="https://taylorgeospatial.org" target="_blank" rel="noopener">Taylor Geospatial</a></li>
+            <li><a href="https://www.wri.org/data" target="_blank" rel="noopener">WRI Data Lab</a></li>
+            <li><a href="https://walmart.org" target="_blank" rel="noopener">Walmart Foundation</a></li>
+          </ul>
+        </div>
+
         <div class="small">© World Resources Institute &amp; Kerner Lab at ASU. Released under CC-BY-4.0 where applicable.</div>
       </div>
     </div>
@@ -703,18 +786,38 @@
   .tz-geo svg.tz-on{ opacity:1; }
   .tz-geo svg path{ fill:#F0AB00; fill-rule:evenodd; stroke:none; }
   @media (prefers-reduced-motion:reduce){ .tz-geo svg{ transition:none; } }
+  .tz-geo{ cursor:pointer; }
+
+  /* ── hover-to-enlarge: hold the mark 2s+ to see all 100 sampled field geometries ── */
+  #tz-mark-overlay{
+    position:fixed; inset:0; z-index:5000;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:28px;
+    padding:40px; background:rgba(4,8,3,0);
+    opacity:0; visibility:hidden; pointer-events:none;
+    transition:opacity .35s ease, background .35s ease, visibility .35s; cursor:zoom-out;
+  }
+  #tz-mark-overlay.show{ opacity:1; visibility:visible; pointer-events:auto; background:rgba(4,8,3,0.93); }
+  .tz-mark-stage{ position:relative; width:min(56vw,480px); height:min(56vw,480px); flex:none; }
+  .tz-mark-stage svg{ position:absolute; inset:0; width:100%; height:100%; opacity:0; transition:opacity .5s ease; overflow:visible; }
+  .tz-mark-stage svg.tz-on{ opacity:1; }
+  .tz-mark-stage svg path{ fill:#F0AB00; fill-rule:evenodd; stroke:none; }
+  .tz-mark-caption{ max-width:540px; text-align:center; font-family:var(--font-body); font-size:14px; line-height:1.6; color:rgba(255,255,255,0.78); }
+  @media (max-width:600px){ .tz-mark-stage{ width:78vw; height:78vw; } .tz-mark-caption{ font-size:12.5px; padding:0 10px; } }
+  @media (prefers-reduced-motion:reduce){ #tz-mark-overlay, .tz-mark-stage svg{ transition:none; } }
 </style>
 <script>
 (function(){
   var PARQUET_URL='https://wri-datalab-sandbox.s3.us-east-1.amazonaws.com/trazofields/release1annotations.parquet';
   var hosts=[], paths=[], idx=0, timer=null;
-  var WANT=100;   /* load 100 random field boundaries from the parquet per page load */
+  var HOLD_MS=2000, FRAME_MS=850;
+  var ov=null, ovLayers=null, hoverTimer=null, playTimer=null, ovIdx=0;
+  var WANT=100;
   function decodeWKB(buf){
     var dv=new DataView(buf.buffer,buf.byteOffset,buf.byteLength), pos=0;
     function geom(){
       var le=dv.getUint8(pos)===1; pos+=1;
       var type=dv.getUint32(pos,le); pos+=4;
-      if(type & 0x20000000) pos+=4;                 /* EWKB SRID */
+      if(type & 0x20000000) pos+=4;
       var base=(type & 0xffff)%1000;
       var hasZ=((type & 0xffff)>=1000) || !!(type & 0x80000000);
       var rings=[];
@@ -735,7 +838,7 @@
     for(k=0;k<rings.length;k++) for(j=0;j<rings[k].length;j++){ p=rings[k][j];
       if(p[0]<mnX)mnX=p[0]; if(p[0]>mxX)mxX=p[0]; if(p[1]<mnY)mnY=p[1]; if(p[1]>mxY)mxY=p[1]; }
     var w=mxX-mnX,h=mxY-mnY; if(!(w>0)||!(h>0)) return null;
-    var s=100/Math.max(w,h), d='';   /* scale longest side to 100 so lon/lat detail survives rounding */
+    var s=100/Math.max(w,h), d='';
     for(k=0;k<rings.length;k++){ var r=rings[k]; if(r.length<3) continue;
       for(var i=0;i<r.length;i++){ var x=(r[i][0]-mnX)*s, y=(mxY-r[i][1])*s;
         d+=(i?'L':'M')+x.toFixed(2)+' '+y.toFixed(2); } d+='Z'; }
@@ -745,25 +848,11 @@
   function mkSvg(){ var s=document.createElementNS('http://www.w3.org/2000/svg','svg');
     s.setAttribute('preserveAspectRatio','xMidYMid meet');
     s.appendChild(document.createElementNS('http://www.w3.org/2000/svg','path')); return s; }
-  function setLayer(svg,po){ svg.setAttribute('viewBox',po.vb); svg.firstChild.setAttribute('d',po.d); }
-  function render(po){ for(var i=0;i<hosts.length;i++){ var H=hosts[i], nx=H.cur^1;
-    setLayer(H.l[nx],po); H.l[nx].classList.add('tz-on'); H.l[H.cur].classList.remove('tz-on'); H.cur=nx; } }
-  function tick(){ if(!paths.length) return; idx=(idx+1)%paths.length; render(paths[idx]); }
-  function start(){ if(paths.length){ render(paths[idx%paths.length]); if(!timer) timer=setInterval(tick,1000); } }
-  function build(){
-    var dots=document.querySelectorAll('.mark .dot, .footer-brand-line .dot');
-    for(var i=0;i<dots.length;i++){ var d=dots[i];
-      var host=document.createElement('span'); host.className='tz-geo'; host.setAttribute('aria-hidden','true');
-      var a=mkSvg(),b=mkSvg(); host.appendChild(a); host.appendChild(b);
-      d.parentNode.replaceChild(host,d); hosts.push({host:host,l:[a,b],cur:0}); }
-  }
   function geoColumn(meta){
     try{ var kv=(meta&&meta.key_value_metadata)||[];
       for(var i=0;i<kv.length;i++){ if(kv[i].key==='geo'){ var j=JSON.parse(kv[i].value); if(j&&j.primary_column) return j.primary_column; } } }catch(e){}
     return 'geometry';
   }
-  /* the GEOMETRY logical type comes back as parsed GeoJSON (lon/lat); take the
-     largest sub-polygon so the mark is a single clean field, not a dense cluster */
   function pickRings(g){
     if(!g||!g.coordinates) return null;
     if(g.type==='Polygon') return g.coordinates;
@@ -777,6 +866,18 @@
     }
     return null;
   }
+  function setLayer(svg,po){ svg.setAttribute('viewBox',po.vb); svg.firstChild.setAttribute('d',po.d); }
+  function render(po){ for(var i=0;i<hosts.length;i++){ var H=hosts[i], nx=H.cur^1;
+    setLayer(H.l[nx],po); H.l[nx].classList.add('tz-on'); H.l[H.cur].classList.remove('tz-on'); H.cur=nx; } }
+  function tick(){ if(!paths.length) return; idx=(idx+1)%paths.length; render(paths[idx]); }
+  function start(){ if(paths.length){ render(paths[idx%paths.length]); if(!timer) timer=setInterval(tick,1000); } }
+  function build(){
+    var dots=document.querySelectorAll('.mark .dot, .footer-brand-line .dot');
+    for(var i=0;i<dots.length;i++){ var d=dots[i];
+      var host=document.createElement('span'); host.className='tz-geo'; host.setAttribute('aria-hidden','true');
+      var a=mkSvg(),b=mkSvg(); host.appendChild(a); host.appendChild(b);
+      d.parentNode.replaceChild(host,d); hosts.push({host:host,l:[a,b],cur:0}); }
+  }
   async function load(){
     var hp=await import('https://cdn.jsdelivr.net/npm/hyparquet/+esm');
     var file=await hp.asyncBufferFromUrl({url:PARQUET_URL});
@@ -784,7 +885,7 @@
     var col=geoColumn(meta);
     var total=Number(meta && meta.num_rows)||0;
     var out=[], tries=0;
-    while(out.length<WANT && tries<6){     /* many tiles have no fields (null geom); sample random windows until we have 100 */
+    while(out.length<WANT && tries<6){
       tries++;
       var span=Math.min(280, total||280);
       var start=(total>span) ? Math.floor(Math.random()*(total-span)) : 0;
@@ -799,9 +900,9 @@
   }
   function init(){
     load().then(function(list){
-      if(!list || !list.length) return;          /* GCS only: no stand-ins — leave the original dot */
+      if(!list || !list.length) return;
       paths=list; idx=0; build(); if(!hosts.length) return; start();
-    }).catch(function(){ /* parquet unreachable -> keep the plain dot, never fake fields */ });
+    }).catch(function(){});
   }
   if(document.readyState!=='loading') init();
   else document.addEventListener('DOMContentLoaded', init);

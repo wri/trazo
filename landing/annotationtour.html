@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="simple">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
+  <title>Trazo · Annotation Tour</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet"/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/geotiff@2.1.3/dist-browser/geotiff.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/proj4@2.11.0/dist/proj4.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --gold:#F0AB00; --ink:#1a1a1a; --muted:#5c5c5a; --dim:#9a9a96;
+      --border:rgba(20,20,18,0.13); --border-dim:rgba(20,20,18,0.07);
+      --card:rgba(255,255,255,0.46); --link:#1a1a1a;
+      --font-header:'Archivo','Segoe UI',sans-serif;
+      --font-body:'Segoe UI',Calibri,sans-serif;
+      --font-mono:'Courier New',monospace;
+    }
+    body { font-family:var(--font-body); background:#fcfcfb; color:var(--ink); overflow:hidden; }
+
+    #map { position:absolute; inset:0; background:#f6f5f2; }
+    /* satellite basemap washed toward white for a light, minimalist backdrop */
+    .leaflet-tile-pane { filter:grayscale(0.28) brightness(1.5) saturate(0.5) contrast(0.88); }
+    .leaflet-tile { background:transparent !important; }
+    .leaflet-control-attribution, .leaflet-control-zoom { display:none !important; }
+    .chip-overlay { image-rendering:pixelated; image-rendering:crisp-edges; }
+
+    /* ── TOPBAR ── */
+    #topbar {
+      position:absolute; top:0; left:0; right:0; height:46px; z-index:1000;
+      display:flex; align-items:center; justify-content:space-between; padding:0 16px;
+      background:rgba(255,255,255,0.9); border-bottom:1px solid var(--border);
+      backdrop-filter:blur(7px);
+    }
+    .brand {
+      display:inline-flex; align-items:center; gap:8px; text-decoration:none;
+      font-family:var(--font-header); font-weight:700; font-size:14px;
+      letter-spacing:0.14em; text-transform:uppercase; color:var(--ink);
+    }
+    .brand:hover { color:var(--gold); }
+    .brand .dot { width:8px; height:8px; border-radius:50%; background:var(--gold); }
+    .ds-wrap { display:flex; align-items:center; gap:8px; }
+    .ds-wrap label { font-family:var(--font-mono); font-size:10px; letter-spacing:0.06em; text-transform:uppercase; color:var(--dim); }
+    #ds-select {
+      font-family:var(--font-header); font-weight:600; font-size:12.5px; color:var(--ink);
+      background:#fff; border:1px solid var(--border); border-radius:7px;
+      padding:6px 28px 6px 10px; cursor:pointer; max-width:240px; appearance:none;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%235c5c5a'/%3E%3C/svg%3E");
+      background-repeat:no-repeat; background-position:right 10px center;
+    }
+    #ds-select:hover { border-color:var(--gold); }
+
+    /* ── CARD ── */
+    #card {
+      position:absolute; left:16px; bottom:16px; z-index:1000;
+      width:clamp(250px,27vw,320px); max-height:calc(100vh - 78px); overflow-y:auto;
+      background:var(--card); border:none;
+      box-shadow:0 4px 22px rgba(0,0,0,0.06), 0 0 0 1px rgba(20,20,18,0.07); border-radius:10px;
+      padding:22px 20px 20px; backdrop-filter:blur(9px);
+      scrollbar-width:thin; scrollbar-color:rgba(20,20,18,0.25) transparent;
+    }
+    #card::-webkit-scrollbar { width:5px; }
+    #card::-webkit-scrollbar-thumb { background:rgba(20,20,18,0.22); border-radius:4px; }
+    #c-name { font-family:var(--font-header); font-weight:700; font-size:24px; color:#1a1a1a; letter-spacing:0.045em; text-transform:uppercase; line-height:1.12; margin-bottom:12px; }
+    .c-tags { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:9px; }
+    .c-tag {
+      font-family:var(--font-header); font-weight:700; font-size:9px; letter-spacing:0.09em;
+      text-transform:uppercase; padding:3px 8px; border-radius:20px; text-decoration:none;
+      border:1px solid currentColor; background:transparent; opacity:0.58;
+      display:inline-flex; align-items:center; gap:4px;
+    }
+    a.c-tag:hover { filter:brightness(1.08); text-decoration:none; }
+    .c-sample { font-family:var(--font-mono); font-size:11px; color:var(--muted); margin-bottom:10px; }
+    .c-desc { font-family:var(--font-body); font-size:12.5px; line-height:1.5; color:var(--ink); margin-bottom:9px; }
+    .c-strategy {
+      font-family:var(--font-body); font-size:11.5px; line-height:1.5; color:var(--muted);
+      border-left:2px solid var(--gold); padding:2px 0 2px 9px; margin-bottom:9px;
+    }
+    .c-strategy b { color:var(--ink); font-weight:600; }
+    .c-authors { font-family:var(--font-mono); font-size:10.5px; color:var(--dim); margin-bottom:12px; }
+    #card a { color:#1a1a1a; text-decoration:underline; text-decoration-color:rgba(240,171,0,0.5); text-underline-offset:2px; }
+    #card a.c-tag { text-decoration:none; }
+    #c-src { display:inline-block; margin-bottom:13px; font-size:11.5px; }
+    #c-src:hover { text-decoration-color:var(--gold); }
+
+    /* ── CONTROLS (two buttons) ── */
+    #seg { display:flex; border:1px solid var(--border); border-radius:8px; overflow:hidden; margin-bottom:8px; }
+    .seg-btn {
+      flex:1; border:none; background:#fff; cursor:pointer;
+      font-family:var(--font-header); font-weight:700; font-size:12px; color:var(--muted);
+      padding:9px 4px; display:flex; flex-direction:column; align-items:center; gap:1px; transition:background .15s,color .15s;
+    }
+    .seg-btn + .seg-btn { border-left:1px solid var(--border); }
+    .seg-btn .s { font-family:var(--font-body); font-weight:400; font-size:9px; color:var(--dim); }
+    .seg-btn.active { background:var(--gold); color:#1a1200; }
+    .seg-btn.active .s { color:rgba(26,18,0,0.66); }
+    .seg-btn:not(.active):hover { background:#faf7f0; color:var(--ink); }
+    #btn-another {
+      width:100%; cursor:pointer; background:#fff; border:1px solid var(--border); border-radius:8px;
+      padding:9px; color:var(--ink); font-family:var(--font-header); font-weight:700; font-size:11.5px;
+      letter-spacing:0.05em; text-transform:uppercase; display:flex; align-items:center; justify-content:center; gap:7px; transition:all .15s;
+    }
+    #btn-another:hover { border-color:var(--gold); color:var(--link); }
+    #btn-another svg { width:14px; height:14px; fill:currentColor; }
+
+    /* explore hint */
+    #explore-note {
+      position:absolute; top:56px; left:50%; transform:translateX(-50%); z-index:900; display:none;
+      background:rgba(255,255,255,0.94); border:1px solid var(--border); border-radius:20px;
+      padding:6px 14px; font-family:var(--font-mono); font-size:11px; color:var(--muted); box-shadow:0 3px 14px rgba(0,0,0,0.08);
+    }
+    #explore-note.show { display:block; }
+
+    /* ── LOADING ── */
+    #load { position:fixed; inset:0; z-index:3000; background:#fcfcfb; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; transition:opacity .5s; }
+    #load.hide { opacity:0; pointer-events:none; }
+    #load .b { font-family:var(--font-header); font-weight:800; font-size:20px; letter-spacing:0.16em; text-transform:uppercase; color:var(--ink); }
+    #load .b .dot { display:inline-block; width:8px; height:8px; border-radius:50%; background:var(--gold); margin-right:8px; }
+    #load .msg { font-family:var(--font-mono); font-size:12px; color:var(--muted); }
+    .spin { width:24px; height:24px; border:2px solid rgba(20,20,18,0.15); border-top-color:var(--gold); border-radius:50%; animation:spin .8s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    #tload { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:900; display:none; align-items:center; gap:9px; background:rgba(255,255,255,0.92); border:1px solid var(--border); border-radius:8px; padding:8px 14px; font-family:var(--font-mono); font-size:11px; color:var(--muted); }
+    #tload.show { display:flex; }
+    #tload .spin { width:14px; height:14px; }
+    #attrib { position:absolute; bottom:5px; left:50%; transform:translateX(-50%); z-index:900; font-family:var(--font-mono); font-size:9px; color:var(--dim); pointer-events:none; white-space:nowrap; }
+    @media (max-width:640px){ #ds-select{ max-width:150px; } #card{ width:calc(100vw - 32px); max-height:52vh; } }
+  </style>
+</head>
+<body>
+
+<div id="load">
+  <div class="b"><span class="dot"></span>Trazo</div>
+  <div class="spin"></div>
+  <div class="msg">Loading annotation tour…</div>
+</div>
+
+<div id="map"></div>
+<div id="tload"><span class="spin"></span><span>Loading chip &amp; annotations…</span></div>
+<div id="explore-note">Exploring full dataset — pauses; resumes 6s after you stop</div>
+
+<div id="topbar">
+  <a class="brand" href="index.html"><span class="dot"></span> Trazo</a>
+  <div class="ds-wrap">
+    <label for="ds-select">Dataset</label>
+    <select id="ds-select"></select>
+  </div>
+</div>
+
+<div id="card">
+  <div id="c-name">—</div>
+  <div class="c-tags" id="c-tags"></div>
+  <div class="c-sample" id="c-sample">—</div>
+  <div class="c-desc" id="c-desc"></div>
+  <div class="c-strategy" id="c-strategy" style="display:none"></div>
+  <div class="c-authors" id="c-authors"></div>
+  <a id="c-src" href="#" target="_blank" rel="noopener">source.coop</a>
+
+  <div id="seg">
+    <button class="seg-btn active" data-win="a">Window A<span class="s">planting</span></button>
+    <button class="seg-btn" data-win="b">Window B<span class="s">harvest</span></button>
+  </div>
+  <button id="btn-another">View another</button>
+</div>
+
+<div id="attrib">Sentinel-2 chips + field annotations · Trazo by WRI &amp; ASU · basemap Esri</div>
+
+<script>
+(function(){
+  "use strict";
+  const B    = "https://data.source.coop/wri-data-lab/trazoannotations";
+  const PAGE = "https://source.coop/wri-data-lab/trazoannotations";
+  const GUIDE= "annotationguide.html";
+  const T1   = "https://huggingface.co/worldresourcesinstitute/Trazo1";
+  const MB   = "https://brasil.mapbiomas.org/en/";
+  const NEWT = 'target="_blank" rel="noopener"';
+
+  proj4.defs("EPSG:5880", "+proj=poly +lat_0=0 +lon_0=-54 +x_0=5000000 +y_0=10000000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs");
+
+  const GROUPS = {
+    eco:     { label:"Ecoregion",       color:"#EB8026" },
+    partner: { label:"Partner Data",    color:"#32864B" },
+    active:  { label:"Active Learning", color:"#3855A3" },
+    test:    { label:"Test Set",        color:"#0096A4" }
+  };
+  const strat = s => s;
+  const FOLDERS = [
+    { id:"acre",            name:"Acre",             group:"eco", desc:"Southwestern Amazon moist-forest frontier, Acre, Brazil." },
+    { id:"altoparana",      name:"Alto Paraná",      group:"eco", desc:"Atlantic-forest agricultural belt, eastern Paraguay." },
+    { id:"araucaria",       name:"Araucaria Forests",group:"eco", desc:"Araucaria moist forests of southern Brazil." },
+    { id:"caatinga",        name:"Caatinga",         group:"eco", desc:"Semi-arid shrubland mosaic, northeastern Brazil." },
+    { id:"cerrado",         name:"Cerrado",          group:"eco", desc:"Tropical savanna cropland of central Brazil." },
+    { id:"chaco",           name:"Dry Chaco",        group:"eco", desc:"Dry Chaco agricultural expansion frontier, Argentina & Paraguay." },
+    { id:"chiquitania",     name:"Chiquitania",      group:"eco", desc:"Chiquitano dry forest, eastern Bolivia." },
+    { id:"humidchaco",      name:"Humid Chaco",      group:"eco", desc:"Humid Chaco floodplain agriculture." },
+    { id:"lowmonte",        name:"Low Monte",        group:"eco", desc:"Monte desert-scrub margins, Argentina." },
+    { id:"pampas",          name:"Pampas",           group:"eco", desc:"Temperate grassland cropland, Argentina & Uruguay." },
+    { id:"pantanal",        name:"Pantanal",         group:"eco", desc:"Pantanal wetland-fringe agriculture." },
+    { id:"para",            name:"Pará",             group:"eco", desc:"Eastern Amazon agricultural frontier, Pará, Brazil." },
+    { id:"peruvianamazon",  name:"Peruvian Amazon",  group:"eco", desc:"Lowland Amazon smallholder mosaics, Peru." },
+    { id:"rondonia",        name:"Rondônia",         group:"eco", desc:"Amazon arc-of-deforestation, Rondônia, Brazil." },
+    { id:"tocantins",       name:"Tocantins",        group:"eco", desc:"Cerrado–Amazon transition, Tocantins, Brazil." },
+    { id:"uruguayansavannah",name:"Uruguayan Savanna",group:"eco", desc:"Rolling savanna cropland, Uruguay." },
+    { id:"matogrosso",      name:"Mato Grosso",      group:"eco", calibration:true, desc:"Cerrado–Amazon soy frontier, Mato Grosso, Brazil. This folder doubles as the inter-annotator calibration set." },
+    { id:"maparaguay",      name:"Mundo Agropecuario",group:"partner", desc:"Partner field data contributed across Paraguay by Mundo Agropecuario." },
+    { id:"matogrosso_brazil_confidences",    name:"Mato Grosso · Conf.",     group:"active", desc:"Active-learning selection, Mato Grosso, Brazil.",
+      strategy:strat('Low <a href="'+T1+'" '+NEWT+'>Trazo&nbsp;1</a> model confidence in <a href="'+MB+'" '+NEWT+'>agriculture</a> samples.') },
+    { id:"matogrosso_brazil_lcdi",           name:"Mato Grosso · LCDI",      group:"active", desc:"Active-learning selection, Mato Grosso, Brazil.",
+      strategy:strat('Discrepancy of <a href="'+T1+'" '+NEWT+'>Trazo1</a>&rsquo;s predicted interiors with <a href="'+MB+'" '+NEWT+'>agriculture</a>.') },
+    { id:"matogrosso_brazil_lcdib",          name:"Mato Grosso · LCDI-B",    group:"active", desc:"Active-learning selection, Mato Grosso, Brazil.",
+      strategy:strat('Discrepancy of <a href="'+T1+'" '+NEWT+'>Trazo1</a>&rsquo;s predicted interiors and boundaries with <a href="'+MB+'" '+NEWT+'>agriculture</a>.') },
+    { id:"matogrosso_brazil_lowconfidences", name:"Mato Grosso · Low Conf.", group:"active", desc:"Active-learning selection, Mato Grosso, Brazil.",
+      strategy:strat('Low <a href="'+T1+'" '+NEWT+'>Trazo&nbsp;1</a> model confidence.') },
+    { id:"testchiquitania", name:"Chiquitania (Test)",group:"test", desc:"Randomly-sampled held-out test set, Chiquitania." },
+    { id:"testmatogrosso",  name:"Mato Grosso (Test)",group:"test", desc:"Randomly-sampled held-out test set, Mato Grosso." },
+    { id:"testsoy",         name:"Soy (Test)",       group:"test", desc:"Randomly-sampled held-out test set across soy landscapes." }
+  ];
+
+  // temporarily hidden from tour / explore / dropdown
+  const HIDDEN = new Set(["maparaguay","testchiquitania","testmatogrosso","testsoy"]);
+
+  // ── MAP ── original satellite imagery, washed toward white by CSS filter
+  const map = L.map("map", { center:[-15,-58], zoom:4, zoomControl:false, attributionControl:false });
+  L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    { maxZoom:19, maxNativeZoom:19, opacity:0.78 }).addTo(map);
+
+  let HP = null;
+  async function hp(){ if(!HP) HP = await import("https://cdn.jsdelivr.net/npm/hyparquet/+esm"); return HP; }
+
+  // ── STATE ──
+  const folderCache = {};   // id -> {file,meta,samples:[{i,aoi,n}]}
+  const infoCache = {};     // id -> {authors,year,location}
+  let order = [], orderPos = 0;
+  let cur = { folder:null, sample:null, aoi:null, win:"a", geom:null, bounds:null };
+  let overlay = null, geoLayer = null;
+  let timer = null, loadToken = 0;
+  let sampleZoom = 99, programmatic = false;
+  let exploreLayers = [], exploring = false, exploreToken = 0, idleTimer = null;
+
+  const $ = id => document.getElementById(id);
+  function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
+
+  // ── CRS for the imagery chip (field polygons are already EPSG:4326) ──
+  function crsDef(gk){
+    if (!gk || gk.GTModelTypeGeoKey === 2) return null;
+    const e = gk.ProjectedCSTypeGeoKey;
+    if (e >= 32701 && e <= 32760) return `+proj=utm +zone=${e-32700} +south +datum=WGS84 +units=m +no_defs`;
+    if (e >= 32601 && e <= 32660) return `+proj=utm +zone=${e-32600} +datum=WGS84 +units=m +no_defs`;
+    if (e === 5880) return "EPSG:5880";
+    if (gk.ProjCoordTransGeoKey === 11) return `+proj=aea +lat_1=${gk.ProjStdParallel1GeoKey} +lat_2=${gk.ProjStdParallel2GeoKey} +lat_0=${gk.ProjNatOriginLatGeoKey||0} +lon_0=${gk.ProjNatOriginLongGeoKey} +x_0=${gk.ProjFalseEastingGeoKey||0} +y_0=${gk.ProjFalseNorthingGeoKey||0} +ellps=GRS80 +units=m +no_defs`;
+    return "UNKNOWN";
+  }
+  function bboxToBounds(bb, def){
+    if (!def) return L.latLngBounds([[bb[1],bb[0]],[bb[3],bb[2]]]);
+    const cs = [[bb[0],bb[1]],[bb[2],bb[1]],[bb[2],bb[3]],[bb[0],bb[3]]].map(c => proj4(def,"EPSG:4326",c));
+    const lo = cs.map(c=>c[0]), la = cs.map(c=>c[1]);
+    return L.latLngBounds([[Math.min(...la),Math.min(...lo)],[Math.max(...la),Math.max(...lo)]]);
+  }
+  function pct(a,p){ const v=[]; for(let i=0;i<a.length;i++) if(a[i]>0) v.push(a[i]); if(!v.length) return 0; v.sort((x,y)=>x-y); return v[Math.floor(p*(v.length-1))]; }
+
+  async function renderTif(id, aoi, win){
+    const ab = await fetch(`${B}/${id}/s2_images/window_${win}/${aoi}.tif`).then(r=>r.arrayBuffer());
+    const img = await (await GeoTIFF.fromArrayBuffer(ab)).getImage();
+    const W = img.getWidth(), H = img.getHeight();
+    const def = crsDef(img.getGeoKeys());
+    if (def === "UNKNOWN") throw new Error("unsupported CRS");
+    const bounds = bboxToBounds(img.getBoundingBox(), def);
+    const r = await img.readRasters();
+    const R=r[0], G=r[1], Bb=r[2];
+    const lo=[pct(R,.02),pct(G,.02),pct(Bb,.02)], hi=[pct(R,.98),pct(G,.98),pct(Bb,.98)];
+    const cv=document.createElement("canvas"); cv.width=W; cv.height=H;
+    const cx=cv.getContext("2d"); const im=cx.createImageData(W,H); const d=im.data; const ga=0.85;
+    const st=(v,l,h)=>{ let x=(v-l)/((h-l)||1); x=x<0?0:x>1?1:x; return Math.round(255*Math.pow(x,ga)); };
+    for(let i=0;i<W*H;i++){ const j=i*4;
+      if(!R[i]&&!G[i]&&!Bb[i]){ d[j+3]=0; continue; }
+      d[j]=st(R[i],lo[0],hi[0]); d[j+1]=st(G[i],lo[1],hi[1]); d[j+2]=st(Bb[i],lo[2],hi[2]); d[j+3]=255;
+    }
+    cx.putImageData(im,0,0);
+    return { dataUrl:cv.toDataURL("image/png"), bounds };
+  }
+
+  // ── parquet ──
+  async function getFolder(id){
+    if (folderCache[id]) return folderCache[id];
+    const h = await hp();
+    const file = await h.asyncBufferFromUrl({ url:`${B}/${id}/chips_${id}.parquet` });
+    const meta = await h.parquetMetadataAsync(file);
+    const rows = await h.parquetReadObjects({ file, metadata:meta, columns:["aoi_id","n_fields"], rowStart:0, rowEnd:Number(meta.num_rows) });
+    const samples = [];
+    rows.forEach((r,i)=>{ if (Number(r.n_fields) > 0) samples.push({ i, aoi:r.aoi_id, n:Number(r.n_fields) }); });
+    return (folderCache[id] = { file, meta, samples });
+  }
+  async function getGeometry(fc, i){
+    const h = await hp();
+    const rows = await h.parquetReadObjects({ file:fc.file, metadata:fc.meta, columns:["geometry"], rowStart:i, rowEnd:i+1 });
+    return rows[0] && rows[0].geometry;
+  }
+  async function getAllGeometries(fc){
+    const h = await hp();
+    const rows = await h.parquetReadObjects({ file:fc.file, metadata:fc.meta, columns:["aoi_id","n_fields","geometry"], rowStart:0, rowEnd:Number(fc.meta.num_rows) });
+    return rows.filter(r=>r.geometry);
+  }
+
+  // ── annotation info.txt → authors / year ──
+  async function getInfo(id){
+    if (infoCache[id] !== undefined) return infoCache[id];
+    try {
+      const t = await fetch(`${B}/${id}/${encodeURIComponent("annotation info.txt")}`).then(r=>r.ok?r.text():"");
+      const g = k => { const m = t.match(new RegExp(k+"\\s*:\\s*(.+)")); return m ? m[1].trim() : ""; };
+      infoCache[id] = { authors:g("Annotator\\(s\\)"), year:g("Year"), location:g("Location") };
+    } catch(e){ infoCache[id] = { authors:"", year:"", location:"" }; }
+    return infoCache[id];
+  }
+
+  // ── field-boundary styling — matches the soy polygons on map.html ──
+  const FIELD_STYLE = { color:"#F0AB00", weight:1.6, opacity:1, fillColor:"#F0AB00", fillOpacity:0.10 };
+
+  // ── UI ──
+  function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  function updateCard(){
+    const f = FOLDERS[cur.folder]; const g = GROUPS[f.group];
+    $("c-name").textContent = f.name;
+    let tags = `<span class="c-tag" style="color:${g.color}">${g.label}</span>`;
+    if (f.calibration) tags += `<a class="c-tag" style="color:#6d4bce" href="${GUIDE}#inter-annotator" ${NEWT}>Inter-annotator Calibration</a>`;
+    $("c-tags").innerHTML = tags;
+    const nf = cur.sample && cur.sample.n;
+    $("c-sample").textContent = (cur.aoi || "—") + (nf ? "  ·  " + nf + " fields  ·  " : "  ·  ") + "Window " + cur.win.toUpperCase();
+    $("c-desc").textContent = f.desc || "";
+    const strat = $("c-strategy");
+    if (f.strategy){ strat.innerHTML = "<b>Sampling strategy:</b> " + f.strategy; strat.style.display = "block"; }
+    else strat.style.display = "none";
+    $("c-authors").textContent = "";
+    $("c-src").href = `${PAGE}/${f.id}/`;
+    document.querySelectorAll(".seg-btn").forEach(b=>b.classList.toggle("active", b.dataset.win===cur.win));
+    const sel = $("ds-select"); if (sel.value !== String(cur.folder)) sel.value = String(cur.folder);
+    // async authors / year
+    getInfo(f.id).then(info=>{
+      if (FOLDERS[cur.folder] !== f) return;
+      if (info && (info.authors || info.year))
+        $("c-authors").textContent = "Annotated by " + (info.authors || "—") + (info.year ? " · " + info.year : "");
+    });
+  }
+
+  function clearLayers(){
+    if (overlay){ map.removeLayer(overlay); overlay=null; }
+    if (geoLayer){ map.removeLayer(geoLayer); geoLayer=null; }
+  }
+
+  // ── scheduler (silent) ──
+  function stopTimer(){ if (timer){ clearTimeout(timer); timer=null; } }
+  function scheduleNext(ms){ stopTimer(); if (exploring) return; timer = setTimeout(advance, ms); }
+
+  function fitTo(bounds){
+    sampleZoom = Math.min(16, map.getBoundsZoom(bounds.pad(0.55)));
+    programmatic = true;
+    map.flyToBounds(bounds.pad(0.55), { maxZoom:16, duration:1.1 });
+    map.once("moveend", ()=>{ setTimeout(()=>{ programmatic = false; }, 80); });
+  }
+
+  // ── core: show a sample ──
+  async function showSample(folderIdx, opts){
+    opts = opts || {};
+    const token = ++loadToken;
+    const f = FOLDERS[folderIdx];
+    let fc;
+    try { fc = await getFolder(f.id); }
+    catch(e){ if(token===loadToken) advance(); return false; }
+    if (!fc.samples.length){ if(token===loadToken) advance(); return false; }
+    if (token!==loadToken) return false;
+
+    let sample = cur.sample;
+    if (opts.newSample || cur.folder!==folderIdx || !sample){
+      do { sample = fc.samples[Math.floor(Math.random()*fc.samples.length)]; }
+      while (fc.samples.length>1 && cur.sample && sample.aoi===cur.aoi);
+    }
+    const win = opts.win || "a";
+
+    cur = { folder:folderIdx, sample, aoi:sample.aoi, win, geom:cur.geom, bounds:cur.bounds };
+    updateCard();
+    $("tload").classList.add("show");
+
+    let res, geom;
+    try {
+      res  = await renderTif(f.id, sample.aoi, win);
+      geom = (opts.keepGeom && cur.geom) ? cur.geom : await getGeometry(fc, sample.i);
+    } catch(e){
+      $("tload").classList.remove("show");
+      if (token!==loadToken) return false;
+      if (!opts._retry){ return showSample(folderIdx, Object.assign({}, opts, { newSample:true, _retry:true })); }
+      advance(); return false;
+    }
+    if (token!==loadToken) return false;
+
+    cur.geom = geom; cur.bounds = res.bounds;
+    clearLayers();
+    overlay = L.imageOverlay(res.dataUrl, res.bounds, { className:"chip-overlay", interactive:false, opacity:1 }).addTo(map);
+    if (geom){ geoLayer = L.geoJSON(geom, { style:()=>FIELD_STYLE, interactive:false }).addTo(map); }
+    if (opts.refit !== false) fitTo(res.bounds);
+    $("tload").classList.remove("show");
+    return true;
+  }
+
+  // ── transitions ──
+  function advance(){ if (exploring) return; orderPos=(orderPos+1)%order.length; goToFolder(order[orderPos]); }
+  async function goToFolder(folderIdx){
+    stopTimer();
+    exitExplore();
+    orderPos = order.indexOf(folderIdx);
+    const ok = await showSample(folderIdx, { win:"a", newSample:true });
+    if (ok) scheduleNext(9000);
+  }
+
+  // ── explore mode (zoom out to browse the whole folder) ──
+  async function enterExplore(folderIdx){
+    if (exploring) return;
+    exploring = true;
+    const myToken = ++exploreToken;
+    $("explore-note").classList.add("show");
+    let fc;
+    try { fc = await getFolder(FOLDERS[folderIdx].id); } catch(e){ return; }
+    if (myToken !== exploreToken) return;
+    let rows;
+    try { rows = await getAllGeometries(fc); } catch(e){ rows = []; }
+    if (myToken !== exploreToken) return;
+    // all annotations at once (vector, light)
+    if (rows.length){
+      const fcoll = { type:"FeatureCollection", features: rows.map(r=>({ type:"Feature", geometry:r.geometry, properties:{} })) };
+      const gl = L.geoJSON(fcoll, { style:()=>FIELD_STYLE, interactive:false }).addTo(map);
+      exploreLayers.push(gl);
+    }
+    // all chip images (concurrency-limited, capped for memory)
+    const list = rows.slice(0, 200);
+    let idx = 0; const CONC = 5;
+    async function worker(){
+      while (myToken === exploreToken && idx < list.length){
+        const s = list[idx++];
+        try {
+          const res = await renderTif(FOLDERS[folderIdx].id, s.aoi_id, "a");
+          if (myToken !== exploreToken) return;
+          const ov = L.imageOverlay(res.dataUrl, res.bounds, { className:"chip-overlay", interactive:false, opacity:1 }).addTo(map);
+          exploreLayers.push(ov);
+        } catch(e){}
+      }
+    }
+    const workers = []; for (let i=0;i<CONC;i++) workers.push(worker());
+    await Promise.all(workers);
+  }
+  function exitExplore(){
+    exploreToken++;
+    exploring = false;
+    $("explore-note").classList.remove("show");
+    exploreLayers.forEach(l=>{ try{ map.removeLayer(l); }catch(e){} });
+    exploreLayers = [];
+  }
+
+  function resumeTour(){ exitExplore(); advance(); }
+
+  function onUserMapChange(){
+    if (programmatic) return;                 // ignore our own flyToBounds
+    stopTimer();
+    if (idleTimer) clearTimeout(idleTimer);
+    idleTimer = setTimeout(resumeTour, 6000); // resume 6s after the user stops
+    if (map.getZoom() < sampleZoom - 0.05 && cur.folder!=null) enterExplore(cur.folder);
+  }
+  map.on("zoomend", onUserMapChange);
+  map.on("moveend", onUserMapChange);
+
+  // ── interactions ──
+  document.querySelectorAll(".seg-btn").forEach(btn=>{
+    btn.addEventListener("click", async ()=>{
+      const w = btn.dataset.win;
+      if (w===cur.win) return;
+      stopTimer();
+      const ok = await showSample(cur.folder, { win:w, refit:false, keepGeom:true });  // same chip+fields, other window
+      if (ok) scheduleNext(4000);                                                       // hold 3s more
+    });
+  });
+  $("btn-another").addEventListener("click", async ()=>{
+    stopTimer();
+    exitExplore();
+    const ok = await showSample(cur.folder, { win:cur.win, newSample:true });
+    if (ok) scheduleNext(9000);
+  });
+  $("ds-select").addEventListener("change", (e)=>{ stopTimer(); goToFolder(+e.target.value); });
+
+  // ── dropdown ──
+  function buildDropdown(){
+    const sel = $("ds-select");
+    const byGroup = {};
+    FOLDERS.forEach((f,i)=>{ if (HIDDEN.has(f.id)) return; (byGroup[f.group]=byGroup[f.group]||[]).push(i); });
+    ["eco","partner","active","test"].forEach(gk=>{
+      if (!byGroup[gk]) return;
+      const og = document.createElement("optgroup"); og.label = GROUPS[gk].label;
+      byGroup[gk].forEach(i=>{ const o=document.createElement("option"); o.value=i; o.textContent=FOLDERS[i].name; og.appendChild(o); });
+      sel.appendChild(og);
+    });
+  }
+
+  async function start(){
+    buildDropdown();
+    order = shuffle(FOLDERS.map((_,i)=>i).filter(i=>!HIDDEN.has(FOLDERS[i].id)));
+    orderPos = 0;
+    document.querySelector("#load .msg").textContent = "Loading first chip & annotations…";
+    await goToFolder(order[0]);
+    $("load").classList.add("hide");
+  }
+  start().catch(err=>{ document.querySelector("#load .msg").textContent = "Could not start: " + (err && err.message ? err.message : err); });
+
+})();
+</script>
+</body>
+</html>
