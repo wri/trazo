@@ -6,6 +6,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
   <title>Trazo Interactive Map</title>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/pmtiles@3.2.0/dist/pmtiles.js"></script>
@@ -41,7 +44,7 @@
       --text-muted: #9B9B9B;
       --text-dim:   #666666;
       /* Fonts */
-      --font-header: 'Gill Sans', 'Segoe UI', sans-serif;
+      --font-header: 'Archivo', 'Segoe UI', sans-serif;
       --font-body:   'Segoe UI', Calibri, sans-serif;
       --font-mono:   'Courier New', monospace;
       /* long-form / index tokens */
@@ -375,8 +378,8 @@
       height: 100%; display: flex; align-items: center;
       padding: 0 13px;
       font-family: var(--font-header);
-      font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
-      text-transform: uppercase; color: var(--text-muted);
+      font-size: 13px; font-weight: 400; letter-spacing: 0.02em;
+      text-transform: none; color: var(--text-muted);
       cursor: pointer; user-select: none;
       border: none; background: none;
       border-right: 1px solid var(--border-dim);
@@ -471,7 +474,6 @@
     .tnav-res:hover { background: rgba(240,171,0,0.06); border-color: rgba(240,171,0,0.3); }
     .tnav-res .res-kind { font-family: var(--font-header); font-size: 9px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--gold); min-width: 90px; flex-shrink: 0; }
     .tnav-res .res-title { font-family: var(--font-body); font-size: 12px; color: var(--text); line-height: 1.35; flex: 1; }
-    .tnav-res .res-arr { font-family: var(--font-mono); font-size: 13px; color: var(--gold); flex-shrink: 0; }
     /* citation */
     .tnav-citation {
       background: rgba(4,8,3,0.92); border: 1px solid var(--border-dim);
@@ -522,6 +524,32 @@
     .tnav-trigger-dim { opacity: 0.45; }
     .tnav-item-dim:hover .tnav-trigger-dim,
     .tnav-item-dim.open .tnav-trigger-dim { opacity: 0.8; }
+
+    /* ── fixed cross-page links (Annotation / Technical Note), styled like index's flat nav items ── */
+    .tnav-plain{
+      height: 100%; display: flex; align-items: center;
+      padding: 0 13px;
+      font-family: var(--font-header);
+      font-size: 13px; font-weight: 400; letter-spacing: 0.02em;
+      text-transform: none; color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.15s;
+      white-space: nowrap;
+    }
+    .tnav-plain:hover{ color: var(--gold); }
+
+    /* ── Release 2 / Trazo on the Ground sub-items: flat, unbracketed, index-style ── */
+    #tgroup-r2 .tnav-trigger, #tgroup-uc .tnav-trigger{
+      border-right: none; background: none;
+    }
+    #tgroup-r2 .tnav-trigger:hover, #tgroup-uc .tnav-trigger:hover,
+    #tgroup-r2 .tnav-item.open .tnav-trigger, #tgroup-uc .tnav-item.open .tnav-trigger{
+      background: none;
+    }
+    /* drop the redundant inner pipe between the two restyled groups, keep the outer ones */
+    #tgroup-r2 .tnav-sep-pipe:last-child{ display: none; }
+    /* group labels read as a clear yellow heading above their items */
+    #tgroup-r2 .tnav-group-label, #tgroup-uc .tnav-group-label{ color: var(--gold); }
     /* highlight animation */
     @keyframes navHighlight {
       0%   { background: transparent; color: var(--text-muted); }
@@ -557,10 +585,12 @@
       width:58px; height:58px; border-radius:50%; pointer-events:auto; cursor:default; z-index:50;
       background:rgba(240,171,0,0.80); display:flex; align-items:center; justify-content:center; }
     [data-theme="light"] .tzo-hub{ background:rgba(139,105,20,0.80); }
+    [data-theme="simple"] .tzo-hub{ background:rgba(168,116,31,0.80); }
     .tzo-hub .tzo-core{ width:26px; height:26px; border-radius:50%; background:rgba(255,255,255,0.85); }
     .tzo-hub .tzo-ring{ position:absolute; border-radius:50%; border:1px solid rgba(240,171,0,0.40);
       animation:tzoPing 2.6s cubic-bezier(0,0,0.2,1) infinite; }
     [data-theme="light"] .tzo-hub .tzo-ring{ border-color:rgba(139,105,20,0.40); }
+    [data-theme="simple"] .tzo-hub .tzo-ring{ border-color:rgba(168,116,31,0.40); }
     .tzo-hub .tzo-ring.r2{ animation-delay:.7s; }
     .tzo-hub-label{ position:absolute; left:50%; top:calc(50% + 44px); transform:translateX(-50%);
       font-family:var(--font-mono); font-size:9px; letter-spacing:.22em; text-transform:uppercase;
@@ -569,8 +599,9 @@
     .tzo-node{ position:absolute; left:50%; top:50%; pointer-events:auto; cursor:pointer; will-change:transform,opacity; }
     .tzo-node .tzo-dot{ width:40px; height:40px; border-radius:50%; transform:translate(-50%,-50%);
       display:flex; align-items:center; justify-content:center;
-      background:var(--bg-overlay); color:var(--gold); border:2px solid var(--border);
+      background:rgba(240,171,0,0.12); color:#D49500; border:2px solid rgba(240,171,0,0.48);
       transition:background .3s,color .3s,border-color .3s,transform .3s; }
+    [data-theme="simple"] .tzo-node .tzo-dot{ background:rgba(168,116,31,0.12); color:#8f6019; border-color:rgba(168,116,31,0.48); }
     .tzo-node .tzo-dot svg{ width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
     .tzo-node .tzo-title{ position:absolute; left:50%; top:34px; transform:translateX(-50%); white-space:nowrap;
       font-family:var(--font-header); font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
@@ -579,6 +610,7 @@
     .tzo-node.active  .tzo-dot{ background:rgba(240,171,0,0.85); color:#fff; border-color:var(--gold);
       transform:translate(-50%,-50%) scale(1.4); }
     [data-theme="light"] .tzo-node.active .tzo-dot{ background:rgba(139,105,20,0.85); }
+    [data-theme="simple"] .tzo-node.active .tzo-dot{ background:rgba(168,116,31,0.85); }
     .tzo-node.active  .tzo-title{ color:var(--text); transform:translateX(-50%) scale(1.15); }
 
     /* card opens to the RIGHT of the node; rotation freezes on click (expand) */
@@ -600,9 +632,9 @@
     .tzo-links{ margin-top:11px; padding-top:9px; border-top:1px solid var(--border-dim); display:flex; flex-direction:column; gap:2px; }
     .tzo-link{ display:flex; align-items:baseline; gap:8px; text-decoration:none; padding:5px 7px; border-radius:6px; transition:background .15s; }
     .tzo-link:hover{ background:rgba(139,105,20,0.09); }
+    [data-theme="simple"] .tzo-link:hover{ background:rgba(168,116,31,0.09); }
     .tzo-link-kind{ flex:none; min-width:60px; font-family:var(--font-mono); font-size:8.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--gold); }
     .tzo-link-title{ flex:1; font-family:var(--font-body); font-size:11px; line-height:1.36; color:var(--text); }
-    .tzo-link-arr{ flex:none; color:var(--text-dim); font-size:10px; }
 
     .tzo-card-rel{ margin-top:11px; padding-top:9px; border-top:1px solid var(--border-dim); display:flex; flex-wrap:wrap; gap:5px; }
     .tzo-rel{ font-family:var(--font-mono); font-size:9px; letter-spacing:.06em; text-transform:uppercase; color:var(--text-muted);
@@ -823,11 +855,9 @@
     #index-content .res-kind{ font-family:var(--font-header); font-size:10px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:var(--gold); }
     #index-content .res-title{ font-family:var(--font-header); font-size:15px; font-weight:700; line-height:1.25; letter-spacing:.02em; color:var(--text); flex:1; }
     #index-content .res-foot{ display:flex; justify-content:space-between; align-items:baseline; font-family:var(--font-mono); font-size:10px; color:var(--text-muted); letter-spacing:.06em; }
-    #index-content .res-arrow{ color:var(--gold); font-size:15px; }
     #index-content .res-card[data-pending]{ cursor:default; opacity:.7; }
     #index-content .res-card[data-pending]:hover{ background:var(--surface); }
     #index-content .res-card[data-pending] .res-foot::after{ content:"Forthcoming"; font-family:var(--font-mono); font-size:9px; letter-spacing:.14em; text-transform:uppercase; color:var(--gold); border:1px solid var(--border-dim); padding:2px 5px; margin-left:6px; }
-    #index-content .res-card[data-pending] .res-arrow{ display:none; }
 
     /* citation */
     #index-content .cite-toggle{ margin-top:28px; max-width:800px; }
@@ -858,9 +888,9 @@
   <style id="tz-split-css">
     .tz-back{ display:flex; align-items:center; padding:0 14px; font-family:var(--font-header);
       font-size:10px; font-weight:700; letter-spacing:.1em; text-transform:uppercase;
-      color:var(--text-muted); text-decoration:none; border-right:1px solid var(--border-dim);
-      transition:color .15s, background .15s; pointer-events:auto; white-space:nowrap; }
-    .tz-back:hover{ color:var(--gold); background:rgba(240,171,0,0.06); }
+      color:var(--text-muted); text-decoration:none;
+      transition:color .15s; pointer-events:auto; white-space:nowrap; }
+    .tz-back:hover{ color:var(--gold); }
     /* Trazo on the Ground - quote lists + hover notes */
     .tnav-drop-scroll{ max-height:min(72vh,580px); overflow-y:auto; overflow-x:hidden;
       padding-right:12px; scrollbar-width:thin; scrollbar-color:rgba(240,171,0,0.3) transparent; }
@@ -868,7 +898,7 @@
     .tnav-drop-scroll::-webkit-scrollbar-thumb{ background:rgba(240,171,0,0.3); border-radius:4px; }
     .tz-intro{ font-family:var(--font-body); font-size:12.5px; line-height:1.55; color:var(--text-muted); margin-top:2px; }
     .tz-quote{ display:block; border-left:2px solid var(--border); padding:2px 0 2px 12px; margin-top:12px; }
-    .tz-q{ display:block; font-family:var(--font-body); font-size:12.5px; line-height:1.5; color:var(--text); font-style:italic; }
+    .tz-q{ display:block; font-family:var(--font-body); font-size:12.5px; line-height:1.5; color:var(--text); font-style:normal; }
     .tz-cite{ display:block; margin-top:5px; font-family:var(--font-header); font-size:9.5px; font-weight:700;
       letter-spacing:.07em; text-transform:uppercase; color:var(--gold); }
     .tz-cite a{ color:var(--gold); text-decoration:underline; text-underline-offset:2px; }
@@ -891,7 +921,21 @@
       transition:max-height .3s ease, opacity .25s ease, margin-top .25s ease;
       font-family:var(--font-body); font-size:11px; line-height:1.5; color:var(--text-muted); }
     .tz-quote:hover .tz-extra{ max-height:320px; opacity:1; margin-top:7px; }
-    .tz-extra .oq{ font-style:italic; }
+    .tz-extra .oq{ font-style:normal; color:var(--text-muted); }
+    /* ── back-link dot (yellow placeholder, replaced by animated field boundary) ── */
+    .tz-back .dot{ display:inline-block; width:0.6em; height:0.6em; border-radius:50%;
+      background:#F0AB00; margin:0 8px; flex-shrink:0; vertical-align:middle; }
+  </style>
+
+  <!-- ════ ANIMATED FIELD-BOUNDARY BRAND MARK (back-link dot on the map page) ════ -->
+  <style>
+    .tz-geo{ position:relative; display:inline-block; width:0.95em; height:0.95em;
+      margin:0 8px; vertical-align:-0.13em; flex:0 0 auto; }
+    .tz-geo svg{ position:absolute; inset:0; width:100%; height:100%; opacity:0;
+      transition:opacity .3s ease; overflow:visible; }
+    .tz-geo svg.tz-on{ opacity:1; }
+    .tz-geo svg path{ fill:#F0AB00; fill-rule:evenodd; stroke:none; }
+    @media (prefers-reduced-motion:reduce){ .tz-geo svg{ transition:none; } }
   </style>
 
   <!-- ════════════════════════════════════════════════════════════════════════
@@ -932,23 +976,23 @@
 
       /* ───────── EXPLORE → large pulsating gold box (replaces the hamburger) ───────── */
       @keyframes tzExplorePulse{
-        0%   { background:rgba(240,171,0,0.16); color:var(--gold);  border-color:var(--gold);    box-shadow:0 0 0 rgba(240,171,0,0);    text-shadow:none; }
-        50%  { background:rgba(240,171,0,0.42); color:#FFD700;      border-color:#FFD700;        box-shadow:0 0 14px rgba(240,171,0,0.55); text-shadow:0 0 7px rgba(240,171,0,0.45); }
-        100% { background:rgba(240,171,0,0.16); color:var(--gold);  border-color:var(--gold);    box-shadow:0 0 0 rgba(240,171,0,0);    text-shadow:none; }
+        0%   { background:rgba(240,171,0,0.16); color:#F0AB00;  border-color:#F0AB00;    box-shadow:0 0 0 rgba(240,171,0,0);     text-shadow:none; }
+        50%  { background:rgba(240,171,0,0.30); color:#F5C242;  border-color:#F5C242;    box-shadow:0 0 8px rgba(240,171,0,0.32); text-shadow:0 0 4px rgba(240,171,0,0.28); }
+        100% { background:rgba(240,171,0,0.16); color:#F0AB00;  border-color:#F0AB00;    box-shadow:0 0 0 rgba(240,171,0,0);     text-shadow:none; }
       }
       #tz-explore{
         display:flex; align-items:center; justify-content:center;
-        height:36px; padding:0 16px; margin-right:2px; flex:none;
+        height:36px; padding:0 16px; margin-left:auto; margin-right:2px; flex:none;
         font-family:var(--font-header); font-size:12px; font-weight:700;
         letter-spacing:.18em; text-transform:uppercase;
-        color:var(--gold); background:rgba(240,171,0,0.16);
-        border:1px solid var(--gold); border-radius:4px; cursor:pointer;
-        animation:tzExplorePulse 3s ease-in-out infinite;
+        color:#F0AB00; background:rgba(240,171,0,0.16);
+        border:1px solid #F0AB00; border-radius:4px; cursor:pointer;
+        animation:tzExplorePulse 5.5s ease-in-out infinite;
         will-change:background,color,border-color,box-shadow;
       }
       @media (prefers-reduced-motion: reduce){ #tz-explore{ animation:none; } }
       html.tz-menu-open #tz-explore,
-      html.tz-reader-open #tz-explore{ animation:none; background:rgba(240,171,0,0.42); color:#FFD700; }
+      html.tz-reader-open #tz-explore{ animation:none; background:rgba(240,171,0,0.30); color:#F5C242; }
       [data-theme="light"] #tz-explore{ color:#6b5210; }
 
       /* the desktop inline nav is replaced wholesale by the full-page menu */
@@ -1372,8 +1416,8 @@
          the panel; only the quotes below scroll */
       #tz-modal-head{ flex:none; padding:30px 48px 14px 36px;
         border-bottom:1px solid rgba(140,140,130,0.22); }
-      #tz-modal-head .tnav-drop-head{ font-size:13px; margin-bottom:8px; }
-      #tz-modal-head .tz-intro{ font-size:19.4px; line-height:1.5; color:var(--text-muted); margin:0; }
+      #tz-modal-head .tnav-drop-head{ font-size:22px; letter-spacing:.08em; margin-bottom:10px; }
+      #tz-modal-head .tz-intro{ font-size:15px; line-height:1.55; color:var(--text-muted); margin:0; }
       #tz-modal-body{ flex:1 1 auto; overflow-y:auto; overflow-x:hidden; padding:6px 36px 30px;
         scrollbar-width:thin; scrollbar-color:rgba(240,171,0,0.3) transparent; }
       #tz-modal-body::-webkit-scrollbar{ width:6px; }
@@ -1387,8 +1431,8 @@
         scroll-snap-align:start;
         display:flex; flex-direction:column; justify-content:center;
         min-height:160px;
-        border-left:none;
-        padding:28px 6px 28px 4px; margin:0;
+        border-left:3px solid var(--border);
+        padding:28px 6px 28px 18px; margin:0;
       }
       #tz-modal-body .tz-quote + .tz-quote{ border-top:1px solid rgba(140,140,130,0.20); }
       #tz-modal-body .tz-q{ font-size:15.5px; line-height:1.8; }
@@ -1492,14 +1536,14 @@
       --accent2:#4f4d49; --accent2-lt:#6e6c66;
       --border:rgba(20,20,18,0.13); --border-dim:rgba(20,20,18,0.07); --border-faint:rgba(20,20,18,0.045);
       --xsurf:rgba(20,20,18,0.03); --xsurfh:rgba(20,20,18,0.06);
-      --chrome-bg:rgba(255,255,255,0.94); --chrome-shadow:0 4px 22px rgba(0,0,0,0.06), 0 0 0 1px rgba(20,20,18,0.07);
+      --chrome-bg:rgba(255,255,255,0.79); --chrome-shadow:0 4px 22px rgba(0,0,0,0.06), 0 0 0 1px rgba(20,20,18,0.07);
       --backdrop:rgba(20,20,18,0.10);
       --xmast:rgba(252,252,251,0.95); --xfoot:#fcfcfb; --footer-text:#5c5c5a; --footer-brand:#1a1a1a;
       --map-filter:grayscale(1) contrast(1.02) brightness(1.04);
       --section-tint:rgba(20,20,18,0.022);
     }
     /* zoom (z) badge: drop the heavy black ground for a light, unobtrusive chip */
-    [data-theme="simple"] #zbadge{ background:rgba(252,252,251,0.80); color:var(--text-muted); border-color:var(--border-dim); }
+    [data-theme="simple"] #zbadge{ background:rgba(252,252,251,0.65); color:var(--text-muted); border-color:var(--border-dim); }
     /* judicious colour — soy yellow only on the brand mark dot and the primary call-to-action */
     [data-theme="simple"] #index-content .mark .dot,
     [data-theme="simple"] #index-content .footer-brand-line .dot{ background:#F0AB00; }
@@ -1514,22 +1558,10 @@
     [data-theme="simple"] #index-content .hero-meta{ border-top:1px solid var(--border); }
     [data-theme="simple"] #index-content .cite-toggle summary{ border-left-width:2px; border-left-color:var(--border); }
 
-    /* simple orbital — drawn like pasture field boundaries: grey/black outlines, no fill colour */
-    [data-theme="simple"] #tz-orbital{ --gold:#3a3a38; --gold-lt:#1a1a1a;
-      --bg-overlay:rgba(252,252,251,0.86);
-      --border:rgba(20,20,18,0.26); --border-dim:rgba(20,20,18,0.12);
-      --text:#1a1a1a; --text-muted:#55534e; --text-dim:#9a9a96; }
-    [data-theme="simple"] #tz-orbital .tzo-hub{ background:transparent; border:1px solid rgba(20,20,18,0.32); }
-    [data-theme="simple"] #tz-orbital .tzo-hub .tzo-core{ background:rgba(20,20,18,0.40); }
-    [data-theme="simple"] #tz-orbital .tzo-hub .tzo-ring{ border-color:rgba(20,20,18,0.18); }
-    [data-theme="simple"] #tz-orbital .tzo-hub-label{ color:#55534e; }
-    [data-theme="simple"] #tz-orbital .tzo-node .tzo-dot{ background:transparent; color:#2a2a28; border-width:1px; border-color:rgba(20,20,18,0.34); }
-    [data-theme="simple"] #tz-orbital .tzo-node.related .tzo-dot{ border-color:rgba(20,20,18,0.46); }
-    [data-theme="simple"] #tz-orbital .tzo-node.active .tzo-dot{ background:transparent; color:#1a1a1a; border-color:rgba(20,20,18,0.6); }
-    [data-theme="simple"] #tz-orbital .tzo-card-k,
-    [data-theme="simple"] #tz-orbital .tzo-card-b em,
-    [data-theme="simple"] #tz-orbital .tzo-fact b,
-    [data-theme="simple"] #tz-orbital .tzo-link-kind{ color:#3a3a38; }
+    /* simple orbital — bright yellow accents like the dark theme, but text stays
+       the page's normal dark ink so it stays legible on the light card background */
+    [data-theme="simple"] #tz-orbital{ --gold:#a8741f; --gold-lt:#c68a28;
+      --border:rgba(168,116,31,0.30); --border-dim:rgba(168,116,31,0.12); }
 
     /* ════ SHARED MAPPING — one block drives all themes via tokens ════ */
     :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) body{ background:var(--bg-page); }
@@ -1564,6 +1596,7 @@
     :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #topbar{ background:var(--chrome-bg); border-bottom:1px solid var(--border); }
     :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #topbar .tz-back{ color:var(--text); }
     :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #topbar .tz-back:hover{ color:var(--gold); }
+    [data-theme="simple"] #topbar .tz-back:hover{ color:var(--text); }
     :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) .tnav-dropdown{ background:var(--chrome-bg); border-color:var(--border); }
     :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) .tnav-model-chip,
     :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) .tnav-step,
@@ -1612,8 +1645,11 @@
 <!-- ── UI OVERLAY: sits in DOM after #map, forced above all Leaflet canvases ── -->
 <div id="ui-layer">
 <div id="topbar">
-  <a class="tz-back" href="./">← Trazo</a>
+  <a class="tz-back" href="index.html"><span class="dot"></span> Trazo</a>
   <nav id="topbar-nav">
+
+    <a class="tnav-plain" href="annotationguide.html">Annotation</a>
+    <a class="tnav-plain" href="https://www.wri.org/research/field-boundaries-south-america-technical-note" target="_blank" rel="noopener">Technical Note</a>
 
     <!-- RELEASE 1 -->
     <div class="tnav-group" id="tgroup-r1">
@@ -1670,7 +1706,7 @@
                 <span class="mc-name">Trazo3</span><span class="mc-tag">Active learning, recommended</span><span class="mc-stat">79.2%</span><span class="mc-tag">Mato Grosso pixel IoU</span>
               </a>
             </div>
-            <p class="tnav-drop-text" style="font-size:11.5px;color:var(--text-muted)">All checkpoints on <a href="https://huggingface.co/collections/worldresourcesinstitute/trazo-models" target="_blank">Hugging Face ↗</a></p>
+            <p class="tnav-drop-text" style="font-size:11.5px;color:var(--text-muted)">All checkpoints on <a href="https://huggingface.co/collections/worldresourcesinstitute/trazo-models" target="_blank">Hugging Face</a></p>
           </div>
         </div>
       </div>
@@ -1681,7 +1717,7 @@
           <div class="tnav-pin-hint">click to pin, click again to dismiss</div>
           <div class="tnav-drop-content">
             <div class="tnav-drop-head">03 / Pipeline</div>
-            <p class="tnav-drop-text">Composable utilities for moving from raw imagery to field-boundary predictions. Full reference in the <a href="https://github.com/wri/trazo#readme" target="_blank">repository README ↗</a>.</p>
+            <p class="tnav-drop-text">Composable utilities for moving from raw imagery to field-boundary predictions. Full reference in the <a href="https://github.com/wri/trazo#readme" target="_blank">repository README</a>.</p>
             <div class="tnav-pipeline">
               <a class="tnav-step" href="https://github.com/wri/trazo#step-1-create-grids-and-data-windows-from-grids" target="_blank"><span class="step-num">01</span><span class="step-title">Create data</span><span class="step-desc">AOI grids and 4-band Sentinel-2 chips at planting and harvest windows.</span></a>
               <a class="tnav-step" href="https://github.com/wri/trazo#step-2-data-preparation" target="_blank"><span class="step-num">02</span><span class="step-title">Prepare data</span><span class="step-desc">Pair temporal stacks, normalize, build instance and semantic masks.</span></a>
@@ -1701,11 +1737,11 @@
             <div class="tnav-drop-head">04 / Use</div>
             <p class="tnav-drop-text">Five open artifacts under CC-BY-4.0, covering the technical foundation through to the 10.9-million-field release for the 2023–2024 planting season.</p>
             <div class="tnav-resources">
-              <a href="https://www.wri.org/research/field-boundaries-south-america-technical-note" class="tnav-res" target="_blank" rel="noopener"><span class="res-kind">Technical note</span><span class="res-title">Field Boundaries of South America, Grupp et al., WRI, 2026</span><span class="res-arr">↗</span></a>
-              <a href="https://source.coop/wri-data-lab/trazoannotations" class="tnav-res" target="_blank" rel="noopener"><span class="res-kind">Dataset</span><span class="res-title">46,908 training + 7,453 test annotations across 17 ecoregions</span><span class="res-arr">↗</span></a>
-              <a href="https://huggingface.co/collections/worldresourcesinstitute/trazo-models" class="tnav-res" target="_blank" rel="noopener"><span class="res-kind">Models</span><span class="res-title">Four checkpoints: Trazo1, TrazoSA, Trazo2, Trazo3</span><span class="res-arr">↗</span></a>
-              <a href="https://github.com/wri/trazo" class="tnav-res" target="_blank" rel="noopener"><span class="res-kind">Pipeline</span><span class="res-title">Inference and fine-tuning pipeline configured by MGRS tile ID</span><span class="res-arr">↗</span></a>
-              <a href="https://source.coop/wri-data-lab/trazofields" class="tnav-res" target="_blank" rel="noopener"><span class="res-kind">Field boundaries</span><span class="res-title">10,935,129 AI-generated boundaries across South America</span><span class="res-arr">↗</span></a>
+              <a href="https://www.wri.org/research/field-boundaries-south-america-technical-note" class="tnav-res" target="_blank" rel="noopener"><span class="res-kind">Technical note</span><span class="res-title">Field Boundaries of South America, Grupp et al., WRI, 2026</span></a>
+              <a href="https://source.coop/wri-data-lab/trazoannotations" class="tnav-res" target="_blank" rel="noopener"><span class="res-kind">Dataset</span><span class="res-title">46,908 training + 7,453 test annotations across 17 ecoregions</span></a>
+              <a href="https://huggingface.co/collections/worldresourcesinstitute/trazo-models" class="tnav-res" target="_blank" rel="noopener"><span class="res-kind">Models</span><span class="res-title">Four checkpoints: Trazo1, TrazoSA, Trazo2, Trazo3</span></a>
+              <a href="https://github.com/wri/trazo" class="tnav-res" target="_blank" rel="noopener"><span class="res-kind">Pipeline</span><span class="res-title">Inference and fine-tuning pipeline configured by MGRS tile ID</span></a>
+              <a href="https://source.coop/wri-data-lab/trazofields" class="tnav-res" target="_blank" rel="noopener"><span class="res-kind">Field boundaries</span><span class="res-title">10,935,129 AI-generated boundaries across South America</span></a>
             </div>
           </div>
         </div>
@@ -1871,7 +1907,6 @@
     </div>
 
   </nav>
-  <a id="theme-toggle" href="#" onclick="window.TZ.toggle();return false;" title="Toggle light / dark theme">Dark ◗</a>
 </div>
 
 <div id="header">mapv6 - Mato Grosso 2024<span>mbmode24, local file</span></div>
@@ -2155,7 +2190,14 @@ const PMTilesLayer = L.GridLayer.extend({
     const { polyGroups, pointFeats } = cached;
     // Light theme: the faint non-primary ("in development") crop boundaries wash out on the
     // cream basemap, so lift them with a visible light-gray boundary and dot.
-    const isLightTheme = document.documentElement.getAttribute("data-theme") !== "dark";
+    const _theme = document.documentElement.getAttribute("data-theme");
+    const isLightTheme = _theme !== "dark";
+    // Darker, higher-opacity centroids for the specified light themes so soy/temp-crop dots pop.
+    const useDarkerDot = (_theme === 'datalab' || _theme === 'prototype' || _theme === 'light');
+    const DARK_DOT_COLORS = { '#F0AB00': '#b98300', '#EB8026': '#b35f17' };
+    // Slight darkening (not the heavy DARK_DOT_COLORS treatment) just for simple theme, so
+    // the bright dark-mode colors still register a bit against the light basemap.
+    const SIMPLE_DOT_COLORS = { '#F0AB00': '#cc9100', '#EB8026': '#c86d20' };
 
     for (const g of Object.values(polyGroups)) {
       // light theme: soy + temporary crops (primary) interior fill 25% more transparent
@@ -2184,20 +2226,38 @@ const PMTilesLayer = L.GridLayer.extend({
           ? Math.max(0.8, Math.min(Math.sqrt(cnt) * 0.15 * zScale, 3))
           : Math.max(0.8, Math.min(Math.sqrt(cnt) * 0.08 * zScale, 2));
       } else {
-        if (z >= 11) {
+        if (z >= 11 && z <= 13) {
+          r = prim ? 1.5 : 1.0;
+        } else if (z > 13) {
           r = prim ? 2.2 : 1.4;
+        } else if (z === 10) {
+          r = prim ? 1.0 : 0.65;
         } else {
           r = prim ? 1.5 * zoomShrink : 1 * zoomShrink;
         }
       }
+      // 1.15× radius bump for darker-dot themes on primary crops
+      if (useDarkerDot && prim) r *= 1.15;
       for (const ring of feat.rings) {
         const [px, py] = ring[0];
         ctx.beginPath();
         ctx.arc(px * sc, py * sc, r, 0, Math.PI * 2);
-        const devGray = isLightTheme && !prim;
-        ctx.fillStyle   = devGray ? "rgba(135,135,135,0.55)" : hexRgba(color, prim ? 0.8 : 0.3);
+        const devGray = isLightTheme && !prim && _theme !== 'simple';
+        let dotFill, dotStroke;
+        if (devGray) {
+          dotFill   = "rgba(135,135,135,0.55)";
+          dotStroke = "rgba(80,80,80,0.33)";
+        } else if (useDarkerDot && prim) {
+          dotFill   = hexRgba(DARK_DOT_COLORS[color] || color, 0.92);
+          dotStroke = "rgba(0,0,0,0.22)";
+        } else {
+          const simpleColor = (_theme === 'simple' && prim) ? (SIMPLE_DOT_COLORS[color] || color) : color;
+          dotFill   = hexRgba(simpleColor, prim ? 0.8 : 0.3);
+          dotStroke = "rgba(255,255,255,0.25)";
+        }
+        ctx.fillStyle   = dotFill;
         ctx.fill();
-        ctx.strokeStyle = devGray ? "rgba(80,80,80,0.33)" : "rgba(255,255,255,0.25)";
+        ctx.strokeStyle = dotStroke;
         ctx.lineWidth   = 0.6;
         ctx.stroke();
       }
@@ -2574,8 +2634,7 @@ window.TZ = (function(){
         a.addEventListener("click", function(e){ e.stopPropagation(); });
         var ks = document.createElement("span"); ks.className = "tzo-link-kind";  ks.textContent = ln.kind;
         var ts = document.createElement("span"); ts.className = "tzo-link-title"; ts.textContent = ln.title;
-        var as = document.createElement("span"); as.className = "tzo-link-arr";   as.textContent = "\u21ac";
-        a.appendChild(ks); a.appendChild(ts); a.appendChild(as); l.appendChild(a);
+        a.appendChild(ks); a.appendChild(ts); l.appendChild(a);
       });
       card.appendChild(l);
     }
@@ -2958,6 +3017,130 @@ window.TZ = (function(){
   if(document.readyState !== 'loading') ready();
   else document.addEventListener('DOMContentLoaded', ready);
   window.TZ6 = { cycle: next, set: apply, current: cur, themes: THEMES };
+})();
+</script>
+
+<!-- ════ ANIMATED FIELD-BOUNDARY BRAND MARK (targets .tz-back .dot on the map page) ════ -->
+<style>
+  .tz-geo{ cursor:pointer; }
+  /* ── hover-to-enlarge: hold the mark 2s+ to see all 100 sampled field geometries ── */
+  #tz-mark-overlay{
+    position:fixed; inset:0; z-index:5000;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:28px;
+    padding:40px; background:rgba(4,8,3,0);
+    opacity:0; visibility:hidden; pointer-events:none;
+    transition:opacity .35s ease, background .35s ease, visibility .35s; cursor:zoom-out;
+  }
+  #tz-mark-overlay.show{ opacity:1; visibility:visible; pointer-events:auto; background:rgba(4,8,3,0.93); }
+  .tz-mark-stage{ position:relative; width:min(56vw,480px); height:min(56vw,480px); flex:none; }
+  .tz-mark-stage svg{ position:absolute; inset:0; width:100%; height:100%; opacity:0; transition:opacity .5s ease; overflow:visible; }
+  .tz-mark-stage svg.tz-on{ opacity:1; }
+  .tz-mark-stage svg path{ fill:#F0AB00; fill-rule:evenodd; stroke:none; }
+  .tz-mark-caption{ max-width:540px; text-align:center; font-family:var(--font-body); font-size:14px; line-height:1.6; color:rgba(255,255,255,0.78); }
+  @media (max-width:600px){ .tz-mark-stage{ width:78vw; height:78vw; } .tz-mark-caption{ font-size:12.5px; padding:0 10px; } }
+  @media (prefers-reduced-motion:reduce){ #tz-mark-overlay, .tz-mark-stage svg{ transition:none; } }
+</style>
+<script>
+(function(){
+  var PARQUET_URL='https://wri-datalab-sandbox.s3.us-east-1.amazonaws.com/trazofields/release1annotations.parquet';
+  var hosts=[], paths=[], idx=0, timer=null;
+  var WANT=100;
+  var HOLD_MS=2000, FRAME_MS=850;
+  var ov=null, ovLayers=null, hoverTimer=null, playTimer=null, ovIdx=0;
+  function decodeWKB(buf){
+    var dv=new DataView(buf.buffer,buf.byteOffset,buf.byteLength), pos=0;
+    function geom(){
+      var le=dv.getUint8(pos)===1; pos+=1;
+      var type=dv.getUint32(pos,le); pos+=4;
+      if(type & 0x20000000) pos+=4;
+      var base=(type & 0xffff)%1000;
+      var hasZ=((type & 0xffff)>=1000) || !!(type & 0x80000000);
+      var rings=[];
+      function ring(){ var n=dv.getUint32(pos,le); pos+=4; var r=[];
+        for(var i=0;i<n;i++){ var x=dv.getFloat64(pos,le); pos+=8; var y=dv.getFloat64(pos,le); pos+=8; if(hasZ) pos+=8; r.push([x,y]); }
+        return r; }
+      if(base===3){ var nr=dv.getUint32(pos,le); pos+=4; for(var i=0;i<nr;i++) rings.push(ring()); }
+      else if(base===6){ var np=dv.getUint32(pos,le); pos+=4; for(var p=0;p<np;p++) rings=rings.concat(geom()); }
+      else if(base===2){ rings.push(ring()); }
+      else if(base===1){ pos+=16; }
+      else if(base===4||base===5||base===7){ var ng=dv.getUint32(pos,le); pos+=4; for(var g=0;g<ng;g++) rings=rings.concat(geom()); }
+      return rings;
+    }
+    try{ return geom(); }catch(e){ return []; }
+  }
+  function toPath(rings){
+    var mnX=1/0,mnY=1/0,mxX=-1/0,mxY=-1/0,k,j,p;
+    for(k=0;k<rings.length;k++) for(j=0;j<rings[k].length;j++){ p=rings[k][j];
+      if(p[0]<mnX)mnX=p[0]; if(p[0]>mxX)mxX=p[0]; if(p[1]<mnY)mnY=p[1]; if(p[1]>mxY)mxY=p[1]; }
+    var w=mxX-mnX,h=mxY-mnY; if(!(w>0)||!(h>0)) return null;
+    var s=100/Math.max(w,h), d='';
+    for(k=0;k<rings.length;k++){ var r=rings[k]; if(r.length<3) continue;
+      for(var i=0;i<r.length;i++){ var x=(r[i][0]-mnX)*s, y=(mxY-r[i][1])*s;
+        d+=(i?'L':'M')+x.toFixed(2)+' '+y.toFixed(2); } d+='Z'; }
+    return d ? {d:d, vb:'0 0 '+(w*s).toFixed(2)+' '+(h*s).toFixed(2)} : null;
+  }
+  function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)),t=a[i];a[i]=a[j];a[j]=t; } return a; }
+  function mkSvg(){ var s=document.createElementNS('http://www.w3.org/2000/svg','svg');
+    s.setAttribute('preserveAspectRatio','xMidYMid meet');
+    s.appendChild(document.createElementNS('http://www.w3.org/2000/svg','path')); return s; }
+  function geoColumn(meta){
+    try{ var kv=(meta&&meta.key_value_metadata)||[];
+      for(var i=0;i<kv.length;i++){ if(kv[i].key==='geo'){ var j=JSON.parse(kv[i].value); if(j&&j.primary_column) return j.primary_column; } } }catch(e){}
+    return 'geometry';
+  }
+  function pickRings(g){
+    if(!g||!g.coordinates) return null;
+    if(g.type==='Polygon') return g.coordinates;
+    if(g.type==='MultiPolygon'){
+      var c=g.coordinates, best=null, ba=-1;
+      for(var i=0;i<c.length;i++){ var ring=c[i][0]||[], mnx=1/0,mny=1/0,mxx=-1/0,mxy=-1/0;
+        for(var j=0;j<ring.length;j++){ var p=ring[j];
+          if(p[0]<mnx)mnx=p[0]; if(p[0]>mxx)mxx=p[0]; if(p[1]<mny)mny=p[1]; if(p[1]>mxy)mxy=p[1]; }
+        var a=(mxx-mnx)*(mxy-mny); if(a>ba){ ba=a; best=c[i]; } }
+      return best;
+    }
+    return null;
+  }
+  function setLayer(svg,po){ svg.setAttribute('viewBox',po.vb); svg.firstChild.setAttribute('d',po.d); }
+  function render(po){ for(var i=0;i<hosts.length;i++){ var H=hosts[i], nx=H.cur^1;
+    setLayer(H.l[nx],po); H.l[nx].classList.add('tz-on'); H.l[H.cur].classList.remove('tz-on'); H.cur=nx; } }
+  function tick(){ if(!paths.length) return; idx=(idx+1)%paths.length; render(paths[idx]); }
+  function start(){ if(paths.length){ render(paths[idx%paths.length]); if(!timer) timer=setInterval(tick,1000); } }
+  function build(){
+    var dots=document.querySelectorAll('.tz-back .dot');
+    for(var i=0;i<dots.length;i++){ var d=dots[i];
+      var host=document.createElement('span'); host.className='tz-geo'; host.setAttribute('aria-hidden','true');
+      var a=mkSvg(),b=mkSvg(); host.appendChild(a); host.appendChild(b);
+      d.parentNode.replaceChild(host,d); hosts.push({host:host,l:[a,b],cur:0}); }
+  }
+  async function load(){
+    var hp=await import('https://cdn.jsdelivr.net/npm/hyparquet/+esm');
+    var file=await hp.asyncBufferFromUrl({url:PARQUET_URL});
+    var meta=await hp.parquetMetadataAsync(file);
+    var col=geoColumn(meta);
+    var total=Number(meta && meta.num_rows)||0;
+    var out=[], tries=0;
+    while(out.length<WANT && tries<6){
+      tries++;
+      var span=Math.min(280, total||280);
+      var start=(total>span) ? Math.floor(Math.random()*(total-span)) : 0;
+      var rows=await hp.parquetReadObjects({file:file,metadata:meta,columns:[col],rowStart:start,rowEnd:start+span});
+      for(var i=0;i<rows.length && out.length<WANT;i++){
+        var g=rows[i] && rows[i][col]; if(!g) continue;
+        var rings=pickRings(g); if(!rings) continue;
+        var po=toPath(rings); if(po) out.push(po);
+      }
+    }
+    return shuffle(out);
+  }
+  function init(){
+    load().then(function(list){
+      if(!list || !list.length) return;
+      paths=list; idx=0; build(); if(!hosts.length) return; start();
+    }).catch(function(){});
+  }
+  if(document.readyState!=='loading') init();
+  else document.addEventListener('DOMContentLoaded', init);
 })();
 </script>
 
