@@ -231,7 +231,7 @@
   ];
 
   // temporarily hidden from tour / explore / dropdown
-  const HIDDEN = new Set(["maparaguay","testchiquitania","testmatogrosso","testsoy"]);
+  const HIDDEN = new Set([]);   // (temporarily-hidden list cleared — all datasets shown)
 
   // ── MAP ── original satellite imagery, washed toward white by CSS filter
   const map = L.map("map", { center:[-15,-58], zoom:4, zoomControl:false, attributionControl:false });
