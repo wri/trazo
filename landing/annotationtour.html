@@ -85,6 +85,8 @@
     .c-k { font-family:var(--font-mono); font-size:9.5px; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); flex:0 0 auto; }
     .c-v { font-family:var(--font-body); font-size:12.5px; color:var(--ink); text-align:right; }
     #card a { color:var(--ink); text-decoration:underline; text-decoration-color:rgba(240,171,0,0.5); text-underline-offset:2px; }
+    #card-head { display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+    #card-toggle { display:none; }
 
     /* ── CONTROLS (two buttons) ── */
     #seg { display:flex; border:1px solid var(--border); border-radius:8px; overflow:hidden; margin-bottom:8px; }
@@ -126,7 +128,26 @@
     #tload.show { display:flex; }
     #tload .spin { width:14px; height:14px; }
     #attrib { position:absolute; bottom:5px; left:50%; transform:translateX(-50%); z-index:900; font-family:var(--font-mono); font-size:9px; color:var(--dim); pointer-events:none; white-space:nowrap; }
-    @media (max-width:640px){ #ds-select{ max-width:150px; } #card{ width:calc(100vw - 32px); max-height:52vh; } }
+    @media (max-width:640px){
+      #ds-select{ max-width:148px; }
+      #card{
+        left:8px; right:8px; bottom:8px; width:auto; max-width:none;
+        max-height:calc(100dvh - 66px); padding:13px 15px 12px;
+      }
+      #card-head{ align-items:center; }
+      #c-name{ font-size:20px; margin-bottom:0; }
+      .c-eyebrow{ margin-bottom:8px; }
+      #card-toggle{
+        display:flex; align-items:center; justify-content:center; flex:0 0 auto;
+        width:32px; height:32px; background:none; border:1px solid var(--border);
+        border-radius:8px; color:var(--muted); font-size:13px; line-height:1; cursor:pointer;
+        transition:transform .22s ease;
+      }
+      #card.expanded #card-toggle{ transform:rotate(180deg); }
+      #c-body{ max-height:0; overflow:hidden; opacity:0; transition:max-height .28s ease, opacity .2s ease; }
+      #card.expanded #c-body{ max-height:42vh; overflow-y:auto; opacity:1; margin-top:12px; }
+      #seg{ margin-top:12px; }
+    }
     /* animated field-boundary brand mark (as on map.html / index.html) */
     .tz-geo{ position:relative; display:inline-block; width:0.95em; height:0.95em; margin:0; vertical-align:-0.13em; flex:0 0 auto; }
     .tz-geo svg{ position:absolute; inset:0; width:100%; height:100%; opacity:0; transition:opacity .3s ease; overflow:visible; }
@@ -165,10 +186,15 @@
 
 <div id="card">
   <div class="c-eyebrow" id="c-eyebrow"></div>
-  <div id="c-name"></div>
-  <div class="c-desc" id="c-desc"></div>
-  <div class="c-strategy" id="c-strategy" style="display:none"></div>
-  <div class="c-meta" id="c-meta"></div>
+  <div id="card-head">
+    <div id="c-name"></div>
+    <button id="card-toggle" type="button" aria-label="Show details">&#9662;</button>
+  </div>
+  <div id="c-body">
+    <div class="c-desc" id="c-desc"></div>
+    <div class="c-strategy" id="c-strategy" style="display:none"></div>
+    <div class="c-meta" id="c-meta"></div>
+  </div>
 
   <div id="seg">
     <button class="seg-btn active" data-win="a">Window A<span class="s">planting</span></button>
@@ -499,6 +525,7 @@
     if (ok) scheduleNext(9000);
   });
   $("ds-select").addEventListener("change", (e)=>{ stopTimer(); goToFolder(+e.target.value); });
+  { const ct=$("card-toggle"); if (ct) ct.addEventListener("click", ()=>{ $("card").classList.toggle("expanded"); }); }
 
   // ── dropdown ──
   function buildDropdown(){
