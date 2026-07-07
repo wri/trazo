@@ -276,6 +276,9 @@
   let timer = null, loadToken = 0;
   let sampleZoom = 99, programmatic = false;
   let exploreLayers = [], exploring = false, exploreToken = 0, idleTimer = null;
+  let introLayer = null;
+  const SA_BOUNDS = L.latLngBounds([[-56, -82], [13, -34]]);   // South America extent
+  const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
   const $ = id => document.getElementById(id);
   function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; }
@@ -336,9 +339,11 @@
     return rows[0] && rows[0].geometry;
   }
   async function getAllGeometries(fc){
+    if (fc._allGeom) return fc._allGeom;
     const h = await hp();
     const rows = await h.parquetReadObjects({ file:fc.file, metadata:fc.meta, columns:["aoi_id","n_fields","geometry"], rowStart:0, rowEnd:Number(fc.meta.num_rows) });
-    return rows.filter(r=>r.geometry);
+    fc._allGeom = rows.filter(r=>r.geometry);
+    return fc._allGeom;
   }
 
   // ── annotation info.txt → authors / year ──
@@ -445,11 +450,43 @@
 
   // ── transitions ──
   function advance(){ if (exploring) return; orderPos=(orderPos+1)%order.length; goToFolder(order[orderPos]); }
+  function clearIntro(){ if (introLayer){ map.removeLayer(introLayer); introLayer=null; } }
+
+  // Show the whole dataset's boundaries across South America, then zoom to one sample.
+  async function runIntro(folderIdx){
+    const token = ++loadToken;
+    const f = FOLDERS[folderIdx];
+    let fc;
+    try { fc = await getFolder(f.id); }
+    catch(e){ if (token===loadToken) advance(); return false; }
+    if (!fc.samples.length){ if (token===loadToken) advance(); return false; }
+    if (token!==loadToken) return false;
+
+    clearIntro(); clearLayers();
+    programmatic = true;
+    map.flyToBounds(SA_BOUNDS, { duration:0.9 });
+    $("tload").classList.add("show");
+
+    let rows = [];
+    try { rows = await getAllGeometries(fc); } catch(e){}
+    if (token!==loadToken){ $("tload").classList.remove("show"); return false; }
+    if (rows.length){
+      const fcoll = { type:"FeatureCollection", features: rows.map(r=>({ type:"Feature", geometry:r.geometry, properties:{} })) };
+      introLayer = L.geoJSON(fcoll, { style:()=>FIELD_STYLE, interactive:false }).addTo(map);
+    }
+    $("load").classList.add("hide");      // reveal the continent view + boundaries
+    $("tload").classList.remove("show");
+    await sleep(1700);                     // hold on South America so the constellation reads
+    return token===loadToken;
+  }
+
   async function goToFolder(folderIdx){
     stopTimer();
     exitExplore();
     orderPos = order.indexOf(folderIdx);
-    const ok = await showSample(folderIdx, { win:"a", newSample:true });
+    const introOk = await runIntro(folderIdx);      // South America + all boundaries
+    if (!introOk) return;
+    const ok = await showSample(folderIdx, { win:"a", newSample:true });   // zoom to one sample
     if (ok) scheduleNext(9000);
   }
 
@@ -465,8 +502,8 @@
     let rows;
     try { rows = await getAllGeometries(fc); } catch(e){ rows = []; }
     if (myToken !== exploreToken) return;
-    // all annotations at once (vector, light)
-    if (rows.length){
+    // all annotations at once (vector, light) — skip if the intro constellation is already shown
+    if (rows.length && !introLayer){
       const fcoll = { type:"FeatureCollection", features: rows.map(r=>({ type:"Feature", geometry:r.geometry, properties:{} })) };
       const gl = L.geoJSON(fcoll, { style:()=>FIELD_STYLE, interactive:false }).addTo(map);
       exploreLayers.push(gl);
@@ -544,9 +581,8 @@
     buildDropdown();
     order = shuffle(FOLDERS.map((_,i)=>i).filter(i=>!HIDDEN.has(FOLDERS[i].id)));
     orderPos = 0;
-    document.querySelector("#load .msg").textContent = "Loading first chip & annotations…";
+    document.querySelector("#load .msg").textContent = "Loading chips & annotations\u2026";
     await goToFolder(order[0]);
-    $("load").classList.add("hide");
   }
   start().catch(err=>{ document.querySelector("#load .msg").textContent = "Could not start: " + (err && err.message ? err.message : err); });
 
