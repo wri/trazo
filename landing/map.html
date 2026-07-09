@@ -1171,7 +1171,7 @@
       html.tz-legend-open #tz-legend-fab{ font-size:28px; }
 
       /* ───────── ORBITAL (Release 1) → smaller still: tighter hub, dots, orbit ───────── */
-      #tz-orbital-stage{ left:auto !important; right:calc(100px + env(safe-area-inset-right)) !important; bottom:calc(168px + env(safe-area-inset-bottom)) !important; }
+      #tz-orbital-stage{ right:auto !important; left:calc(100px + env(safe-area-inset-left)) !important; bottom:calc(168px + env(safe-area-inset-bottom)) !important; }
       .tzo-orbit-ring{ display:none; }                 /* dashed ring is noisy on small screens */
       .tzo-hub{ width:40px; height:40px; }
       .tzo-hub .tzo-core{ width:17px; height:17px; }
@@ -1217,7 +1217,7 @@
     @media (max-width: 768px) and (max-height: 480px){
       #info-panel.pinned #panel-body{ max-height:40dvh; }
       #tzo-sheet{ max-height:78dvh; }
-      #tz-orbital-stage{ left:auto !important; right:calc(100px + env(safe-area-inset-right)) !important; bottom:calc(140px + env(safe-area-inset-bottom)) !important; }
+      #tz-orbital-stage{ right:auto !important; left:calc(100px + env(safe-area-inset-left)) !important; bottom:calc(140px + env(safe-area-inset-bottom)) !important; }
     }
   </style>
   <!-- ══════════════════════════════════════════════════════════════════════
