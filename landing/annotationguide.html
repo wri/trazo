@@ -91,7 +91,10 @@
       --section-tint:rgba(95,208,230,0.05);
     }
 
-    html{ scroll-behavior:smooth; scrollbar-width:thin; scrollbar-color:var(--border) transparent; }
+    html{ scroll-behavior:smooth; scrollbar-width:thin; scrollbar-color:rgba(240,171,0,0.3) transparent; }
+    html::-webkit-scrollbar, body::-webkit-scrollbar { width:5px; }
+    html::-webkit-scrollbar-track, body::-webkit-scrollbar-track { background:transparent; }
+    html::-webkit-scrollbar-thumb, body::-webkit-scrollbar-thumb { background:rgba(240,171,0,0.3); border-radius:4px; }
     body{
       background:var(--bg-page); color:var(--text);
       font-family:var(--font-body); font-size:18px; line-height:1.65;
