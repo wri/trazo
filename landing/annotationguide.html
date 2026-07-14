@@ -5,6 +5,29 @@
   <script>document.documentElement.setAttribute("data-theme","simple");</script>
   <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
   <title>Trazo Field Boundary Annotation Guide</title>
+
+  <!-- ═══ Google Analytics 4 (gtag.js) ═══ -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-WDZSV2M2G6"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){ dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-WDZSV2M2G6');
+    // lightweight click + control tracking (page views & outbound clicks are automatic)
+    document.addEventListener('click', function(e){
+      var el = e.target.closest('a, button, [data-ga]');
+      if (!el) return;
+      var label = (el.getAttribute('data-ga') || el.textContent || el.getAttribute('aria-label') || el.id || '').replace(/\s+/g,' ').trim().slice(0,80);
+      if (!label) return;
+      gtag('event', 'ui_click', { label: label, element: el.tagName.toLowerCase(), page: location.pathname });
+    }, true);
+    document.addEventListener('change', function(e){
+      var sel = e.target;
+      if (sel && sel.tagName === 'SELECT'){
+        gtag('event', 'select_change', { control: sel.id || 'select', value: (sel.options[sel.selectedIndex]||{}).text || sel.value, page: location.pathname });
+      }
+    }, true);
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&display=swap" rel="stylesheet">
