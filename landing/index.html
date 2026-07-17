@@ -812,6 +812,20 @@
     #index-content .section-lead{ font-family:var(--font-body); font-size:clamp(20px,2.2vw,26px); line-height:1.3; color:var(--text); max-width:34ch; margin:0 0 16px; }
     #index-content .section-lead em{ font-style:normal; color:var(--gold); }
     #index-content .eyebrow{ font-family:var(--font-mono); font-size:10.5px; letter-spacing:.22em; text-transform:uppercase; color:var(--gold); display:inline-flex; align-items:center; gap:10px; }
+    /* top-nav hover: yellow underline (matches mobile map reader tabs) */
+    #index-content nav.primary a{ border-bottom:2px solid transparent; padding-bottom:2px; }
+    #index-content nav.primary a:hover{ border-bottom-color:#F0AB00; }
+    /* hover-reveal cue (subtle yellow underline) */
+    #index-content .hover-cue{ border-bottom:1px dotted rgba(240,171,0,0.75); padding-bottom:3px; cursor:help; }
+    /* read-more: hover reveals, click pins */
+    #index-content .rm-cue{ margin-top:18px; }
+    #index-content .rm-trigger{ font-family:var(--font-body); font-size:15px; background:none; border:none; padding:0; cursor:pointer; color:var(--text); text-decoration:underline; text-decoration-color:rgba(240,171,0,0.65); text-decoration-thickness:2px; text-underline-offset:3px; }
+    #index-content .rm-trigger::after{ content:" \203A"; color:#c8880a; }
+    #index-content .rm-trigger:hover{ text-decoration-color:#F0AB00; }
+    #index-content .rm.pinned .rm-trigger::after{ content:" \2039"; }
+    #index-content .rm > .rm-body{ max-height:0; overflow:hidden; opacity:0; transition:max-height .5s ease, opacity .3s ease; }
+    #index-content .rm:hover > .rm-body, #index-content .rm.pinned > .rm-body{ max-height:3200px; opacity:1; overflow:visible; }
+    @media (hover:none){ #index-content .rm > .rm-body{ max-height:none; opacity:1; } }
     #index-content .eyebrow::before{ content:""; width:24px; height:1px; background:var(--gold); }
 
     /* models */
@@ -846,6 +860,21 @@
     #index-content .step .num{ font-family:var(--font-mono); font-size:10.5px; color:var(--gold); letter-spacing:.16em; margin-bottom:8px; }
     #index-content .step h4{ font-family:var(--font-header); font-size:12.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--text); margin-bottom:6px; }
     #index-content .step p{ font-family:var(--font-body); font-size:13px; line-height:1.55; color:var(--text-muted); margin:0; }
+    /* ── hover-to-reveal collapse ── */
+    #index-content .hc > .hc-body{ max-height:0; overflow:hidden; opacity:0; margin-top:0; transition:max-height .45s ease, opacity .3s ease, margin-top .3s ease; }
+    #index-content .hc:hover > .hc-body, #index-content .hc:focus-within > .hc-body{ max-height:1400px; opacity:1; margin-top:14px; overflow:visible; }
+    #index-content .hc > .section-num{ cursor:default; }
+    #index-content .model-card .model-body, #index-content .model-card .model-foot-link{ max-height:0; overflow:hidden; opacity:0; padding-top:0; padding-bottom:0; transition:max-height .45s ease, opacity .3s ease, padding .3s ease; }
+    #index-content .model-card:hover .model-body, #index-content .model-card:focus-within .model-body{ max-height:520px; opacity:1; padding-top:18px; padding-bottom:20px; }
+    #index-content .model-card:hover .model-foot-link, #index-content .model-card:focus-within .model-foot-link{ max-height:120px; opacity:1; padding-top:11px; padding-bottom:13px; }
+    #index-content .step p{ max-height:0; overflow:hidden; opacity:0; margin-top:0 !important; transition:max-height .35s ease, opacity .25s ease, margin-top .25s ease; }
+    #index-content .step:hover p, #index-content .step:focus-within p{ max-height:240px; opacity:1; margin-top:6px !important; }
+    @media (hover:none){
+      #index-content .hc > .hc-body{ max-height:none; opacity:1; margin-top:14px; }
+      #index-content .model-card .model-body{ max-height:none; opacity:1; padding-top:18px; padding-bottom:20px; }
+      #index-content .model-card .model-foot-link{ max-height:none; opacity:1; padding-top:11px; padding-bottom:13px; }
+      #index-content .step p{ max-height:none; opacity:1; margin-top:6px !important; }
+    }
 
     /* resources */
     #index-content .resources{ margin-top:24px; display:grid; grid-template-columns:repeat(5,1fr); gap:1px; background:var(--border-faint); border:1px solid var(--border-faint); }
@@ -897,7 +926,7 @@
       box-shadow:0 0 0 1px rgba(80,70,40,0.18), 0 8px 40px rgba(0,0,0,0.12); }
     #landing-cta .lc-title{ font-family:var(--font-header); font-size:26px; font-weight:700;
       color:var(--gold); letter-spacing:.06em; text-transform:uppercase; line-height:1; }
-    #landing-cta .lc-sub{ font-family:var(--font-body); font-size:13px; color:var(--text-muted);
+    #landing-cta .lc-sub{ font-family:var(--font-body); font-size:18px; font-weight:600; color:#0a0a0a;
       margin-top:6px; margin-bottom:16px; }
     #landing-cta .lc-btn{ display:flex; align-items:center; justify-content:space-between; gap:10px;
       font-family:var(--font-header); font-size:11.5px; font-weight:700; letter-spacing:.09em;
@@ -921,7 +950,7 @@
         border-radius:8px;
       }
       #landing-cta .lc-title{ font-size:16px; }
-      #landing-cta .lc-sub{ font-size:10px; margin-top:4px; margin-bottom:8px; line-height:1.35; }
+      #landing-cta .lc-sub{ font-size:14px; margin-top:4px; margin-bottom:8px; line-height:1.35; }
       #landing-cta .lc-btn{ padding:7px 9px; font-size:9px; gap:6px; margin-top:6px; letter-spacing:.07em; }
 
       /* taller hero map so it reads on a phone */
@@ -1438,7 +1467,7 @@
 <div id="ui-layer">
 <div id="landing-cta">
   <div class="lc-title">Trazo</div>
-  <div class="lc-sub">Mato Grosso, 2024 field boundaries</div>
+  <div class="lc-sub">Agricultural Fields of Mato Grosso, 2024</div>
   <a class="lc-btn lc-btn-primary" href="map.html">View larger map </a>
   <a class="lc-btn" href="https://source.coop/wri-data-lab/trazofields" target="_blank" rel="noopener">Access field boundaries for 2024 </a>
 </div>
@@ -2072,24 +2101,28 @@ loadFile();
   <!-- ═══ COVERAGE ═══ -->
   <section class="section" id="coverage">
     <div class="wrap">
-      <h2 class="section-num">1 Coverage</h2>
-      <p class="section-lead">The original benchmark included 1,854 field boundaries in South America. Trazo adds <em>46,908</em>.</p>
-      <p class="eyebrow" style="margin-bottom: 24px;">46,908 expert annotated fields</p>
-      <p class="section-intro">
-        The Fields of The World benchmark included 1,854 field boundaries
-        in South America, about 0.11% of its global corpus, drawn from a
-        single site in Bahia, Brazil. <a href="https://source.coop/wri-data-lab/trazoannotations" target="_blank" rel="noopener">Trazo extends that coverage</a> to 17
-        soy-producing ecoregions, including Araucaria, Uruguayan Savannah, the
-        Chiquitania, the Pampas, Amazonian moist forests, the Chaco, and
-        the Cerrado.
-      </p>
-      <div class="train-hover-line">
-        <span class="hover-term">Hover to view<span class="hover-pop hover-pop--train">
-          <video src="https://wri-datalab-sandbox.s3.us-east-1.amazonaws.com/trazofields/Trazo+Landing+Images/trazo_training_animation_square.mp4" autoplay loop muted playsinline></video>
-        </span></span> the boundaries that trained Trazo models.
-      </div>
-      <div class="train-hover-line">
-        <a href="https://wri.github.io/trazo/landing/annotationtour.html">Tour and view</a> the field boundary annotations.
+      <div class="hc">
+        <h2 class="section-num">Coverage</h2>
+        <p class="section-lead">The original benchmark included 1,854 field boundaries in South America. Trazo adds <em>46,908</em>.</p>
+        <p class="eyebrow hover-cue" style="margin-bottom: 8px;">46,908 expert annotated fields</p>
+        <div class="hc-body">
+          <p class="section-intro">
+            The Fields of The World benchmark included 1,854 field boundaries
+            in South America, about 0.11% of its global corpus, drawn from a
+            single site in Bahia, Brazil. <a href="https://source.coop/wri-data-lab/trazoannotations" target="_blank" rel="noopener">Trazo extends that coverage</a> to 17
+            soy-producing ecoregions, including Araucaria, Uruguayan Savannah, the
+            Chiquitania, the Pampas, Amazonian moist forests, the Chaco, and
+            the Cerrado.
+          </p>
+          <div class="train-hover-line">
+            <span class="hover-term">Hover to view<span class="hover-pop hover-pop--train">
+              <video src="https://wri-datalab-sandbox.s3.us-east-1.amazonaws.com/trazofields/Trazo+Landing+Images/trazo_training_animation_square.mp4" autoplay loop muted playsinline></video>
+            </span></span> the boundaries that trained Trazo models.
+          </div>
+          <div class="train-hover-line">
+            <a href="https://wri.github.io/trazo/landing/annotationtour.html">Tour and view</a> the field boundary annotations.
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -2097,13 +2130,17 @@ loadFile();
   <!-- ═══ MODELS ═══ -->
   <section class="section" id="models">
     <div class="wrap">
-      <h2 class="section-num">2 Models</h2>
-      <p class="section-intro">
-        Trazo provides four model checkpoints, each trained on a different
-        combination of South American Data and FTW Data for different use cases.
-        The right checkpoint depends on the region, the agricultural system,
-        and whether pixel-level or object-level accuracy matters more.
-      </p>
+      <div class="hc">
+        <h2 class="section-num">Models</h2>
+        <div class="hc-body">
+          <p class="section-intro">
+            Trazo provides four model checkpoints, each trained on a different
+            combination of South American Data and FTW Data for different use cases.
+            The right checkpoint depends on the region, the agricultural system,
+            and the specific accuracy metric.
+          </p>
+        </div>
+      </div>
 
       <div class="model-grid">
 
@@ -2189,6 +2226,9 @@ loadFile();
         <a href="https://github.com/wri/trazo#readme">repository README</a>.
       </p>
 
+      <div class="rm">
+        <div class="rm-cue"><button type="button" class="rm-trigger">Read more about Trazo3</button></div>
+        <div class="rm-body">
       <p class="model-foot" style="color:var(--text); border-left-color:var(--gold); max-width:72ch;">
         Trazo3 is the recommended model for most use-cases. It was trained on
         median composited imagery, samples from <span class="hover-term">Mato Grosso<span class="hover-pop hover-pop--trazo3">
@@ -2235,13 +2275,15 @@ loadFile();
           <span class="cap">On the left-hand side during the planting season, there was more intact forest. In the harvest season, new land was opened up in the forest through clearing. We annotate newly cleared land which fit our definition of clear signs of recent management and anthropogenic intervention.</span>
         </span></span> that occurred between the planting and harvest seasons.
       </p>
+        </div>
+      </div>
     </div>
   </section>
 
   <!-- ═══ PIPELINE ═══ -->
   <section class="section" id="pipeline-section">
     <div class="wrap">
-      <h2 class="section-num">3 Pipeline</h2>
+      <h2 class="section-num">Pipeline</h2>
       <p class="section-intro">
         A sequence of composable utilities for moving from raw imagery to
         field-boundary predictions. Use the whole pipeline end-to-end, or
@@ -2251,27 +2293,27 @@ loadFile();
 
       <div class="pipeline">
         <a class="step" href="https://github.com/wri/trazo#step-1-create-grids-and-data-windows-from-grids">
-          <div class="num">01</div>
+          <div class="num">1</div>
           <h4>Create data</h4>
           <p>AOI grids and 4-band Sentinel-2 chips at planting and harvest windows.</p>
         </a>
         <a class="step" href="https://github.com/wri/trazo#step-2-data-preparation">
-          <div class="num">02</div>
+          <div class="num">2</div>
           <h4>Prepare data</h4>
           <p>Pair temporal stacks, normalize, build instance and semantic masks.</p>
         </a>
         <a class="step" href="https://github.com/wri/trazo/blob/main/src/trazo/pt3_finetune/Cerrado_Fine_Tuning.ipynb">
-          <div class="num">03</div>
+          <div class="num">3</div>
           <h4>Sample &amp; fine-tune</h4>
           <p>Active learning, temporal diversity, geographic balancing.</p>
         </a>
         <a class="step" href="https://github.com/wri/trazo#step-4-model-training">
-          <div class="num">04</div>
+          <div class="num">4</div>
           <h4>Train</h4>
           <p>U-Net, UperNet, DeepLabV3+, FCSiam, with twelve loss functions.</p>
         </a>
         <a class="step" href="https://github.com/wri/trazo#step-5-select-per-tile-pairs-and-run-inference">
-          <div class="num">05</div>
+          <div class="num">5</div>
           <h4>Infer at scale</h4>
           <p>Select the best Sentinel-2 scenes per tile and run multi-checkpoint inference at scale.</p>
         </a>
@@ -2282,7 +2324,7 @@ loadFile();
   <!-- ═══ RESOURCES / USE ═══ -->
   <section class="section" id="use">
     <div class="wrap">
-      <h2 class="section-num">4 Use</h2>
+      <h2 class="section-num">Use</h2>
       <p class="section-intro">
         Five open artifacts under CC-BY-4.0, covering the technical
         foundation through to the 10.9-million-field release for the
@@ -2322,7 +2364,7 @@ loadFile();
   <!-- ═══ CITATION ═══ -->
   <section class="section" id="cite">
     <div class="wrap">
-      <h2 class="section-num">5 Citation</h2>
+      <h2 class="section-num">Citation</h2>
       <p class="section-intro">
         Cite both the Trazo technical note (Grupp et al. 2026) and the original
         Fields of The World benchmark (Kerner et al. 2025).
@@ -2671,5 +2713,6 @@ window.TZ = (function(){
 })();
 </script>
 
+<script>document.addEventListener("click",function(e){var t=e.target.closest(".rm-trigger");if(t){var rm=t.closest(".rm");if(rm)rm.classList.toggle("pinned");}});</script>
 </body>
 </html>

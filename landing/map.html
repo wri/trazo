@@ -523,6 +523,28 @@
       letter-spacing: 0.18em; text-transform: uppercase;
       color: rgba(240,171,0,0.75); white-space: nowrap; pointer-events: none; line-height: 1;
     }
+    /* Release 2 / Trazo on the Ground: one hoverable label; items fan DOWN on hover */
+    #tgroup-r2, #tgroup-uc{ align-items:center; }
+    #tgroup-r2 > .tnav-group-label, #tgroup-uc > .tnav-group-label{
+      position:static; top:auto; left:auto; right:auto; text-align:left; pointer-events:auto; cursor:pointer;
+      display:flex; align-items:center; gap:6px; height:100%; padding:0 13px;
+      font-size:13px; font-weight:400; letter-spacing:.02em; text-transform:none;
+      color:var(--text-muted); border-bottom:2px solid transparent; transition:color .15s, border-color .15s;
+    }
+    #tgroup-r2 > .tnav-group-label::after, #tgroup-uc > .tnav-group-label::after{ content:"▾"; font-size:9px; opacity:.7; }
+    #tgroup-r2:hover > .tnav-group-label, #tgroup-uc:hover > .tnav-group-label{ color:var(--gold); border-bottom-color:#F0AB00; }
+    #tgroup-r2 .tnav-fan, #tgroup-uc .tnav-fan{
+      position:absolute; top:calc(100% - 2px); left:6px; z-index:640;
+      display:flex; flex-direction:column; min-width:190px; padding:5px;
+      background:var(--chrome-bg,var(--bg-overlay)); border:1px solid var(--border); border-radius:8px;
+      box-shadow:0 10px 30px rgba(0,0,0,0.18);
+      opacity:0; pointer-events:none; transform:translateY(-6px);
+      transition:opacity .18s ease, transform .22s ease;
+    }
+    #tgroup-r2:hover .tnav-fan, #tgroup-uc:hover .tnav-fan{ opacity:1; pointer-events:auto; transform:translateY(0); }
+    #tgroup-r2 .tnav-fan > .tnav-item, #tgroup-uc .tnav-fan > .tnav-item{ display:block; }
+    #tgroup-r2 .tnav-fan .tnav-trigger, #tgroup-uc .tnav-fan .tnav-trigger{ width:100%; justify-content:space-between; padding:9px 12px; }
+    #tgroup-r2 .tnav-fan .tnav-dropdown, #tgroup-uc .tnav-fan .tnav-dropdown{ left:auto !important; right:100% !important; top:0; margin-right:8px; }
     /* coverage geography list */
     .tnav-coverage-list { display: flex; flex-direction: column; gap: 4px; }
     .cov-entry {
@@ -559,7 +581,7 @@
       transition: color 0.15s;
       white-space: nowrap;
     }
-    .tnav-plain:hover{ color: var(--gold); }
+    .tnav-plain:hover{ color: var(--gold); border-bottom:2px solid #F0AB00; }
 
     /* ── Release 2 / Trazo on the Ground sub-items: flat, unbracketed, index-style ── */
     #tgroup-r2 .tnav-trigger, #tgroup-uc .tnav-trigger{
@@ -1776,6 +1798,7 @@
       <div class="tnav-sep-pipe"></div>
       <span class="tnav-group-label">Release 2</span>
 
+      <div class="tnav-fan">
       <div class="tnav-item tnav-item-dim" id="tnav-r2-coverage">
         <button class="tnav-trigger tnav-trigger-dim">Coverage <span class="caret">▾</span></button>
         <div class="tnav-dropdown">
@@ -1808,6 +1831,7 @@
           </div>
         </div>
       </div>
+      </div>
 
       <div class="tnav-sep-pipe"></div>
     </div>
@@ -1817,6 +1841,7 @@
       <div class="tnav-sep-pipe"></div>
       <span class="tnav-group-label">Trazo on the Ground</span>
 
+      <div class="tnav-fan">
       <div class="tnav-item" id="tnav-tg-barriers">
         <button class="tnav-trigger">Barriers <span class="caret">▾</span></button>
         <div class="tnav-dropdown" style="min-width:460px;max-width:560px;left:auto;right:0">
@@ -1883,6 +1908,7 @@
             <div class="tz-quote"><span class="tz-q">"The model’s data performance was generally in line with what I expected. More specifically, I expected a high-quality result but anticipated that complex areas (for example, fields that differ from the average in the Chaco region with different textures, diverse geometries, color, etc.) would be challenging, which was largely the case. Our organization is interested in accurate and up-to-date data on agricultural and livestock plots, both for monitoring deforestation and for tracking productivity, degradation status, and the implementation of sustainable practices in these areas. The data format aligns perfectly with what we typically use and prefer, and the spatial resolution is high.<br><br>These initial datasets demonstrated the quality that can be achieved with this methodology and align well with the needs mentioned, with the only exception being temporal coverage, as we require the most up-to-date data possible. However, this is not a major concern since the datasets that will be published next year will enable us to generate this type of information as frequently as needed.<br><br>It is also worth noting that we are highly interested in differentiating between crop types, and the segmentation models and training samples that will be shared next year will allow us to customize the model to better meet this need."</span><div class="tz-cite">GIS Specialist, Major Bank Investing in Sustainable Agriculture</div></div>
           </div>
         </div>
+      </div>
       </div>
 
       <div class="tnav-sep-pipe"></div>

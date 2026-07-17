@@ -137,8 +137,8 @@
     .mark{ display:flex; align-items:center; gap:9px; text-decoration:none; color:var(--text); font-family:var(--font-header); font-weight:700; letter-spacing:.08em; font-size:18px; text-transform:uppercase; }
     .mark .dot{ width:10px; height:10px; border-radius:50%; background:var(--gold); }
     .primary{ margin-left:auto; display:flex; align-items:center; gap:18px; }
-    .primary a{ color:var(--text-muted); text-decoration:none; font-family:var(--font-header); font-size:13px; letter-spacing:.02em; transition:color .15s; white-space:nowrap; }
-    .primary a:hover{ color:var(--gold); }
+    .primary a{ color:var(--text-muted); text-decoration:none; font-family:var(--font-header); font-size:13px; letter-spacing:.02em; transition:color .15s, border-color .15s; white-space:nowrap; border-bottom:2px solid transparent; padding-bottom:2px; }
+    .primary a:hover{ color:var(--gold); border-bottom-color:#F0AB00; }
     .primary .nav-div{ display:inline-block; width:1px; height:14px; background:var(--border); flex:none; }
     @media (max-width:760px){
       .masthead-inner{ flex-wrap:wrap; gap:10px 16px; height:auto; padding:10px 0; }
