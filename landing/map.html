@@ -628,10 +628,10 @@
     /* flat, semi-transparent fills - no gradients, no glow */
     .tzo-hub{ position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
       width:58px; height:58px; border-radius:50%; pointer-events:auto; cursor:default; z-index:50;
-      background:rgba(240,171,0,0.80); display:flex; align-items:center; justify-content:center; }
+      background:rgba(240,171,0,0.30); border:1.5px solid rgba(240,171,0,0.55); display:flex; align-items:center; justify-content:center; }
     [data-theme="light"] .tzo-hub{ background:rgba(139,105,20,0.80); }
-    [data-theme="simple"] .tzo-hub{ background:rgba(240,171,0,0.80); }
-    .tzo-hub .tzo-core{ width:26px; height:26px; border-radius:50%; background:rgba(255,255,255,0.85); }
+    [data-theme="simple"] .tzo-hub{ background:rgba(240,171,0,0.30); }
+    .tzo-hub .tzo-core{ width:22px; height:22px; border-radius:50%; background:rgba(255,255,255,0.28); }
     .tzo-hub .tzo-ring{ position:absolute; border-radius:50%; border:1px solid rgba(240,171,0,0.40);
       animation:tzoPing 2.6s cubic-bezier(0,0,0.2,1) infinite; }
     [data-theme="light"] .tzo-hub .tzo-ring{ border-color:rgba(139,105,20,0.40); }
@@ -644,18 +644,18 @@
     .tzo-node{ position:absolute; left:50%; top:50%; pointer-events:auto; cursor:pointer; will-change:transform,opacity; }
     .tzo-node .tzo-dot{ width:40px; height:40px; border-radius:50%; transform:translate(-50%,-50%);
       display:flex; align-items:center; justify-content:center;
-      background:rgba(240,171,0,0.12); color:#D49500; border:2px solid rgba(240,171,0,0.48);
+      background:rgba(240,171,0,0.26); color:#D49500; border:1.5px solid rgba(240,171,0,0.55);
       transition:background .3s,color .3s,border-color .3s,transform .3s; }
-    [data-theme="simple"] .tzo-node .tzo-dot{ background:rgba(240,171,0,0.12); color:#F0AB00; border-color:rgba(240,171,0,0.48); }
-    .tzo-node .tzo-dot svg{ width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+    [data-theme="simple"] .tzo-node .tzo-dot{ background:rgba(240,171,0,0.26); color:#F0AB00; border-color:rgba(240,171,0,0.55); }
+    .tzo-node .tzo-dot svg{ width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; opacity:0.72; }
     .tzo-node .tzo-title{ position:absolute; left:50%; top:34px; transform:translateX(-50%); white-space:nowrap;
       font-family:var(--font-header); font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
       color:var(--text-muted); transition:color .3s,transform .3s; pointer-events:none; }
     .tzo-node.related .tzo-dot{ border-color:var(--gold); animation:tzoPulse 1.4s ease-in-out infinite; }
-    .tzo-node.active  .tzo-dot{ background:rgba(240,171,0,0.85); color:#fff; border-color:var(--gold);
+    .tzo-node.active  .tzo-dot{ background:rgba(240,171,0,0.5); color:#fff; border-color:var(--gold);
       transform:translate(-50%,-50%) scale(1.4); }
     [data-theme="light"] .tzo-node.active .tzo-dot{ background:rgba(139,105,20,0.85); }
-    [data-theme="simple"] .tzo-node.active .tzo-dot{ background:rgba(240,171,0,0.85); }
+    [data-theme="simple"] .tzo-node.active .tzo-dot{ background:rgba(240,171,0,0.5); }
     .tzo-node.active  .tzo-title{ color:var(--text); transform:translateX(-50%) scale(1.15); }
 
     /* card opens to the RIGHT of the node; rotation freezes on click (expand) */
