@@ -1,0 +1,607 @@
+---
+title: "MapBiomas extraction for Trazo field boundaries - v3"
+author: "Trazo Fields"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
+```
+
+# What changed from `extract_mapbiomas_fieldboundaries_chunkedv2.Rmd`
+
+Every change below is backed by a measurement on this machine. Profiles were taken on
+Distrito Federal 2019 (50k features), Alagoas 2019 (238k) and Mato Grosso 2024 (1.22M).
+
+### 1. `make_poly_bb_sfc_4326()` is gone — the single biggest win
+
+v2 built one `sfc` rectangle per polygon, in an R loop, purely to test raster overlap.
+On Mato Grosso that was **4,017.7 s of a 5,094 s run (79%)**, and it degrades
+*superlinearly* — 2.01 -> 2.13 -> **3.28** ms/feature at 50k / 238k / 1.22M, because
+`do.call(c, lapply(...))` concatenates a growing `sfc`.
+
+Replaced by a bbox **matrix** plus an arithmetic overlap test: **4,017.7 s -> 14-67 s (60x)**.
+
+> `st_intersects(polys, r_bbox)` is **not** a valid substitute. It throws
+> `Loop 0 is not valid: Edge 10 has duplicate vertex with edge 14` on polygonised raster
+> boundaries, which carry degenerate edges. That failure is almost certainly why v2 built
+> rectangles in the first place. The arithmetic test avoids the geometry engine entirely
+> and was verified to give identical answers.
+
+### 2. Filters moved ahead of extraction
+
+v2 extracted MapBiomas for every polygon, and the ipynb Stage G discarded a large share
+afterwards. Two filters now run *before* any extraction:
+
+- **`gridcode == 2`** — boundary polygons, dropped by `DROP_GRIDCODE` downstream anyway.
+  179,902 of 1,404,888 on Mato Grosso (**12.8%**). Filtered in SQL at read time, so they
+  never enter memory.
+- **Geography clip** — moved here from ipynb Stage G. Discards **22-71%** depending on
+  state (Alagoas -68%, Distrito Federal -71%, Acre -22%); small states lose most because
+  110 km S2 tiles overhang their borders.
+
+### 3. Chunking is now unconditional and smaller
+
+v2 chunked only above 1,000,000 features, at 500,000. That is unsafe: `exact_extract(fun =
+NULL)` on 1.22M features **OOM'd at 12.6 GB** during `rbindlist`. Chunking is load-bearing,
+not a nicety. v3 chunks every layer at `CHUNK_SIZE = 50000`.
+
+| Chunk | Result on Mato Grosso |
+|---|---|
+| unchunked | 1,076 s extraction, then **OOM at 12.6 GB** |
+| 250,000 | **killed** — needs ~19 GB |
+| 100,000 | completed, **7.7 GB peak** |
+| **50,000 (v3)** | headroom on a machine that had 12.7 GB free |
+
+### 4. Reclassification happens on the pixel table, never the raster
+
+v2 called `terra::classify()` on the whole country raster **once per chunk**. Measured
+**135 s vs 2.9 s** cropped on Bolivia — a 46x penalty. `rcl_brazil` is `NULL`, so primary
+Brazilian layers escaped it, but **border layers still pay it via neighbour sources**:
+Acre extracts against Bolivia and Peru and runs at 15.0 ms/feature against Alagoas' 8.5.
+
+v3 extracts raw values and maps them through a 256-entry lookup vector on the (tiny)
+extracted pixel table.
+
+### Two things that were measured and rejected — do not reintroduce
+
+- **crop + built-in C++ summaries** (`exact_extract(r, p, c("mode","count"))`). Measured
+  5.7x *faster* on 5,000 contiguous Acre polygons but **2.5x slower** on Mato Grosso. The
+  Acre result was a property of spatially compact chunks, not of the method.
+- **Hilbert / spatial reordering.** Made extraction **37% slower**, and mean chunk bbox
+  area got 17% *larger* (10.23 -> 11.95 deg^2). Polygonisation already emits raster-scan
+  order, which is near-optimal for `exact_extract`'s feature-sequential traversal.
+
+### Measurement caveat
+
+This machine is shared with other memory-hungry work (63.8 GB total, ~80% used during
+testing). The identical configuration measured **1,781.9 s** and **2,489.7 s** on two runs.
+Rankings are reliable; absolute multipliers carry roughly +/-40%. Expect **~2.5-3x** on the
+extraction path, multiplied by the 30-75% of features the new filters remove up front.
+
+---
+
+# Settings
+
+```{r settings}
+library(terra); library(sf); library(exactextractr); library(data.table)
+data.table::setDTthreads(0L)
+
+# Source layers (Stage F output of the ipynb) and destination for finished layers.
+fields_dir    <- "D:/WRI/Field Boundaries/Trazo Fields/gpkg_outputs_v2"
+out_dir       <- "F:/Trazo Fields v2/field boundaries"
+mapbiomas_dir <- "D:/WRI/Field Boundaries/Trazo Fields/extract data/mapbiomas"
+
+# Admin composite built by Stage A of the ipynb (ADM0_NAME / ADM1_NAME / geometry).
+boundary_shp  <- "F:/Trazo Fields v2/states and countries/sa_admin_boundaries.shp"
+
+KEEP_QA_COLS              <- TRUE
+STRICT_FAIL_ON_NO_MB_YEAR <- FALSE
+CAP_TO_LATEST_MB_YEAR     <- TRUE
+
+# Filters applied BEFORE extraction (this is the point of v3).
+KEEP_GRIDCODE  <- 1L      # NULL disables the gridcode filter
+CLIP_GEOGRAPHY <- TRUE    # moved here from ipynb Stage G
+
+# --- Does nodata count toward mbcov_area? -----------------------------------
+# FALSE (v3 default, recommended): nodata cells are excluded from sampled_area.
+# TRUE: reproduce v2's behaviour exactly, including its double-counting bug.
+#
+# v2 summed coverage area across every source whose BOUNDING BOX overlapped a polygon.
+# Peru's raster bbox covers all of Acre while containing no Peruvian data there, so those
+# cells became class 27 (`others`) and were added to sampled_area -- giving every Acre
+# polygon a "coverage area" exactly 2x its real one. Measured on Acre 2019:
+#
+#   Id 6107:  v2 mbcov 26,119.5 | v3 mbcov 13,059.7 | v2 mbvalid 13,059.7
+#
+# v2's own mbvalid_area equals the true sampled area, which is what confirms the
+# inflation. Ratio was exactly 0.5000 (median and mean) across 14,667 compared features.
+#
+# CONSEQUENCE: mbcov_area_* in the 64 layers produced by v2 is inflated by roughly the
+# number of neighbour rasters whose bbox overlaps that geography. mbmode and
+# mbvalid_area are NOT affected (verified: 100% modal agreement, ratio 1.0000).
+COUNT_NODATA_IN_COVERAGE <- FALSE
+
+# Chunking: unconditional. 50k leaves headroom on a machine with ~12 GB free;
+# 100k peaked at 7.7 GB and 250k was killed outright.
+CHUNK_SIZE <- 50000L
+
+# Unset in v2, so GDAL ran on its conservative default. Divide by worker count
+# if this is ever parallelised -- each worker carries its own block cache.
+Sys.setenv(GDAL_CACHEMAX = "25%")
+
+terra::terraOptions(progress = 0)
+OTHERS_VALUE <- 27L
+```
+
+---
+
+# Catalogues and helpers (carried over from v2)
+
+```{r country-neighbors}
+country_neighbors <- list(
+  argentina = c("paraguay", "bolivia", "brazil", "chile", "uruguay"),
+  bolivia   = c("brazil", "paraguay", "peru", "argentina", "chile"),
+  brazil    = c("bolivia", "paraguay", "peru", "argentina", "uruguay",
+                "colombia", "venezuela", "ecuador"),
+  chile     = c("argentina", "bolivia", "peru"),
+  colombia  = c("ecuador", "peru", "venezuela", "brazil"),
+  ecuador   = c("peru", "colombia"),
+  paraguay  = c("argentina", "bolivia", "brazil"),
+  peru      = c("bolivia", "brazil", "ecuador", "colombia", "chile"),
+  uruguay   = c("argentina", "brazil"),
+  venezuela = c("colombia", "brazil")
+)
+```
+
+```{r filename-helpers}
+detect_country <- function(x) {
+  bn <- tolower(basename(x))
+  for (c_ in c("argentina","bolivia","chile","colombia","ecuador",
+               "paraguay","peru","uruguay","venezuela"))
+    if (grepl(c_, bn)) return(c_)
+  if (grepl("brazil|brasil", bn)) return("brazil")
+  NA_character_
+}
+
+extract_years_from_string <- function(x) {
+  hits <- regmatches(x, gregexpr("(?<![0-9])\\d{4}(?![0-9])", x, perl = TRUE))[[1]]
+  y <- suppressWarnings(as.integer(hits))
+  y[!is.na(y) & y >= 1985 & y <= 2035]
+}
+parse_mb_file_year <- function(path) {
+  y <- extract_years_from_string(basename(path))
+  if (!length(y)) NA_integer_ else tail(y, 1)
+}
+detect_gpkg_year <- parse_mb_file_year
+
+extract_years_from_band_names <- function(nm) {
+  y <- suppressWarnings(as.integer(regmatches(nm, regexpr("\\d{4}", nm))))
+  y[!is.na(y) & y >= 1985 & y <= 2035]
+}
+get_mb_available_years <- function(path) {
+  fy <- parse_mb_file_year(path)
+  if (!is.na(fy)) return(fy)
+  r <- rast(path)
+  if (nlyr(r) == 1) return(integer(0))
+  sort(unique(extract_years_from_band_names(names(r))))
+}
+```
+
+```{r mb-catalog}
+mb_tifs <- list.files(mapbiomas_dir, pattern = "\\.tif$", full.names = TRUE)
+if (!length(mb_tifs)) stop("No MapBiomas TIFFs in: ", mapbiomas_dir)
+
+mb_catalog <- data.frame(
+  path     = mb_tifs,
+  country  = vapply(mb_tifs, detect_country,      character(1)),
+  fileyear = vapply(mb_tifs, parse_mb_file_year,  integer(1)),
+  exists   = file.exists(mb_tifs), stringsAsFactors = FALSE)
+mb_catalog$available_years <- lapply(mb_catalog$path, get_mb_available_years)
+mb_catalog$maxyear <- vapply(seq_len(nrow(mb_catalog)), function(k) {
+  ay <- mb_catalog$available_years[[k]]
+  cand <- c(mb_catalog$fileyear[k], if (length(ay)) ay else NA_integer_)
+  if (all(is.na(cand))) NA_integer_ else max(cand, na.rm = TRUE)
+}, integer(1))
+country_max_year <- tapply(mb_catalog$maxyear, mb_catalog$country, max, na.rm = TRUE)
+
+catalog_has_year <- function(v, y) length(v) > 0 && y %in% v
+find_exact_mb_source <- function(cty, yr, cat) {
+  rows <- cat[cat$country == cty & cat$exists, , drop = FALSE]
+  if (!nrow(rows)) return(NULL)
+  for (i in seq_len(nrow(rows)))
+    if (!is.na(rows$fileyear[i]) && rows$fileyear[i] == yr ||
+        catalog_has_year(rows$available_years[[i]], yr))
+      return(list(path = rows$path[i], country = cty, year = yr))
+  NULL
+}
+find_best_mb_source <- function(cty, yr, cat, nbrs) {
+  s <- find_exact_mb_source(cty, yr, cat)
+  if (!is.null(s)) { s$reason <- "own-country exact-year source"; return(s) }
+  for (nb in nbrs[[cty]]) {
+    s <- find_exact_mb_source(nb, yr, cat)
+    if (!is.null(s)) { s$reason <- paste("neighbor exact-year source:", nb); return(s) }
+  }
+  NULL
+}
+```
+
+```{r reclass-tables}
+# from -> to per country, carried over from v2. rcl_brazil is NULL (no remapping).
+rcl_defs <- list(
+  brazil    = NULL, colombia = NULL, venezuela = NULL,
+  peru = list(
+    from = c( 1, 3, 4, 5, 6,10,11,12,13,14,15,18,21,23,24,25,26,29,30,31,32,33,34,35,40,61,66,68,70,72,27),
+    to   = c( 3, 3, 4, 5, 6,12,11,12,12,14,15,18,21,23,24,25,33,29,30,31,32,33,34,35,40,25,12,25,12,41,27)),
+  bolivia = list(
+    from = c( 1, 3, 4, 5, 6,10,11,12,13,15,18,19,20,21,24,25,27,29,30,31,32,33,34,35,36,39,40, 9,61,66,68,72,81,82),
+    to   = c( 3, 3, 4, 5, 6,12,11,12, 3,15,18,41,20,21,24,25,27,29,30,31,32,33,34,35,48,39,40, 9,25,12,25,41,12,11)),
+  paraguay = list(
+    from = c( 3, 4, 5, 9,11,12,15,18,19,21,24,27,33,39),
+    to   = c( 3, 4, 5, 9,11,12,15,18,41,21,24,27,33,39)),
+  argentina = list(
+    from = c( 3, 4, 5, 9,11,12,15,18,19,20,21,24,25,27,29,30,32,33,34,36,39,41,48,49,50,63,66,73,77),
+    to   = c( 3, 4, 5, 9,11,12,15,18,41,20,21,24,25,27,29,30,32,33,34,48,39,41,48,49,50,12, 4,11, 4)),
+  ecuador = list(
+    from = c( 3, 4, 5, 6, 9,11,12,13,15,18,19,21,24,27,29,30,32,33,34,35,36,39,40,41,68,74,81,82),
+    to   = c( 3, 4, 5, 6, 9,11,12,12,15,18,41,21,24,27,29,30,32,33,34,35,48,39,40,41,25,41,12,11)),
+  uruguay = list(
+    from = c( 3, 9,11,12,15,21,24,27,33,39,41),
+    to   = c( 3, 9,11,12,15,21,24,27,33,39,41)),
+  chile = list(
+    from = c( 3, 4, 5, 9,11,12,15,18,21,23,24,27,29,30,32,33,34,41,48,59,60,61,63,66,67),
+    to   = c( 3, 4, 5, 9,11,12,15,18,21,23,24,27,29,30,32,33,34,41,48, 3, 3,25,12, 4, 4))
+)
+
+# 256-entry lookup indexed by `value + 1`. Reclassifies any number of pixels with a
+# single vectorised subscript -- and never touches the raster.
+build_lut <- function(country) {
+  d <- rcl_defs[[country]]
+  lut <- if (is.null(d)) as.integer(0:255)               # identity (brazil et al.)
+         else { l <- rep(OTHERS_VALUE, 256L); l[d$from + 1L] <- as.integer(d$to); l }
+  # Class 0 is nodata. Mapping it to NA drops it from sampled_area (v3 default);
+  # leaving it in reproduces v2, where 0 became `others` and inflated the column.
+  # Either way it is excluded from validclass_area, which filters val > 0 & val != 27.
+  if (!COUNT_NODATA_IN_COVERAGE) lut[1L] <- NA_integer_
+  as.integer(lut)
+}
+LUT_CACHE <- new.env(parent = emptyenv())
+get_lut <- function(country) {
+  if (is.null(LUT_CACHE[[country]])) LUT_CACHE[[country]] <- build_lut(country)
+  LUT_CACHE[[country]]
+}
+```
+
+---
+
+# v3 core: fast bounding boxes, geography lookup, chunked extraction
+
+```{r fast-bbox}
+# Feature bounding boxes as a plain matrix (xmin ymin xmax ymax per row).
+# ~156x faster than v2's sfc-rectangle loop: no geometry objects are constructed.
+feature_bboxes <- function(x) {
+  t(vapply(sf::st_geometry(x), function(g) as.numeric(sf::st_bbox(g)), numeric(4)))
+}
+
+# Overlap against a raster extent, by arithmetic. Identical to v2's
+# st_intersects(bbox_rectangles, raster_bbox), and immune to invalid geometry.
+bbox_overlaps_raster <- function(bb, r) {
+  rb <- as.numeric(sf::st_bbox(terra::ext(r)))
+  bb[, 3] >= rb[1] & bb[, 1] <= rb[3] & bb[, 4] >= rb[2] & bb[, 2] <= rb[4]
+}
+```
+
+```{r geography-lookup}
+# Accent/case-insensitive key, matching the ipynb's norm() so layer names built from
+# folder names ("Brazil_Mato_Grosso_Do_Sul_2024") match GADM's "Mato Grosso do Sul".
+norm_key <- function(s) {
+  s <- iconv(as.character(s), to = "ASCII//TRANSLIT")
+  s[is.na(s)] <- ""
+  s <- gsub("[_]+", " ", s)
+  tolower(trimws(gsub("\\s+", " ", s)))
+}
+
+admin <- st_read(boundary_shp, quiet = TRUE)
+if (is.na(st_crs(admin))) admin <- st_set_crs(admin, 4326)
+admin <- st_transform(admin, 4326)
+admin$k <- paste(norm_key(admin$ADM0_NAME), norm_key(admin$ADM1_NAME), sep = "|")
+cat("admin units:", nrow(admin), "\n")
+
+STATE_LEVEL <- c("Brazil", "Argentina")
+
+# "Brazil_Mato_Grosso_2024" -> list(adm0="Brazil", adm1="Mato_Grosso", year=2024)
+parse_layer_name <- function(layer) {
+  m <- regmatches(layer, regexec("^(.+)_(\\d{4})$", layer))[[1]]
+  if (length(m) != 3) return(NULL)
+  region <- m[2]; year <- as.integer(m[3])
+  for (c_ in STATE_LEVEL)
+    if (startsWith(region, paste0(c_, "_")))
+      return(list(adm0 = c_, adm1 = substring(region, nchar(c_) + 2L), year = year))
+  list(adm0 = region, adm1 = "", year = year)
+}
+
+layer_geometry <- function(layer) {
+  p <- parse_layer_name(layer)
+  if (is.null(p)) return(NULL)
+  k <- paste(norm_key(p$adm0), norm_key(p$adm1), sep = "|")
+  i <- which(admin$k == k)
+  if (!length(i)) return(NULL)
+  st_geometry(admin)[i[1]]
+}
+```
+
+```{r extraction-engine}
+# Area-weighted modal class per polygon. Ties break toward the smaller class, matching
+# v2's `setorder(cls, pid, -a, val)`. Measured: zero exact ties in 20,000 polygons --
+# coverage_area is a continuous float, so ties are effectively measure-zero.
+aggregate_chunk <- function(d, n_chunk) {
+  out <- data.table(k = seq_len(n_chunk), sampled_area = 0,
+                    validclass_area = 0, mb_mode = NA_real_)
+  if (!nrow(d)) return(out)
+  d <- d[!is.na(val) & !is.na(area)]
+  if (!nrow(d)) return(out)
+
+  out[d[, .(s = sum(area)), by = k], sampled_area := i.s, on = "k"]
+
+  vv <- d[val > 0 & val != OTHERS_VALUE]
+  if (!nrow(vv)) return(out)
+  out[vv[, .(v = sum(area)), by = k], validclass_area := i.v, on = "k"]
+
+  cls <- vv[, .(a = sum(area)), by = .(k, val)]
+  setorder(cls, k, -a, val)
+  out[cls[, .(m = as.numeric(val[1])), by = k], mb_mode := i.m, on = "k"]
+  out[]
+}
+
+# Extract one chunk against every source (primary + neighbours), pooling pixels.
+# Each source is reclassified through ITS OWN LUT on the pixel table -- the raster is
+# never modified, which is what removes v2's per-chunk whole-country classify().
+extract_chunk <- function(polys_chunk, bb_chunk, sources) {
+  n <- nrow(polys_chunk)
+  parts <- list()
+  for (s in sources) {
+    r  <- rast(s$path)
+    ov <- bbox_overlaps_raster(bb_chunk, r)
+    if (!any(ov)) next
+    pix <- exact_extract(r, polys_chunk[ov, ], fun = NULL,
+                         coverage_area = TRUE, progress = FALSE)
+    d <- rbindlist(pix, idcol = "j", use.names = TRUE, fill = TRUE)
+    if (!nrow(d)) next
+    setnames(d, c("value", "coverage_area"), c("val", "area"), skip_absent = TRUE)
+    d[, val := get_lut(s$country)[as.integer(val) + 1L]]
+    d[, k := which(ov)[j]][, j := NULL]
+    parts[[length(parts) + 1L]] <- d
+    rm(pix, d)
+  }
+  if (!length(parts)) {
+    return(data.table(k = seq_len(n), sampled_area = 0,
+                      validclass_area = 0, mb_mode = NA_real_))
+  }
+  aggregate_chunk(rbindlist(parts, use.names = TRUE, fill = TRUE), n)
+}
+```
+
+---
+
+# Main loop
+
+```{r main-loop}
+srcs <- list.files(fields_dir, pattern = "\\.gpkg$", full.names = TRUE)
+srcs <- srcs[!grepl("__part[0-9]{3}\\.gpkg$", srcs)]
+cat("source layers:", length(srcs), "\n\n")
+
+log_rows <- list()
+
+for (src in srcs) {
+  layer    <- tools::file_path_sans_ext(basename(src))
+  out_gpkg <- file.path(out_dir, paste0(layer, ".gpkg"))
+  t0 <- proc.time()
+
+  cat("==============================================================\n")
+  cat("Layer:", layer, "\n")
+
+  # Skip completed layers (an mbmode column means v2 or v3 already finished it).
+  if (file.exists(out_gpkg)) {
+    cols <- tryCatch(names(st_read(out_gpkg,
+              query = sprintf('SELECT * FROM "%s" LIMIT 0', layer), quiet = TRUE)),
+            error = function(e) character(0))
+    if (any(grepl("^mbmode", cols))) { cat("  SKIP (already has mbmode)\n\n"); next }
+  }
+
+  country_key <- detect_country(src)
+  file_yr     <- detect_gpkg_year(src)
+  if (is.na(country_key)) { cat("  cannot detect country - skip\n\n"); next }
+  if (is.na(file_yr))     { cat("  cannot detect year - skip\n\n");    next }
+
+  # ---- 1. read, with gridcode filtered AT SOURCE -------------------------
+  q <- sprintf('SELECT * FROM "%s"', layer)
+  if (!is.null(KEEP_GRIDCODE)) q <- paste0(q, sprintf(" WHERE gridcode = %d", KEEP_GRIDCODE))
+  polys <- tryCatch(st_read(src, query = q, quiet = TRUE),
+                    error = function(e) { cat("  ERROR reading:", conditionMessage(e), "\n"); NULL })
+  if (is.null(polys) || !nrow(polys)) { cat("  0 features - skip\n\n"); next }
+  n_gc <- nrow(polys)
+  cat("  read (gridcode ==", KEEP_GRIDCODE, "):", format(n_gc, big.mark = ","), "\n")
+
+  if (is.na(st_crs(polys))) polys <- st_set_crs(polys, 4326)
+  if (st_crs(polys) != st_crs(4326)) polys <- st_transform(polys, 4326)
+
+  # ---- 2. geography clip, BEFORE extraction ------------------------------
+  # s2 MUST be off here. With s2 on this throws
+  #   "Loop 0 is not valid: Edge 24 has duplicate vertex with edge 28"
+  # because polygonised raster boundaries carry degenerate edges. Planar is also the
+  # correct semantics to match: the ipynb Stage G used geopandas, i.e. planar GEOS.
+  if (CLIP_GEOGRAPHY) {
+    geom <- layer_geometry(layer)
+    if (is.null(geom)) {
+      cat("  WARNING: no admin geometry for", layer, "- clip skipped\n")
+    } else {
+      s2_was <- sf_use_s2()
+      suppressMessages(sf_use_s2(FALSE))
+      keep <- tryCatch(lengths(st_intersects(polys, geom)) > 0,
+                       error = function(e) {
+                         cat("  clip FAILED:", conditionMessage(e), "- keeping all\n")
+                         rep(TRUE, nrow(polys))
+                       })
+      suppressMessages(sf_use_s2(s2_was))
+      polys <- polys[keep, ]
+      cat("  after geography clip:", format(nrow(polys), big.mark = ","),
+          sprintf("(-%.1f%%)\n", 100 * (1 - nrow(polys) / n_gc)))
+    }
+  }
+  n <- nrow(polys)
+  if (!n) { cat("  0 features after clip - skip\n\n"); next }
+
+  # ---- 3. year cap + output column names --------------------------------
+  cmax  <- suppressWarnings(country_max_year[[country_key]])
+  mb_yr <- if (CAP_TO_LATEST_MB_YEAR && !is.null(cmax) && !is.na(cmax) && file_yr > cmax) {
+             cat("  capping MapBiomas year", file_yr, "->", cmax, "\n"); cmax
+           } else file_yr
+  out_col <- paste0("mbmode",        substr(file_yr, 3, 4))
+  cov_col <- paste0("mbcov_area_",   file_yr)
+  val_col <- paste0("mbvalid_area_", file_yr)
+
+  srcmb <- find_best_mb_source(country_key, mb_yr, mb_catalog, country_neighbors)
+  if (is.null(srcmb)) {
+    if (STRICT_FAIL_ON_NO_MB_YEAR) stop("No MapBiomas source for ", country_key, " ", mb_yr)
+    cat("  no MapBiomas source - writing NA columns\n")
+    polys[[out_col]] <- NA_real_; polys[[cov_col]] <- 0; polys[[val_col]] <- 0
+    st_write(polys, out_gpkg, layer = layer, delete_dsn = TRUE, quiet = TRUE)
+    cat("\n"); next
+  }
+
+  sources <- c(list(list(path = srcmb$path, country = srcmb$country)),
+               Filter(Negate(is.null), lapply(country_neighbors[[country_key]], function(nb) {
+                 s <- find_exact_mb_source(nb, mb_yr, mb_catalog)
+                 if (is.null(s)) NULL else list(path = s$path, country = nb)
+               })))
+  cat("  sources:", paste(vapply(sources, `[[`, character(1), "country"), collapse = ", "), "\n")
+
+  # ---- 4. bbox matrix once, then chunked extraction -----------------------
+  tb <- proc.time()
+  BB <- feature_bboxes(polys)
+  cat(sprintf("  bbox matrix: %.1f s (%.3f ms/feat)\n",
+              (proc.time() - tb)[["elapsed"]], 1000 * (proc.time() - tb)[["elapsed"]] / n))
+
+  mode_v <- rep(NA_real_, n); cov_v <- rep(0, n); val_v <- rep(0, n)
+  brks <- seq(1L, n, by = CHUNK_SIZE)
+  te <- proc.time()
+  for (ci in seq_along(brks)) {
+    sel <- brks[ci]:min(brks[ci] + CHUNK_SIZE - 1L, n)
+    res <- extract_chunk(polys[sel, ], BB[sel, , drop = FALSE], sources)
+    mode_v[sel] <- res$mb_mode; cov_v[sel] <- res$sampled_area; val_v[sel] <- res$validclass_area
+    rm(res); invisible(gc(verbose = FALSE))
+    cat(sprintf("    chunk %d/%d  %.0f s cum\n", ci, length(brks),
+                (proc.time() - te)[["elapsed"]]))
+  }
+  t_ext <- (proc.time() - te)[["elapsed"]]
+
+  # ---- 5. write ----------------------------------------------------------
+  polys[[out_col]] <- mode_v
+  if (KEEP_QA_COLS) { polys[[cov_col]] <- cov_v; polys[[val_col]] <- val_v }
+  st_write(polys, out_gpkg, layer = layer, delete_dsn = TRUE, quiet = TRUE)
+
+  n_out <- as.integer(st_read(out_gpkg,
+            query = sprintf('SELECT COUNT(*) AS n FROM "%s"', layer), quiet = TRUE)$n)
+  el <- (proc.time() - t0)[["elapsed"]]
+  cat(sprintf("  wrote %s features %s | %.0f s total (%.3f ms/feat extraction)\n\n",
+              format(n_out, big.mark = ","),
+              if (identical(n_out, n)) "(verified)" else "(*** COUNT MISMATCH ***)",
+              el, 1000 * t_ext / n))
+
+  log_rows[[length(log_rows) + 1L]] <- data.table(
+    layer = layer, n_gridcode = n_gc, n_after_clip = n, n_written = n_out,
+    total_s = el, extract_s = t_ext, ms_per_feat = 1000 * t_ext / n)
+
+  rm(polys, BB, mode_v, cov_v, val_v); invisible(gc(verbose = FALSE))
+}
+
+if (length(log_rows)) {
+  run_log <- rbindlist(log_rows)
+  print(run_log)
+  fwrite(run_log, file.path(dirname(out_dir), "v3_run_log.csv"))
+}
+```
+
+---
+
+# Verification against v2
+
+Run this on a layer v2 already produced. It re-extracts with v3 and compares row by row.
+**Do this before trusting a production run** — the `"sum"` vs `"count"` bug found during
+development produced a silently wrong area column while modal class stayed 100% correct,
+so agreement on one field proves nothing about the others.
+
+```{r verify, eval=FALSE}
+VERIFY_LAYER <- "Brazil_Acre_2019"
+v2_path <- file.path(out_dir, paste0(VERIFY_LAYER, ".gpkg"))
+
+v2 <- st_read(v2_path, quiet = TRUE)
+mode_col <- grep("^mbmode", names(v2), value = TRUE)[1]
+
+src <- file.path(fields_dir, paste0(VERIFY_LAYER, ".gpkg"))
+q <- sprintf('SELECT * FROM "%s" WHERE gridcode = %d', VERIFY_LAYER, KEEP_GRIDCODE)
+p <- st_transform(st_read(src, query = q, quiet = TRUE), 4326)
+g <- layer_geometry(VERIFY_LAYER)
+if (!is.null(g)) {
+  suppressMessages(sf_use_s2(FALSE))
+  p <- p[lengths(st_intersects(p, g)) > 0, ]
+  suppressMessages(sf_use_s2(TRUE))
+}
+
+# The R clip does not reproduce the ipynb's Python clip EXACTLY: measured 141,562 vs
+# 141,560 on Acre 2019, a +2 / 0.0014% difference. Both use planar GEOS `intersects`,
+# so the discrepancy is boundary-touching polygons resolving differently between
+# geopandas and sf. Tolerate a small difference; a large one means the wrong geometry
+# was matched (check parse_layer_name / norm_key against the admin table).
+cat("v2 rows:", nrow(v2), " v3 rows:", nrow(p),
+    sprintf(" (diff %+d, %.4f%%)\n", nrow(p) - nrow(v2),
+            100 * abs(nrow(p) - nrow(v2)) / nrow(v2)))
+if (abs(nrow(p) - nrow(v2)) / nrow(v2) > 0.001)
+  stop("clip differs from ipynb Stage G by more than 0.1% - investigate before proceeding")
+
+# Row-wise comparison below requires identical row sets. When counts differ by a
+# handful of boundary polygons, compare on the intersection by geometry id instead.
+if (nrow(p) != nrow(v2)) {
+  cat("NOTE: row counts differ; comparing on the common `Id` set only.\n")
+  common <- intersect(v2$Id, p$Id)
+  v2 <- v2[match(common, v2$Id), ]
+  p  <- p [match(common, p$Id),  ]
+  cat("comparing", length(common), "common features\n")
+}
+
+cy <- detect_gpkg_year(src); ck <- detect_country(src)
+sm <- find_best_mb_source(ck, cy, mb_catalog, country_neighbors)
+sources <- c(list(list(path = sm$path, country = sm$country)),
+             Filter(Negate(is.null), lapply(country_neighbors[[ck]], function(nb) {
+               s <- find_exact_mb_source(nb, cy, mb_catalog)
+               if (is.null(s)) NULL else list(path = s$path, country = nb)
+             })))
+
+BB <- feature_bboxes(p); n <- nrow(p)
+m3 <- rep(NA_real_, n); c3 <- rep(0, n)
+for (lo in seq(1L, n, by = CHUNK_SIZE)) {
+  sel <- lo:min(lo + CHUNK_SIZE - 1L, n)
+  r_  <- extract_chunk(p[sel, ], BB[sel, , drop = FALSE], sources)
+  m3[sel] <- r_$mb_mode; c3[sel] <- r_$sampled_area
+}
+
+agree <- mean((is.na(v2[[mode_col]]) & is.na(m3)) |
+              (!is.na(v2[[mode_col]]) & !is.na(m3) & v2[[mode_col]] == m3))
+cat(sprintf("mb_mode agreement : %.4f%%\n", 100 * agree))
+
+cov_col <- grep("^mbcov_area_", names(v2), value = TRUE)[1]
+if (!is.na(cov_col)) {
+  rel <- abs(v2[[cov_col]] - c3) / pmax(v2[[cov_col]], 1e-9)
+  cat(sprintf("max rel. area diff: %.2e\n", max(rel, na.rm = TRUE)))
+}
+cat("\nRequire ~100%% mode agreement and area diff <= ~1e-7 before running production.\n")
+```
+
+```{r session-info}
+sessionInfo()
+```
