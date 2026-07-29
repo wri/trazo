@@ -315,17 +315,17 @@ def create_grid(
     print(f"[OK] Wrote dissolved polygons: {dissolved_path}")
 
     grid = generate_grid(dissolved.total_bounds, cell_size_meters, parcelas.crs)
-    grid["cell_id"] = np.arange(len(grid), dtype=np.int64)
-    grid["cell_area"] = grid.geometry.area
+    grid["chip_id"] = np.arange(len(grid), dtype=np.int64)
+    grid["chip_area"] = grid.geometry.area
     print(f"[INFO] Grid cells: {len(grid)} | CRS: {grid.crs}")
 
     intersections = grid.geometry.intersection(union_poly)
-    grid["covered_area"] = intersections.area.fillna(0.0)
-    grid["coverage_pct"] = np.where(
-        grid["cell_area"] > 0, 100.0 * grid["covered_area"] / grid["cell_area"], 0.0
+    grid["cov_area"] = intersections.area.fillna(0.0)
+    grid["cov_pct"] = np.where(
+        grid["chip_area"] > 0, 100.0 * grid["cov_area"] / grid["chip_area"], 0.0
     )
 
-    grid_filtered = grid[grid["coverage_pct"] > 10].copy()
+    grid_filtered = grid[grid["cov_pct"] > 10].copy()
     grid_filtered["geometry"] = grid_filtered.geometry.buffer(0)
     grid_filtered = grid_filtered[grid_filtered.geometry.geom_type.isin(["Polygon", "MultiPolygon"])].copy()
     grid_filtered.reset_index(drop=True, inplace=True)

@@ -15,10 +15,10 @@ from torch import Tensor
 from torchgeo.datasets import NonGeoDataset
 
 #from ftw_tools.settings import ALL_COUNTRIES, TEMPORAL_OPTIONS
-from src.tkt.pt4_train.settings import ALL_COUNTRIES, TEMPORAL_OPTIONS
+from .settings import ALL_COUNTRIES, TEMPORAL_OPTIONS
 
 # from ftw_tools.utils import validate_checksums
-from src.tkt.pt4_train.utils import validate_checksums
+from .utils import validate_checksums
 
 class FTW(NonGeoDataset):
     valid_splits = ["train", "val", "test"]

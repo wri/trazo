@@ -2,16 +2,37 @@ import click
 import os
 
 
-def fit(config, ckpt_path, cli_args):
+def build_fit_args(config, ckpt_path=None, cli_args=(), data_dir=None, output_dir=None):
+    """Assemble the argv handed to LightningCLI for a fit run.
+
+    ``data_dir`` and ``output_dir`` become ``--data.init_args.root`` and
+    ``--trainer.default_root_dir`` so they override whatever the YAML config
+    sets. Offering the flags and then ignoring them is worse than not offering
+    them at all, so this is covered by tests.
+    """
+    args = ["fit", f"--config={config}"] + list(cli_args)
+    if data_dir:
+        args += [f"--data.init_args.root={data_dir}"]
+    if output_dir:
+        args += [f"--trainer.default_root_dir={output_dir}"]
+    if ckpt_path:
+        args += [f"--ckpt_path={ckpt_path}"]
+    return args
+
+
+def fit(config, ckpt_path, cli_args, data_dir=None, output_dir=None):
     """Command to fit the model."""
     from lightning.pytorch.cli import LightningCLI
     from torchgeo.trainers import BaseTask
 
     print("Running fit command")
 
-    cli_args = ["fit", f"--config={config}"] + list(cli_args)
-    if ckpt_path:
-        cli_args += [f"--ckpt_path={ckpt_path}"]
+    if output_dir:
+        os.makedirs(output_dir, exist_ok=True)
+    cli_args = build_fit_args(
+        config, ckpt_path=ckpt_path, cli_args=cli_args,
+        data_dir=data_dir, output_dir=output_dir,
+    )
     print(f"CLI arguments: {cli_args}")
 
     rasterio_best_practices = {
@@ -49,15 +70,18 @@ def model():
 )
 @click.option(
     "--data-dir", "-d",
-    required=True,
+    default=None,
     type=click.Path(exists=True, file_okay=False),
-    help="Path to dataset directory",
+    help="Dataset directory. Overrides data.init_args.root in the config.",
 )
 @click.option(
     "--output-dir", "-o",
-    required=True,
+    default=None,
     type=click.Path(file_okay=False),
-    help="Directory where logs/checkpoints should be saved",
+    help=(
+        "Directory for logs and checkpoints. Overrides trainer.default_root_dir "
+        "in the config."
+    ),
 )
 @click.option(
     "--ckpt_path", "-m",
@@ -69,7 +93,7 @@ def model():
 @click.argument("cli_args", nargs=-1, type=click.UNPROCESSED)
 def model_fit(config, data_dir, output_dir, ckpt_path, cli_args):
     """Fit the model using a YAML config."""
-    fit(config, ckpt_path, cli_args)
+    fit(config, ckpt_path, cli_args, data_dir=data_dir, output_dir=output_dir)
 
 
 @model.command("test", help="Test the model")
@@ -100,7 +124,13 @@ def model_fit(config, data_dir, output_dir, ckpt_path, cli_args):
     help="GPU index",
 )
 def model_test(**kwargs):
-    from ftw_tools.training.eval import test
+    # ftw-tools installs its packages as `ftw` / `ftw_cli`, not `ftw_tools`.
+    # Try the current location first and fall back, so this keeps working if
+    # the upstream layout changes again.
+    try:
+        from ftw_cli.model import test
+    except ImportError:  # pragma: no cover - depends on the installed ftw-tools
+        from ftw_tools.training.eval import test
     test(**kwargs)
 
 

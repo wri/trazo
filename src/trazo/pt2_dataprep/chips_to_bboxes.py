@@ -19,7 +19,7 @@ Rules
   - Chips without CRS are skipped.
 
 Example CLI:
-  python -m tkt.pt2_dataprep.chips_to_bboxes \
+  python -m trazo.pt2_dataprep.chips_to_bboxes \
       --folder /data/stacked \
       --folder /more/stacked \
       --require-256 \

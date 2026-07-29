@@ -32,7 +32,7 @@ As a module:
 
 From CLI (once wired into your entrypoints):
 
-    python -m tkt.pt2_dataprep.pair_stacks \
+    python -m trazo.pt2_dataprep.pair_stacks \
         --window-a-dir /data/window_a \
         --window-b-dir /data/window_b \
         --out-dir /data/stacked \

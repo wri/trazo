@@ -67,25 +67,41 @@ def _ensure_aoi_id(gdf: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
         g["aoi_id"] = g["aoi_id"].astype("string")
         return g
 
-    for col in ["id", "name", "tile_id", "grid_id", "stem"]:
-        if col in g.columns:
-            g["aoi_id"] = g[col].astype("string")
+    def _stems(series) -> "pd.Series":
+        """Strip any directory prefix and raster extension."""
+        s = series.astype("string")
+        return (
+            s.str.replace("\\", "/", regex=False)
+            .str.split("/")
+            .str[-1]
+            .str.replace(r"\.tiff?$", "", case=False, regex=True)
+        )
+
+    # `filename` is what chips-bboxes writes; the rest are common in
+    # hand-made grids and third-party chip indexes.
+    for col in ["filename", "chip_id", "id", "name", "tile_id", "grid_id", "stem"]:
+        if col in g.columns and g[col].notna().any():
+            g["aoi_id"] = _stems(g[col])
             return g
 
-    # try to derive from any filename-like column
-    str_cols = [c for c in g.columns if g[c].dtype == "object" or str(g[c].dtype).startswith("string")]
-    for col in str_cols:
+    # Fall back to any text column that looks like it holds raster filenames.
+    # `is_string_dtype` rather than a dtype-name check: pandas 3 reports the
+    # string dtype as `str`, which the old `object`/`string` test missed, and
+    # this function then raised on perfectly good bbox files.
+    for col in g.columns:
+        if col == g.geometry.name:
+            continue
+        if not pd.api.types.is_string_dtype(g[col]):
+            continue
         s = g[col].astype("string")
         if s.str.contains(".tif", case=False, na=False).any():
-            g["aoi_id"] = (
-                s.str.replace("\\\\", "/", regex=True)
-                 .str.split("/")
-                 .str[-1]
-                 .str.replace(".tif", "", case=False, regex=False)
-            )
+            g["aoi_id"] = _stems(s)
             return g
 
-    raise ValueError("Bounding boxes have no aoi_id and no recognizable fallback column.")
+    raise ValueError(
+        "Bounding boxes have no aoi_id and no recognizable fallback column. "
+        f"Columns present: {sorted(c for c in g.columns if c != g.geometry.name)}"
+    )
 
 
 def _to_epsg(gdf: gpd.GeoDataFrame, epsg: str) -> gpd.GeoDataFrame:
@@ -298,7 +314,7 @@ def process_one_base(
 # CLI
 # ----------------------------
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(
         description="Build one-row-per-chip GeoParquet with field MultiPolygons per chip."
     )
@@ -337,7 +353,7 @@ def parse_args() -> argparse.Namespace:
     )
     p.add_argument(
         "--split-salt",
-        default="tkt_split_v1",
+        default="trazo_split_v1",
         help="Salt for deterministic split hashing."
     )
     p.add_argument(
@@ -355,11 +371,11 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Overwrite existing outputs."
     )
-    return p.parse_args()
+    return p.parse_args(argv)
 
 
 def main(argv: Optional[List[str]] = None) -> None:
-    args = parse_args()
+    args = parse_args(argv)
 
     bases = [Path(b).expanduser().resolve() for b in args.base_folder]
     fields = Path(args.fields_shp).expanduser().resolve() if args.fields_shp else None

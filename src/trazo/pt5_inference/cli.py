@@ -8,23 +8,23 @@ Subcommands:
 
   tilepairs
       AOI based selector and stack writer.
-      Delegates to tkt.pt5_inference.tilepairs.main(argv).
+      Delegates to trazo.pt5_inference.tilepairs.main(argv).
 
   tilepairs-advanced
       Advanced selector that also handles inference and cleanup.
-      Delegates to tkt.pt5_inference.tilepairs_advanced.main(argv).
+      Delegates to trazo.pt5_inference.tilepairs_advanced.main(argv).
 
   tilepairs-tilelist
       Tile list based selector using SOS/EOS and progressive cloud constraints.
-      Delegates to tkt.pt5_inference.tilepairs_tilelist.main(argv).
+      Delegates to trazo.pt5_inference.tilepairs_tilelist.main(argv).
 
   multi-infer
       Multi model batch inference over a folder of TIFFs.
-      Delegates to tkt.pt5_inference.multimodelinference.main(argv).
+      Delegates to trazo.pt5_inference.multimodelinference.main(argv).
 
   batch-infer
       Batch inference utility (single or multiple checkpoints).
-      Delegates to tkt.pt5_inference.batchinference.main(argv).
+      Delegates to trazo.pt5_inference.batchinference.main(argv).
 """
 
 import argparse
@@ -47,7 +47,7 @@ def build_parser() -> argparse.ArgumentParser:
         "tilepairs",
         help=(
             "AOI based Sentinel-2 scene pairing and 8 band stack creation "
-            "(delegates to tkt.pt5_inference.tilepairs)."
+            "(delegates to trazo.pt5_inference.tilepairs)."
         ),
     )
     p_pairs.set_defaults(command="tilepairs")
@@ -58,7 +58,7 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "Advanced Sentinel-2 scene pairing that can also run inference and "
             "cleanup temporary stacks "
-            "(delegates to tkt.pt5_inference.tilepairs_advanced)."
+            "(delegates to trazo.pt5_inference.tilepairs_advanced)."
         ),
     )
     p_pairs_adv.set_defaults(command="tilepairs-advanced")
@@ -69,7 +69,7 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "Tile list based Sentinel-2 scene pairing using SOS/EOS derived "
             "date windows "
-            "(delegates to tkt.pt5_inference.tilepairs_tilelist)."
+            "(delegates to trazo.pt5_inference.tilepairs_tilelist)."
         ),
     )
     p_pairs_tile.set_defaults(command="tilepairs-tilelist")
@@ -79,7 +79,7 @@ def build_parser() -> argparse.ArgumentParser:
         "multi-infer",
         help=(
             "Multi model batch inference over a directory of TIFFs "
-            "(delegates to tkt.pt5_inference.multimodelinference)."
+            "(delegates to trazo.pt5_inference.multimodelinference)."
         ),
     )
     p_multi.set_defaults(command="multi-infer")
@@ -89,7 +89,7 @@ def build_parser() -> argparse.ArgumentParser:
         "batch-infer",
         help=(
             "Batch inference utility "
-            "(delegates to tkt.pt5_inference.batchinference)."
+            "(delegates to trazo.pt5_inference.batchinference)."
         ),
     )
     p_batch.set_defaults(command="batch-infer")

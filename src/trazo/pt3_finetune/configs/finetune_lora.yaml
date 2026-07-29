@@ -1,0 +1,77 @@
+# Step 3.1 - LoRA fine-tuning.
+#
+# Base weights stay frozen; rank-r adapters train alongside them, cutting the
+# trainable parameter count by roughly two orders of magnitude. Scored 64.0%
+# pixel IoU in the note's Chiquitania comparison - above the 42.5% FTW baseline,
+# below full fine-tuning.
+#
+# Rank is the knob that matters: 4 is cheap and conservative, 16 adapts harder.
+# lora_alpha / lora_rank is the effective scale of the update.
+#
+# Run:
+#   trazo-pt3-finetune run --strategy lora --config this_file.yaml
+#       --checkpoint /models/ftw_3class.ckpt
+#       --data-dir /data/region --output-dir /models/ft_lora
+#
+# Every key below is overridable from the command line, e.g.
+#   --data.init_args.batch_size=16
+
+seed_everything: 7
+
+trainer:
+  max_epochs: 300           # note used 300 epochs with early stopping
+  log_every_n_steps: 10
+  accelerator: auto
+  devices: auto
+  gradient_clip_val: 0.5
+  default_root_dir: logs/trazo_finetune_lora
+  callbacks:
+    - class_path: lightning.pytorch.callbacks.ModelCheckpoint
+      init_args:
+        monitor: val_loss
+        mode: min
+        save_top_k: 1
+        save_last: true
+        filename: "best-{epoch:03d}-{val_loss:.4f}"
+    - class_path: lightning.pytorch.callbacks.EarlyStopping
+      init_args:
+        monitor: val_loss
+        mode: min
+        patience: 100        # note used patience 100 on a 300-epoch budget
+    - class_path: lightning.pytorch.callbacks.LearningRateMonitor
+      init_args:
+        logging_interval: epoch
+
+model:
+  class_path: trazo.pt3_finetune.trainers.FineTuneTask
+  init_args:
+    strategy: lora
+    pretrained_ckpt: null    # set with --checkpoint
+    model: unet
+    backbone: efficientnet-b3   # best FTW benchmark backbone
+    weights: true               # ImageNet init before the checkpoint loads
+    in_channels: 8              # planting + harvest, 4 bands each
+    num_classes: 3              # background / interior / boundary
+    num_filters: 64
+    loss: ce
+    class_weights: [0.05, 0.20, 0.75]   # boundary-weighted, per the note
+    ignore_index: 3             # class 3 = unlabeled, presence-only masks
+    patch_weights: false
+    lr: 1.0e-4                  # higher: only the adapters are learning
+    patience: 100               # cosine annealing T_max
+    lora_rank: 4
+    lora_alpha: 1.0
+    lora_dropout: 0.1
+
+data:
+  class_path: trazo.pt4_train.datamodules.FTWDataModule
+  init_args:
+    root: data/ftw              # override with --data-dir
+    batch_size: 32
+    num_workers: 4
+    temporal_options: stacked
+    train_countries: [region]
+    val_countries: [region]
+    test_countries: [region]
+  dict_kwargs:
+    load_boundaries: true

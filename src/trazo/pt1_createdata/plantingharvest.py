@@ -81,7 +81,7 @@ UC_GITHUB_BASE = (
     "main/cropcalendars_phase2/smoothed"
 )
 WRI_GITHUB_BASE = (
-    "https://raw.githubusercontent.com/wri/toolkit-for-traceability/main/seasontifs"
+    "https://raw.githubusercontent.com/wri/trazo/main/seasontifs"
 )
 
 
@@ -104,6 +104,41 @@ def first_jan(year: int) -> datetime:
 def doy_to_date(year: int, doy: int) -> datetime:
     d = max(1, min(366, int(doy)))
     return first_jan(year) + relativedelta(days=d - 1)
+
+
+LEGACY_CHIPID_COLUMNS = ("chip_id", "chipid", "cell_id", "cellid")
+
+
+def resolve_chip_column(
+    columns, chipid_field: Optional[str], source_name: str = ""
+) -> Optional[str]:
+    """Find the column holding chip IDs, case-insensitively.
+
+    Step 1.1 writes `chip_id`, which is also the `--chipid-field` default, so the
+    two steps line up with no flags. Grids produced by older versions carry
+    `cell_id` or `cellid`; those are picked up here and reported, rather than
+    falling through to `aoi_id`, which would silently renumber every chip and
+    break the correspondence with the labels drawn against the original grid.
+
+    Returns the actual column name as it appears in the data, or None.
+    """
+    cols = {str(c).lower(): c for c in columns}
+
+    if chipid_field:
+        hit = cols.get(chipid_field.lower())
+        if hit is not None:
+            return hit
+
+    for legacy in LEGACY_CHIPID_COLUMNS:
+        if legacy in cols:
+            found = cols[legacy]
+            where = f" in {source_name}" if source_name else ""
+            print(
+                f"[chipid] '{chipid_field}' not found{where}; using '{found}' instead."
+            )
+            return found
+
+    return None
 
 
 def parse_chip_name(raw: str) -> str:
@@ -141,7 +176,7 @@ def ensure_season_tifs(season_dir: Path, verbose: bool = True) -> Tuple[Path, Pa
     Order:
       1) If both exist locally, use them.
       2) Try to download from ucg-uv/research_products cropcalendars_phase2/smoothed.
-      3) If that fails, try wri/toolkit-for-traceability/seasontifs.
+      3) If that fails, try wri/trazo/seasontifs.
       4) If still missing, raise an error.
     """
     ensure_dir(season_dir)
@@ -160,7 +195,7 @@ def ensure_season_tifs(season_dir: Path, verbose: bool = True) -> Tuple[Path, Pa
     if sos_ok and eos_ok:
         return sos_path, eos_path
 
-    # Fallback: wri toolkit-for-traceability repo
+    # Fallback: wri/trazo repo
     sos_ok = sos_ok or _download_file(f"{WRI_GITHUB_BASE}/{SOS_FILENAME}", sos_path, verbose=verbose)
     eos_ok = eos_ok or _download_file(f"{WRI_GITHUB_BASE}/{EOS_FILENAME}", eos_path, verbose=verbose)
 
@@ -794,8 +829,7 @@ def run_for_shapefile_parallel(
         print(f"{shp_path.name}: empty shapefile")
         return [], []
 
-    cols = {c.lower(): c for c in gdf.columns}
-    chip_col = cols.get(chipid_field.lower(), None) if chipid_field else None
+    chip_col = resolve_chip_column(gdf.columns, chipid_field, source_name=shp_path.name)
 
     # Ensure aoi_id column exists and is unique
     if "aoi_id" not in gdf.columns:
@@ -901,7 +935,7 @@ def run_for_shapefile_parallel(
 # CLI
 # =====================================================================
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     epilog = """
 Additional notes on key parameters:
 
@@ -960,8 +994,12 @@ Additional notes on key parameters:
     )
     parser.add_argument(
         "--chipid-field",
-        default="cellid",
-        help="Column name to use as chip ID (default: 'cellid').",
+        default="chip_id",
+        help=(
+            "Column name to use as chip ID (default: 'chip_id', the column "
+            "written by Step 1.1 gridding). Legacy 'cell_id'/'cellid' grids "
+            "are detected automatically."
+        ),
     )
     parser.add_argument(
         "--fallback-id-field",
@@ -1070,15 +1108,15 @@ Additional notes on key parameters:
         help=f"Number of features processed in parallel (ThreadPool workers, default: {DEFAULT_BBOX_BATCH_SIZE}).",
     )
 
-    return parser.parse_args()
+    return parser.parse_args(argv)
 
 
 # =====================================================================
 # TOP-LEVEL MAIN
 # =====================================================================
 
-def main() -> None:
-    args = parse_args()
+def main(argv: Optional[List[str]] = None) -> None:
+    args = parse_args(argv)
 
     input_path = Path(args.input)
     if args.output_dir is None:
