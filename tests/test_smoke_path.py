@@ -34,3 +34,29 @@ def test_grid_columns_are_shapefile_safe(tmp_path):
     too_long = [c for c in columns if len(c) > 10]
     assert not too_long, f"columns truncated by the shapefile driver: {too_long}"
     assert set(columns) == {"chip_id", "chip_area", "cov_area", "cov_pct"}
+
+
+def test_export_hkl_and_zarr_round_out_the_chain(tmp_path):
+    """Steps 2.7 - the optional FTW-style packed archives.
+
+    Documented in the subcommand table but absent from the recommended order,
+    and never exercised: both mains were changed to accept argv, so run them.
+    """
+    pytest.importorskip("rasterio", reason="needs the pt2 extra")
+    hickle = pytest.importorskip("hickle", reason="needs the pt2 extra")  # noqa: F841
+    pytest.importorskip("zarr", reason="needs the pt2 extra")
+    from trazo.pt2_dataprep import export_hkl, export_zarr
+    from trazo.smoke import run
+
+    root = tmp_path / "root"
+    region = run(root / "region")
+
+    export_hkl.main([
+        "--root", str(root), "--mask-type", "semantic_3class", "--overwrite", "--quiet",
+    ])
+    assert list((region / "hkl").glob("*.hkl")), "export-hkl wrote nothing"
+
+    export_zarr.main([
+        "--root", str(root), "--mask-type", "semantic_3class", "--overwrite", "--quiet",
+    ])
+    assert list(region.glob("*.zarr")), "export-zarr wrote nothing"
