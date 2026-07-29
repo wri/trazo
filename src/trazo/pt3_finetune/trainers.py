@@ -21,11 +21,11 @@ derived from:
 
 * The pretrained checkpoint is loaded **before** LoRA injection or freezing, and
   a load that matches no keys is a hard error. The original injected LoRA first
-  and loaded with ``strict=False``, which happened to work only because the
-  wrapper aliased the wrapped conv's parameters onto itself; without that
-  accident the pretrained weights would have been dropped in silence. Loading
-  first removes the dependency on the accident, and the hard error means a
-  genuinely mismatched checkpoint can never be mistaken for a bad model.
+  and loaded with ``strict=False``, which worked only because the wrapper
+  aliased the wrapped conv's parameters onto itself; without that accident the
+  pretrained weights would have been dropped in silence. Loading first removes
+  the dependency on the accident, and the hard error means a genuinely
+  mismatched checkpoint can never be mistaken for a badly performing model.
 * The optimizer is selected by the ``optimizer`` hparam. In the original,
   ``configure_optimizers`` always constructed UPGD with the AdamW line commented
   out, so the full / last-layer / LoRA arms of the comparison were all secretly

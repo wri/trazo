@@ -229,3 +229,29 @@ def test_bundled_configs_exist_for_every_strategy():
         cfg = yaml.safe_load(path.read_text(encoding="utf-8"))
         assert cfg["model"]["init_args"]["strategy"] == strategy
         assert cfg["model"]["class_path"].endswith("FineTuneTask")
+
+
+def test_lora_preserves_output_shape_on_efficientnet():
+    """The original wrapper broke stride-2 same-padding convs.
+
+    EfficientNet keeps its padding in a separate module, so re-running the
+    convolution with `padding=self.conv.padding` dropped a pixel and the U-Net
+    skip connections failed. Guard the shape explicitly.
+    """
+    smp = pytest.importorskip("segmentation_models_pytorch", reason="needs the pt3 extra")
+    pytest.importorskip("efficientnet_pytorch", reason="needs the efficientnet encoder")
+    from trazo.pt3_finetune.lora import inject_lora
+
+    model = smp.Unet(encoder_name="efficientnet-b3", encoder_weights=None,
+                     in_channels=8, classes=3).eval()
+    x = torch.randn(1, 8, 256, 256)
+    with torch.no_grad():
+        before = model(x)
+
+    inject_lora(model, r=4, lora_alpha=1.0, lora_dropout=0.1)
+    model.eval()
+    with torch.no_grad():
+        after = model(x)
+
+    assert after.shape == before.shape
+    assert torch.allclose(before, after, atol=1e-4)

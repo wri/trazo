@@ -9,18 +9,24 @@ Adapted from Microsoft's LoRA reference implementation:
 Adapted for smp U-Nets with EfficientNet encoders, via the WRI/Kerner Lab
 active-learning experiments. Changes from that version:
 
-* The wrapper no longer re-registers the wrapped conv's parameters on itself.
-  In the original this was load-bearing by accident: the alias kept the
-  pre-injection state-dict keys resolvable, so a checkpoint loaded after
-  injection still reached the real conv weights. It also made every base weight
-  appear twice in ``named_parameters()``, so any caller optimizing
-  ``model.parameters()`` on a LoRA-wrapped model would double-count them.
-  Here the checkpoint is loaded *before* injection instead (see
-  :mod:`trazo.pt3_finetune.trainers`), which gets the same result without the
-  duplicate parameters.
+* ``forward`` produces the right output shape. The original folded the LoRA
+  delta into the weight and then re-ran the convolution manually via
+  ``F.conv2d``, taking ``padding`` from the conv itself. For EfficientNet's
+  ``Conv2dStaticSamePadding`` that padding is ``(0, 0)`` because the padding
+  lives in a separate module, so a stride-2 wrapped conv returned 15x15 where
+  the unwrapped conv returned 16x16, and the U-Net skip connections then failed
+  outright on the current segmentation-models-pytorch. Here the base conv is
+  called normally and the low-rank term is added as a second convolution.
 * ``lora_dropout`` is actually applied. In the original it was accepted,
   documented and set to 0.1 in the shipped config, but ``forward`` never
   referenced it, so every LoRA run effectively used dropout 0.
+* The wrapper no longer re-registers the wrapped conv's parameters on itself.
+  That alias was load-bearing by accident - it kept the pre-injection state-dict
+  keys resolvable, so a checkpoint loaded *after* injection still reached the
+  real conv weights - but it also put every base tensor into ``state_dict()``
+  twice (634 keys became 1110), which is what made a normal load report 476
+  spurious missing keys. Here the checkpoint is loaded before injection
+  instead (see :mod:`trazo.pt3_finetune.trainers`), so the alias is unnecessary.
 * ``inject_lora`` returns the number of wrapped layers and raises when that is
   zero, instead of silently returning an unmodified model that trains nothing.
 * Dead ``Conv1d``/``Conv2d``/``Conv3d``/``Conv2dSamePadLoRA`` subclasses were
