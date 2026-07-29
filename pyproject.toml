@@ -7,58 +7,132 @@ name = "trazo"
 version = "0.1.0"
 description = "Toolkit for FTW-style field boundary and traceability workflows"
 readme = "README.md"
-requires-python = ">=3.10"
+license = { text = "CC-BY-4.0" }
+authors = [{ name = "World Resources Institute", email = "tristan.grupp@wri.org" }]
+# The upper bound is not cosmetic: ftw-tools (Steps 3-5) requires >=3.11,<3.13,
+# and several geospatial wheels lag new interpreters. The core install (Steps
+# 1.1 and 2) works on 3.10; Steps 3, 4 and 5 need 3.11 or 3.12.
+requires-python = ">=3.10,<3.13"
+classifiers = [
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+# Version floors and caps are deliberate. This package is the code artifact
+# behind a technical note, so a run two years from now should still resolve to
+# something that behaves like the run described in the note.
 dependencies = [
-    "geopandas",
-    "shapely",
-    "pyproj",
-    "numpy",
-    "pyarrow",
+    "geopandas>=0.14,<2",
+    "shapely>=2.0,<3",
+    "pyproj>=3.4,<4",
+    "numpy>=1.24,<3",
+    "pyarrow>=14",
 ]
 
 [project.optional-dependencies]
-pt1 = ["pystac-client>=0.8", "odc-stac>=0.3", "planetary-computer>=1.0", "python-dateutil", "rasterio", "rioxarray", "tqdm", "odc-stac>=0.3"]
-pt2 = ["rasterio", "geopandas", "shapely", "pyproj", "rtree", "pyarrow", "zarr", "hickle", "tqdm"]
+# Step 1.2: planting/harvest imagery from the Planetary Computer STAC.
+pt1 = [
+    "pystac-client>=0.8,<1",
+    "odc-stac>=0.3,<1",
+    "planetary-computer>=1.0,<2",
+    "rasterio>=1.3,<2",
+    "rioxarray>=0.15,<1",
+    "python-dateutil>=2.8,<3",
+    "tqdm>=4.65,<5",
+]
+# Step 2: chips, masks, parquet, hkl/zarr export.
+pt2 = [
+    "rasterio>=1.3,<2",
+    "rtree>=1.0,<2",
+    "pandas>=2.0,<3",
+    "zarr>=2.16,<4",
+    "hickle>=5.0,<6",
+    "tqdm>=4.65,<5",
+]
+# Step 3: fine-tuning strategies (full, last-layer, LoRA, UPGD) and merging.
+pt3 = [
+    "torch>=2.0,<3",
+    "torchvision>=0.15,<1",
+    "lightning>=2.0,<3",
+    "torchgeo>=0.6,<0.9",
+    "segmentation-models-pytorch>=0.3,<1",
+    "kornia>=0.7,<1",
+    "einops>=0.7,<1",
+    "torchmetrics>=1.0,<2",
+    "click>=8.0,<9",
+    "pyyaml>=6.0,<7",
+    "matplotlib>=3.7,<4",
+    "rasterio>=1.3,<2",
+    "ftw-tools>=1.4,<2",
+]
+# Step 4: full training stack.
 pt4 = [
-    "torch>=2.0",
-    "lightning>=2.0",
-    "torchgeo>=0.5",
-    "segmentation-models-pytorch",
-    "ultralytics",
-    "kornia",
-    "einops",
-    "torchmetrics",
-    "click",
-    "pyyaml",
-    "matplotlib",
-    "hickle",
-    "rasterio>=1.3",
-    "geopandas",
-    "ftw-tools",
+    "torch>=2.0,<3",
+    "torchvision>=0.15,<1",
+    "lightning>=2.0,<3",
+    "torchgeo>=0.6,<0.9",
+    "segmentation-models-pytorch>=0.3,<1",
+    "ultralytics>=8.0,<9",
+    "kornia>=0.7,<1",
+    "einops>=0.7,<1",
+    "torchmetrics>=1.0,<2",
+    "click>=8.0,<9",
+    "pyyaml>=6.0,<7",
+    "matplotlib>=3.7,<4",
+    "hickle>=5.0,<6",
+    "rasterio>=1.3,<2",
+    "geopandas>=0.14,<2",
+    "ftw-tools>=1.4,<2",
 ]
-pt5 = ["ftw-tools"]  # whatever package provides `ftw`
-# Active-learning sampling from a model checkpoint.
-# Install with: pip install "trazo[active]"
+# Step 5: per-tile pair selection and inference. Needs the `ftw` CLI.
+# Tile-pair selection queries the Planetary Computer STAC, so it needs the same
+# STAC clients as Step 1.2 - not only the inference tooling.
+pt5 = [
+    "ftw-tools>=1.4,<2",
+    "pystac-client>=0.8,<1",
+    "planetary-computer>=1.0,<2",
+    "rasterio>=1.3,<2",
+    "geopandas>=0.14,<2",
+    "pandas>=2.0,<3",
+    "tqdm>=4.65,<5",
+]
+# Step 3.2: active-learning sampling from a model checkpoint.
 active = [
-    "ftw-tools",           # FTW model + trainer (CustomSemanticSegmentationTask)
-    "torch>=2.0",          # deep learning runtime
-    "rasterio>=1.3",       # raster I/O and reprojection
-    "numpy>=1.24",
-    "tqdm",
-    "shapely",
+    "ftw-tools>=1.4,<2",
+    "torch>=2.0,<3",
+    "rasterio>=1.3,<2",
+    "numpy>=1.24,<3",
+    "tqdm>=4.65,<5",
+    "shapely>=2.0,<3",
 ]
-all = ["trazo[pt1,pt2,pt4,pt5,active]"]
+dev = ["pytest>=7.4,<9"]
+all = ["trazo[pt1,pt2,pt3,pt4,pt5,active]"]
 
 [project.scripts]
 trazo-pt1-create = "trazo.pt1_createdata.cli:main"
 trazo-pt2-dataprep = "trazo.pt2_dataprep.cli:main"
-trazo-pt3-finetune    = "trazo.pt3_finetune.cli:main"
-trazo-pt4-train       = "trazo.pt4_train.cli:model"
+trazo-pt3-finetune = "trazo.pt3_finetune.cli:main"
+trazo-pt4-train = "trazo.pt4_train.cli:model"
 trazo-pt5-infer = "trazo.pt5_inference.cli:main"
 trazo-active-sample = "trazo.pt1_createdata.active_sample:main"
+trazo-smoke = "trazo.smoke:main"
+
+[project.urls]
+Homepage = "https://github.com/wri/trazo"
+Documentation = "https://wri.github.io/trazo/"
+Issues = "https://github.com/wri/trazo/issues"
 
 [tool.setuptools]
-package-dir = {"" = "src"}
+package-dir = { "" = "src" }
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+trazo = ["pt3_finetune/configs/*.yaml", "pt4_train/configs/*.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "heavy: needs the deep-learning extras (torch, lightning, torchgeo, ftw-tools)",
+]
