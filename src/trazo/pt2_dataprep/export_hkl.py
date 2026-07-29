@@ -138,7 +138,7 @@ def create_hkl_for_country(
         print(f"    Missing files:    {num_missing}")
 
 
-def main():
+def main(argv=None):
     parser = argparse.ArgumentParser(
         description="Create .hkl files combining window_a, window_b, and a mask type (no splits)."
     )
@@ -172,7 +172,7 @@ def main():
         help="Reduce console output",
     )
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     root = args.root
     mask_type = args.mask_type
     overwrite = args.overwrite

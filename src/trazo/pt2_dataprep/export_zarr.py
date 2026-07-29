@@ -156,14 +156,14 @@ def create_zarr_for_country(root, country, mask_type, overwrite=False, verbose=T
         print(f"    Missing files: {num_missing}")
 
 
-def main():
+def main(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", required=True, type=str)
     parser.add_argument("--countries", nargs="+", default=None)
     parser.add_argument("--mask-type", type=str, default="semantic_3class")
     parser.add_argument("--overwrite", action="store_true")
     parser.add_argument("--quiet", action="store_true")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     verbose = not args.quiet
 
