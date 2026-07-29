@@ -26,7 +26,7 @@ Optional filtering:
     filename-like column.
 
 Example:
-  python -m tkt.pt2_dataprep.make_masks_and_windows \
+  python -m trazo.pt2_dataprep.make_masks_and_windows \
     --base-folder /data/regionA \
     --base-folder /data/regionB \
     --fields-shp-name-contains field \

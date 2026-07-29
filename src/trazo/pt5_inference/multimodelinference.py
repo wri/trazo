@@ -7,7 +7,7 @@ Step 5 utility: run FTW inference across multiple checkpoints and stacks.
 This script does one thing:
 
   * For every TIFF stack in an input directory (typically the 8-band stacks
-    written by tkt.pt5_inference.tilepairs) and for every model checkpoint
+    written by trazo.pt5_inference.tilepairs) and for every model checkpoint
     in a checkpoint directory, run:
 
         ftw inference run <stack> -f -o <output> --gpu <gpu> -m <checkpoint>
@@ -26,7 +26,7 @@ Polygonization is intentionally not done here.
 
 Example:
 
-    python -m tkt.pt5_inference.multimodelinference \
+    python -m trazo.pt5_inference.multimodelinference \
         --input-dir /path/to/tilepairs/stacks \
         --checkpoint-dir /path/to/checkpoints \
         --output-dir /path/to/inf_output \
@@ -220,7 +220,7 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
         required=True,
         help=(
             "Directory containing input TIFF stacks (e.g. output from "
-            "tkt.pt5_inference.tilepairs). These are typically 8-band stacks "
+            "trazo.pt5_inference.tilepairs). These are typically 8-band stacks "
             "with window_a and window_b combined."
         ),
     )

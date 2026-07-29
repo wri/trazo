@@ -81,7 +81,7 @@ UC_GITHUB_BASE = (
     "main/cropcalendars_phase2/smoothed"
 )
 WRI_GITHUB_BASE = (
-    "https://raw.githubusercontent.com/wri/toolkit-for-traceability/main/seasontifs"
+    "https://raw.githubusercontent.com/wri/trazo/main/seasontifs"
 )
 
 
@@ -797,6 +797,19 @@ def run_for_shapefile_parallel(
     cols = {c.lower(): c for c in gdf.columns}
     chip_col = cols.get(chipid_field.lower(), None) if chipid_field else None
 
+    # Backward compatibility: grids written by older versions of Step 1.1 use
+    # `cell_id` / `cellid` instead of `chip_id`. Fall back to those rather than
+    # silently dropping to `aoi_id`, which would renumber every chip.
+    if chip_col is None:
+        for legacy in ("chip_id", "chipid", "cell_id", "cellid"):
+            if legacy in cols:
+                chip_col = cols[legacy]
+                print(
+                    f"[chipid] '{chipid_field}' not found in {shp_path.name}; "
+                    f"using '{chip_col}' instead."
+                )
+                break
+
     # Ensure aoi_id column exists and is unique
     if "aoi_id" not in gdf.columns:
         gdf["aoi_id"] = np.arange(len(gdf), dtype=np.int64)
@@ -960,8 +973,12 @@ Additional notes on key parameters:
     )
     parser.add_argument(
         "--chipid-field",
-        default="cellid",
-        help="Column name to use as chip ID (default: 'cellid').",
+        default="chip_id",
+        help=(
+            "Column name to use as chip ID (default: 'chip_id', the column "
+            "written by Step 1.1 gridding). Legacy 'cell_id'/'cellid' grids "
+            "are detected automatically."
+        ),
     )
     parser.add_argument(
         "--fallback-id-field",

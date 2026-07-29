@@ -11,7 +11,7 @@ This script assumes:
 
 Basic usage:
 
-    python -m tkt.pt5_inference.batch_inference \
+    python -m trazo.pt5_inference.batch_inference \
         --input-dir /path/to/tiles \
         --model-checkpoint /path/to/model.ckpt
 

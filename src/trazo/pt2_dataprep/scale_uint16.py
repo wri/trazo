@@ -17,11 +17,11 @@ By default, scans these subfolders inside each base folder:
 You can change subdirs with repeated --subdir flags.
 
 Examples
-  python -m tkt.pt2_dataprep.scale_uint16 \
+  python -m trazo.pt2_dataprep.scale_uint16 \
     --base-folder /data/regionA --base-folder /data/regionB \
     --write-mode suffix --out-suffix _u16
 
-  python -m tkt.pt2_dataprep.scale_uint16 \
+  python -m trazo.pt2_dataprep.scale_uint16 \
     --base-folder /data/regionA \
     --write-mode inplace --overwrite
 """
@@ -29,7 +29,7 @@ Examples
 import argparse
 import glob
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 import rasterio
@@ -165,7 +165,7 @@ def scan_subdirs(base: Path, subdirs: List[str]) -> List[Path]:
     return targets
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(
         description="Scale or cast Sentinel-2 chips to uint16 in [0, 10000]."
     )
@@ -215,11 +215,11 @@ def parse_args() -> argparse.Namespace:
         default=10_000.0,
         help="Scale factor applied for reflectance decimals. Default 10000.0."
     )
-    return p.parse_args()
+    return p.parse_args(argv)
 
 
-def main() -> None:
-    args = parse_args()
+def main(argv: Optional[List[str]] = None) -> None:
+    args = parse_args(argv)
 
     bases = [Path(b).expanduser().resolve() for b in args.base_folder]
     subdirs = args.subdir if args.subdir else DEFAULT_SUBDIRS

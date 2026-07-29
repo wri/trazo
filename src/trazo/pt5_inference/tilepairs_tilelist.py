@@ -6,7 +6,7 @@ Step 5 utility: select Sentinel-2 scene pairs per tile (tile list variant).
 
 This tool is designed to reimplement and extend the logic from
 "Create List of Sentinel2 Image Pairs based on Tile List.ipynb"
-inside the tkt package.
+inside the trazo package.
 
 Key features:
 

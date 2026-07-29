@@ -30,7 +30,7 @@ A summary CSV is written in the output directory listing:
 
 Example:
 
-  python -m tkt.pt5_inference.select_and_stack_pairs \
+  python -m trazo.pt5_inference.select_and_stack_pairs \
       --aoi-shp /path/to/aois/merged.shp \
       --year 2022 \
       --output-dir /path/to/output/stacks \
