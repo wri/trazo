@@ -54,7 +54,10 @@ pt3 = [
     "torch>=2.0,<3",
     "torchvision>=0.15,<1",
     "lightning>=2.0,<3",
-    "torchgeo>=0.6,<0.9",
+    # ftw-tools declares torchgeo>=0.7 but imports
+    # torchgeo.transforms.AugmentationSequential, which 0.8 removed. Cap at
+    # <0.8 until ftw-tools catches up, or `ftw` cannot be imported at all.
+    "torchgeo>=0.7,<0.8",
     "segmentation-models-pytorch>=0.3,<1",
     "efficientnet-pytorch>=0.7,<1",
     "kornia>=0.7,<1",
@@ -71,7 +74,10 @@ pt4 = [
     "torch>=2.0,<3",
     "torchvision>=0.15,<1",
     "lightning>=2.0,<3",
-    "torchgeo>=0.6,<0.9",
+    # ftw-tools declares torchgeo>=0.7 but imports
+    # torchgeo.transforms.AugmentationSequential, which 0.8 removed. Cap at
+    # <0.8 until ftw-tools catches up, or `ftw` cannot be imported at all.
+    "torchgeo>=0.7,<0.8",
     "segmentation-models-pytorch>=0.3,<1",
     "ultralytics>=8.0,<9",
     "kornia>=0.7,<1",

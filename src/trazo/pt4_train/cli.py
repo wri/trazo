@@ -124,7 +124,13 @@ def model_fit(config, data_dir, output_dir, ckpt_path, cli_args):
     help="GPU index",
 )
 def model_test(**kwargs):
-    from ftw_tools.training.eval import test
+    # ftw-tools installs its packages as `ftw` / `ftw_cli`, not `ftw_tools`.
+    # Try the current location first and fall back, so this keeps working if
+    # the upstream layout changes again.
+    try:
+        from ftw_cli.model import test
+    except ImportError:  # pragma: no cover - depends on the installed ftw-tools
+        from ftw_tools.training.eval import test
     test(**kwargs)
 
 

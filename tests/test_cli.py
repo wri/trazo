@@ -108,3 +108,38 @@ def test_pt4_fit_args_omit_unset_options():
 
     args = build_fit_args("cfg.yaml")
     assert args == ["fit", "--config=cfg.yaml"]
+
+
+@pytest.mark.heavy
+def test_pt4_test_command_resolves_the_ftw_entry_point():
+    """`trazo-pt4-train test` delegates to ftw-tools.
+
+    ftw-tools installs its packages as `ftw` / `ftw_cli`; the module path the
+    code originally imported (`ftw_tools.training.eval`) does not exist in any
+    published version, so the command raised ModuleNotFoundError on use.
+    """
+    pytest.importorskip("ftw_cli", reason="needs the pt4/pt5 extra")
+    from ftw_cli.model import test as ftw_test
+
+    assert callable(ftw_test)
+
+    import inspect
+
+    from trazo.pt4_train import cli
+
+    # model_test is a click Command; the function is on .callback
+    source = inspect.getsource(cli.model_test.callback)
+    assert "ftw_cli.model" in source
+
+
+@pytest.mark.heavy
+def test_ftw_is_importable_with_the_pinned_torchgeo():
+    """ftw-tools imports torchgeo.transforms.AugmentationSequential.
+
+    torchgeo removed it in 0.8 while ftw-tools still declares `torchgeo>=0.7`,
+    so an unpinned resolve installs a combination where `import ftw` fails.
+    The pin exists to prevent that; this asserts the pin is doing its job.
+    """
+    pytest.importorskip("ftw", reason="needs the pt4/pt5 extra")
+    import ftw.datamodules  # noqa: F401
+    import ftw.trainers  # noqa: F401
