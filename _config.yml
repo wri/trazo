@@ -18,5 +18,6 @@ exclude:
   - test_import.py
   - pyproject.toml
   - web.zip
+  - NOTICE.md      # BibTeX '{{...}}' breaks Jekyll's Liquid parser; still renders on github.com
 # README.md is intentionally NOT excluded — Jekyll renders it as the
 # homepage at https://wri.github.io/trazo/, matching the current site.
