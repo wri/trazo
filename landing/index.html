@@ -819,10 +819,10 @@
     #index-content .hover-cue{ border-bottom:1px dotted rgba(240,171,0,0.75); padding-bottom:3px; cursor:help; }
     /* read-more: hover reveals, click pins */
     #index-content .rm-cue{ margin-top:18px; }
-    #index-content .rm-trigger{ font-family:var(--font-body); font-size:15px; background:none; border:none; padding:0; cursor:pointer; color:var(--text); text-decoration:underline; text-decoration-color:rgba(240,171,0,0.65); text-decoration-thickness:2px; text-underline-offset:3px; }
-    #index-content .rm-trigger::after{ content:" \203A"; color:#c8880a; }
-    #index-content .rm-trigger:hover{ text-decoration-color:#F0AB00; }
-    #index-content .rm.pinned .rm-trigger::after{ content:" \2039"; }
+    #index-content .rm-trigger{ font-family:var(--font-mono); font-size:10.5px; letter-spacing:.22em; text-transform:uppercase; color:var(--gold); background:none; border:none; border-bottom:1px dotted rgba(240,171,0,0.75); padding:0 0 3px; cursor:pointer; display:inline-flex; align-items:center; gap:10px; }
+    #index-content .rm-trigger::before{ content:""; width:24px; height:1px; background:var(--gold); }
+    #index-content .rm-trigger:hover{ border-bottom-color:#F0AB00; }
+    #index-content .rm-body .section-intro + .section-intro{ font-size:17px; color:var(--text); margin-top:16px; }
     #index-content .rm > .rm-body{ max-height:0; overflow:hidden; opacity:0; transition:max-height .5s ease, opacity .3s ease; }
     #index-content .rm:hover > .rm-body, #index-content .rm.pinned > .rm-body{ max-height:3200px; opacity:1; overflow:visible; }
     @media (hover:none){ #index-content .rm > .rm-body{ max-height:none; opacity:1; overflow:visible; } }
@@ -2224,18 +2224,10 @@ loadFile();
 
       </div>
 
-      <p class="model-foot">
-        All four checkpoints share the same U-Net architecture with an
-        EfficientNet-B3 backbone, inherited from
-        <a href="https://github.com/fieldsoftheworld">FTW</a>. For
-        fine-tuning to new regions, see the
-        <a href="https://github.com/wri/trazo#readme">repository README</a>.
-      </p>
-
       <div class="rm">
         <div class="rm-cue"><button type="button" class="rm-trigger">Read more about Trazo3</button></div>
         <div class="rm-body">
-      <p class="model-foot" style="color:var(--text); border-left-color:var(--gold); max-width:72ch;">
+      <p class="section-intro">
         Trazo3 is the recommended model for most use-cases. It was trained on
         median composited imagery, samples from <span class="hover-term">Mato Grosso<span class="hover-pop hover-pop--trazo3">
           <img src="https://wri-datalab-sandbox.s3.us-east-1.amazonaws.com/trazofields/Trazo+Landing+Images/Trazo3+Active+Learning+Samples.png" alt="Trazo3 active learning samples in Mato Grosso" loading="lazy"/>
@@ -2246,7 +2238,7 @@ loadFile();
         </span></span> and other features from active learning sampling.
       </p>
 
-      <p class="model-foot" style="color:var(--text); border-left-color:var(--gold); max-width:72ch;">
+      <p class="section-intro">
         Trazo3 was tested against plots of land delineated by South American
         farmers and landowners. Against farmer-delineated boundaries, Trazo3 had
         84% IoU accuracy for corn and 75% accuracy for soybean. Hover for the
@@ -2269,7 +2261,7 @@ loadFile();
         of a plot of agriculture.
       </p>
 
-      <p class="model-foot" style="color:var(--text); border-left-color:var(--gold); max-width:72ch;">
+      <p class="section-intro">
         All Trazo models are trained on South American data, much of which was
         intentionally sampled on the frontier of nature and agriculture. The
         training data captures diverse agroecological contexts and hotspots of conversion.
