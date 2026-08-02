@@ -825,7 +825,7 @@
     #index-content .rm.pinned .rm-trigger::after{ content:" \2039"; }
     #index-content .rm > .rm-body{ max-height:0; overflow:hidden; opacity:0; transition:max-height .5s ease, opacity .3s ease; }
     #index-content .rm:hover > .rm-body, #index-content .rm.pinned > .rm-body{ max-height:3200px; opacity:1; overflow:visible; }
-    @media (hover:none){ #index-content .rm > .rm-body{ max-height:none; opacity:1; } }
+    @media (hover:none){ #index-content .rm > .rm-body{ max-height:none; opacity:1; overflow:visible; } }
     #index-content .eyebrow::before{ content:""; width:24px; height:1px; background:var(--gold); }
 
     /* models */
@@ -870,10 +870,13 @@
     #index-content .step p{ max-height:0; overflow:hidden; opacity:0; margin-top:0 !important; transition:max-height .35s ease, opacity .25s ease, margin-top .25s ease; }
     #index-content .step:hover p, #index-content .step:focus-within p{ max-height:240px; opacity:1; margin-top:6px !important; }
     @media (hover:none){
-      #index-content .hc > .hc-body{ max-height:none; opacity:1; margin-top:14px; }
+      #index-content .hc > .hc-body{ max-height:none; opacity:1; margin-top:14px; overflow:visible; }
       #index-content .model-card .model-body{ max-height:none; opacity:1; padding-top:18px; padding-bottom:20px; }
       #index-content .model-card .model-foot-link{ max-height:none; opacity:1; padding-top:11px; padding-bottom:13px; }
       #index-content .step p{ max-height:none; opacity:1; margin-top:6px !important; }
+      /* touch: no hover, so drop the collapse cues/highlighting (content already shown) */
+      #index-content .hover-cue{ border-bottom:none; padding-bottom:0; cursor:auto; }
+      #index-content .rm-cue{ display:none; }
     }
 
     /* resources */
@@ -1452,6 +1455,15 @@
   .hover-pop--trazo3{ max-width:min(544px, 76.5vw); }
   .hover-pop--train video{ display:block; width:100%; max-height:50vh; height:auto; border-radius:6px; background:#000; object-fit:contain; }
   @media (max-width:600px){ .hover-pop--train{ max-width:88vw; } }
+  @media (max-width:640px){
+    .hover-pop{
+      position:fixed !important; left:50% !important; right:auto !important;
+      top:50% !important; bottom:auto !important;
+      transform:translate(-50%,-46%) !important;
+      width:92vw !important; max-width:92vw !important; z-index:300;
+    }
+    .hover-term:hover > .hover-pop, .hover-term:focus-within > .hover-pop{ transform:translate(-50%,-50%) !important; }
+  }
 </style>
 
 <!-- ════════════════════ PAGE 1 · THE MAP ════════════════════ -->

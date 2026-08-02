@@ -40,7 +40,7 @@
     :root {
       --gold:#F0AB00; --ink:#1a1a1a; --muted:#5c5c5a; --dim:#9a9a96;
       --border:rgba(20,20,18,0.13); --border-dim:rgba(20,20,18,0.07);
-      --card:rgba(255,255,255,0.46); --link:#1a1a1a;
+      --card:rgba(255,255,255,0.82); --link:#1a1a1a;
       --font-header:'Archivo','Segoe UI',sans-serif;
       --font-body:'Segoe UI',Calibri,sans-serif;
       --font-mono:'Courier New',monospace;
@@ -90,7 +90,7 @@
       width:clamp(250px,27vw,320px); max-height:calc(100vh - 78px); overflow-y:auto;
       background:var(--card); border:none;
       box-shadow:0 4px 22px rgba(0,0,0,0.06), 0 0 0 1px rgba(20,20,18,0.07); border-radius:10px;
-      padding:22px 20px 20px; backdrop-filter:blur(9px);
+      padding:22px 20px 20px; isolation:isolate;
       scrollbar-width:thin; scrollbar-color:rgba(20,20,18,0.25) transparent;
     }
     #card::-webkit-scrollbar { width:5px; }
