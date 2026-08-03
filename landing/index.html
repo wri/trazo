@@ -822,10 +822,11 @@
     #index-content .rm-trigger{ font-family:var(--font-mono); font-size:10.5px; letter-spacing:.22em; text-transform:uppercase; color:var(--gold); background:none; border:none; border-bottom:1px dotted rgba(240,171,0,0.75); padding:0 0 3px; cursor:pointer; display:inline-flex; align-items:center; gap:10px; }
     #index-content .rm-trigger::before{ content:""; width:24px; height:1px; background:var(--gold); }
     #index-content .rm-trigger:hover{ border-bottom-color:#F0AB00; }
-    #index-content .rm-body .section-intro + .section-intro{ font-size:17px; color:var(--text); margin-top:16px; }
+    /* coverage + Trazo3 read-more paragraphs match the hero intro paragraphs (.hero-para) */
+    #index-content .hc-body .section-intro, #index-content .rm-body .section-intro{ font-size:15px; line-height:1.7; color:var(--text-muted); max-width:82ch; margin-top:12px; }
+    #index-content .rm-body .section-intro + .section-intro{ font-size:15px; line-height:1.7; color:var(--text-muted); margin-top:12px; }
     #index-content .rm > .rm-body{ max-height:0; overflow:hidden; opacity:0; transition:max-height .5s ease, opacity .3s ease; }
     #index-content .rm:hover > .rm-body, #index-content .rm.pinned > .rm-body{ max-height:3200px; opacity:1; overflow:visible; }
-    @media (hover:none){ #index-content .rm > .rm-body{ max-height:none; opacity:1; overflow:visible; } }
     #index-content .eyebrow::before{ content:""; width:24px; height:1px; background:var(--gold); }
 
     /* models */
@@ -871,12 +872,16 @@
     #index-content .step:hover p, #index-content .step:focus-within p{ max-height:240px; opacity:1; margin-top:6px !important; }
     @media (hover:none){
       #index-content .hc > .hc-body{ max-height:none; opacity:1; margin-top:14px; overflow:visible; }
-      #index-content .model-card .model-body{ max-height:none; opacity:1; padding-top:18px; padding-bottom:20px; }
-      #index-content .model-card .model-foot-link{ max-height:none; opacity:1; padding-top:11px; padding-bottom:13px; }
       #index-content .step p{ max-height:none; opacity:1; margin-top:6px !important; }
-      /* touch: no hover, so drop the collapse cues/highlighting (content already shown) */
+      /* touch: model cards start collapsed like desktop; tap the card to expand (JS toggles .open) */
+      #index-content .model-card:hover .model-body,
+      #index-content .model-card:focus-within .model-body{ max-height:0; opacity:0; padding-top:0; padding-bottom:0; }
+      #index-content .model-card:hover .model-foot-link,
+      #index-content .model-card:focus-within .model-foot-link{ max-height:0; opacity:0; padding-top:0; padding-bottom:0; }
+      #index-content .model-card.open .model-body{ max-height:520px; opacity:1; padding-top:18px; padding-bottom:20px; }
+      #index-content .model-card.open .model-foot-link{ max-height:120px; opacity:1; padding-top:11px; padding-bottom:13px; }
+      /* touch: drop hover cue underline on the always-open coverage body */
       #index-content .hover-cue{ border-bottom:none; padding-bottom:0; cursor:auto; }
-      #index-content .rm-cue{ display:none; }
     }
 
     /* resources */
@@ -2712,5 +2717,6 @@ window.TZ = (function(){
 </script>
 
 <script>document.addEventListener("click",function(e){var t=e.target.closest(".rm-trigger");if(t){var rm=t.closest(".rm");if(rm)rm.classList.toggle("pinned");}});</script>
+<script>if(window.matchMedia&&window.matchMedia("(hover:none)").matches){document.querySelectorAll("#index-content .model-card").forEach(function(card){card.addEventListener("click",function(e){if(!card.classList.contains("open")){e.preventDefault();card.classList.add("open");}});});}</script>
 </body>
 </html>
