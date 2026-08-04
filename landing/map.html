@@ -2373,10 +2373,43 @@ async function loadFile() {
     ds.classList.add("fade-out");
     setTimeout(() => ds.style.display = "none", 520);
 
-    // Init Leaflet - always open at the specified location and zoom
+    // Init Leaflet - shuffle a random Mato Grosso location (with its own zoom) on each load
+    const TZ_LOCATIONS = [
+      { lat:-13.78074, lng:-57.57385, zoom:10 },
+      { lat:-13.59460, lng:-58.92242, zoom:10 },
+      { lat:-13.11827, lng:-60.54085, zoom:11 },
+      { lat:-13.62463, lng:-57.26074, zoom:9  },
+      { lat:-15.11356, lng:-59.33098, zoom:12 },
+      { lat:-14.25107, lng:-53.62118, zoom:12 },
+      { lat:-15.11356, lng:-59.33098, zoom:11 },
+      { lat:-13.25665, lng:-56.40724, zoom:11 },
+      { lat:-11.95738, lng:-55.79819, zoom:10 },
+      { lat:-14.58225, lng:-57.04994, zoom:12 },
+      { lat:-15.39014, lng:-54.52515, zoom:9  },
+      { lat:-13.68869, lng:-57.70638, zoom:11 },
+      { lat:-12.54954, lng:-52.39174, zoom:12 },
+      { lat:-14.38646, lng:-54.23332, zoom:12 },
+      { lat:-10.37977, lng:-55.66704, zoom:11 },
+      { lat:-14.26538, lng:-53.99334, zoom:12 },
+      { lat:-14.83562, lng:-57.12547, zoom:12 },
+      { lat:-14.49851, lng:-56.32278, zoom:11 },
+      { lat:-13.73272, lng:-55.73570, zoom:11 },
+      { lat:-14.86416, lng:-56.82575, zoom:12 },
+      { lat:-12.14960, lng:-56.07061, zoom:13 },
+      { lat:-13.17310, lng:-55.65948, zoom:10 },
+      { lat:-15.49901, lng:-58.03185, zoom:12 },
+      { lat: -9.78553, lng:-55.16853, zoom:12 },
+      { lat:-12.25950, lng:-55.41779, zoom:9  },
+      { lat:-14.27902, lng:-56.95313, zoom:10 },
+      { lat:-13.64665, lng:-58.88397, zoom:12 },
+      { lat:-13.65199, lng:-57.85160, zoom:12 },
+      { lat:-15.21264, lng:-57.33215, zoom:10 },
+      { lat:-15.82099, lng:-59.38042, zoom:12 },
+    ];
+    const TZ_LOC = TZ_LOCATIONS[Math.floor(Math.random() * TZ_LOCATIONS.length)];
     const map = L.map("map", {
-      center: [-12.286425, -52.662142],
-      zoom:   10,
+      center: [TZ_LOC.lat, TZ_LOC.lng],
+      zoom:   TZ_LOC.zoom,
       minZoom: 4,
       maxZoom: 13,
       zoomControl: false,
