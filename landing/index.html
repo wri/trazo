@@ -300,6 +300,12 @@
                  border: 1px solid rgba(255,255,255,0.2); }
     .lcode     { color: var(--text-muted); font-size: 10px; min-width: 20px; font-family: var(--font-mono); }
     .ldivider  { height: 1px; background: rgba(255,255,255,0.1); margin: 7px 0; }
+    /* extra "in development" classes: hidden, revealed on hover of the bottom cue; legend grows upward (bottom-anchored) */
+    .lmore{ max-height:0; overflow:hidden; opacity:0; transition:max-height .4s ease, opacity .3s ease; }
+    .lmore-wrap:hover .lmore, .lmore-wrap:focus-within .lmore{ max-height:340px; opacity:1; }
+    .lmore-cue{ font-family:var(--font-mono); font-size:9px; letter-spacing:.16em; text-transform:uppercase; color:var(--text-muted); margin-top:7px; opacity:.7; cursor:default; user-select:none; }
+    .lmore-wrap:hover .lmore-cue{ color:var(--gold); opacity:1; }
+    @media (hover:none){ .lmore{ max-height:none; opacity:1; } .lmore-cue{ display:none; } }
     .lgroup    {
       font-family: var(--font-header);
       font-size: 9.5px; font-weight: 700; letter-spacing: .08em;
@@ -1793,8 +1799,14 @@ function buildLegend() {
       <span class="lcode">${c.code}</span><span>${c.name}</span>
     </div>`;
   }
+  // visible In-Development classes (rest are revealed on hover); order per request
+  const VISIBLE_REST = [15, 20, 40, 62, 46, 47]; // pasture, sugar cane, rice, cotton, coffee, citrus
+  const byCode = Object.fromEntries(CROPS.map(c => [c.code, c]));
+  const restVisible = VISIBLE_REST.map(code => byCode[code]).filter(Boolean);
+  const restHidden  = rest.filter(c => !VISIBLE_REST.includes(c.code));
   el.innerHTML += `<div class="lgroup">Crop</div>` + prim.map(row).join("");
-  el.innerHTML += `<div class="ldivider"></div><div class="lgroup">In Development Field Boundaries</div>` + rest.map(row).join("");
+  el.innerHTML += `<div class="ldivider"></div><div class="lgroup">In Development Field Boundaries</div>` + restVisible.map(row).join("");
+  el.innerHTML += `<div class="lmore-wrap"><div class="lmore">` + restHidden.map(row).join("") + `</div><div class="lmore-cue">+ more classes</div></div>`;
 }
 
 // ── MAIN LOAD ────────────────────────────────────────────────────────────────
