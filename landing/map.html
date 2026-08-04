@@ -398,6 +398,7 @@
       overflow: visible;
       pointer-events: auto;
     }
+    #topbar .topbar-wrap{ display:flex; align-items:stretch; width:100%; max-width:var(--max-w); margin:0 auto; padding-left:var(--gutter); padding-right:var(--gutter); }
     #topbar-nav {
       display: flex; align-items: stretch; flex: 1;
       justify-content: flex-end;
@@ -944,8 +945,8 @@
   </style>
 
   <style id="tz-split-css">
-    .tz-back{ display:flex; align-items:center; padding:0 20px; font-family:var(--font-header);
-      font-size:13px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+    .tz-back{ display:flex; align-items:center; padding:0; font-family:var(--font-header);
+      font-size:16px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
       color:var(--text-muted); text-decoration:none;
       transition:color .15s; pointer-events:auto; white-space:nowrap; }
     .tz-back:hover{ color:var(--gold); }
@@ -1022,7 +1023,7 @@
       /* hero sized to the SMALL viewport: stable, and never extends under Chrome's bottom bar */
       #map-screen{ height:100vh; height:100svh; }
       [data-theme="light"] #topbar{ background:rgba(240,237,230,0.92); }
-      .tz-back{ font-size:12px; padding:0 8px; height:48px; display:flex; align-items:center; }
+      .tz-back{ font-size:15px; padding:0; height:48px; display:flex; align-items:center; }
 
       /* push the map + orbital below the fixed bar */
       #map{ top:48px !important; }
@@ -1702,6 +1703,7 @@
 <!-- ── UI OVERLAY: sits in DOM after #map, forced above all Leaflet canvases ── -->
 <div id="ui-layer">
 <div id="topbar">
+  <div class="topbar-wrap">
   <a class="tz-back" href="index.html"><span class="dot"></span> Trazo</a>
   <nav id="topbar-nav">
 
@@ -1969,6 +1971,7 @@
     </div>
 
   </nav>
+  </div>
 </div>
 
 <div id="header">mapv6 - Mato Grosso 2024<span>mbmode24, local file</span></div>
