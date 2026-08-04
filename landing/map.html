@@ -315,6 +315,7 @@
       padding: 4px 9px;
       z-index: 10; display: none;
     }
+    #zcoord{ margin-left:9px; color:var(--gold); user-select:all; -webkit-user-select:all; }
 
     /* ── LEAFLET POPUP ──────────────────────────────────────────────────────── */
     .leaflet-popup-content-wrapper {
@@ -651,7 +652,7 @@
     .tzo-node .tzo-title{ position:absolute; left:50%; top:34px; transform:translateX(-50%); white-space:nowrap;
       font-family:var(--font-header); font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
       color:var(--text-muted); transition:color .3s,transform .3s; pointer-events:none; }
-    .tzo-node.related .tzo-dot{ border-color:var(--gold); animation:tzoPulse 1.4s ease-in-out infinite; }
+    .tzo-node.related .tzo-dot{ border-color:var(--gold); animation:tzoPulse 2.8s ease-in-out infinite; }
     .tzo-node.active  .tzo-dot{ background:rgba(240,171,0,0.5); color:#fff; border-color:var(--gold);
       transform:translate(-50%,-50%) scale(1.4); }
     [data-theme="light"] .tzo-node.active .tzo-dot{ background:rgba(139,105,20,0.85); }
@@ -1959,7 +1960,7 @@
 
 <div id="header">mapv6 - Mato Grosso 2024<span>mbmode24, local file</span></div>
 <div id="legend"><h3>Crop Type</h3><div class="lsub">mode value of Mapbiomas 2024</div></div>
-<div id="zbadge">z<span id="zval">-</span></div>
+<div id="zbadge">z<span id="zval">-</span><span id="zcoord"></span></div>
 
 <!-- ── TRAZO INFO PANEL ────────────────────────────────────────────────────── -->
 <div id="info-panel">
@@ -2431,6 +2432,12 @@ async function loadFile() {
 
     // Click popup
     map.on("click", async (e) => {
+      const cEl = document.getElementById("zcoord");
+      if (cEl) {
+        cEl.textContent = e.latlng.lat.toFixed(5) + ", " + e.latlng.lng.toFixed(5);
+        clearTimeout(cEl._t);
+        cEl._t = setTimeout(() => { cEl.textContent = ""; }, 5000);
+      }
       const z  = Math.min(header.maxZoom || 12, Math.floor(map.getZoom()));
       const n  = Math.pow(2, z);
       const tx = Math.floor((e.latlng.lng + 180) / 360 * n);
