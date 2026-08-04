@@ -4,7 +4,7 @@
   <meta charset="UTF-8"/>
   <script>document.documentElement.setAttribute("data-theme","simple");</script>
   <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
-  <title>Trazo Field Boundaries of South America</title>
+  <title>Trazo</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
 
   <!-- ═══ Google Analytics 4 (gtag.js) ═══ -->
@@ -805,21 +805,22 @@
     #index-content .hero-meta dt{ font-family:var(--font-mono); font-size:10px; letter-spacing:.16em; text-transform:uppercase; color:var(--text-muted); margin-bottom:3px; }
     #index-content .hero-meta dd{ color:var(--text); font-size:14.5px; }
     #index-content .cta-row{ margin-top:26px; display:flex; flex-wrap:wrap; gap:10px; }
-    /* partner logos: full-colour scrolling marquee on subtle cards */
+    /* partner logos: washed-gold scrolling marquee (mask recolours each logo to gold) */
     #index-content .partners{ margin-top:26px; width:100%; overflow:hidden;
       -webkit-mask:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);
               mask:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent); }
-    #index-content .partners-track{ display:flex; align-items:center; gap:18px; width:max-content; animation:pmarq 50s linear infinite; }
+    #index-content .partners-track{ display:flex; align-items:center; gap:44px; width:max-content; animation:pmarq 50s linear infinite; }
     #index-content .partners:hover .partners-track{ animation-play-state:paused; }
-    #index-content .partners a{ flex:none; display:inline-flex; align-items:center; justify-content:center;
-      height:58px; width:154px; padding:10px 18px; border-radius:8px; background:#ffffff; border:1px solid var(--border-faint); }
-    #index-content .partners a.on-dark{ background:#0e1608; border-color:rgba(255,255,255,0.12); }
-    #index-content .partners img.plogo{ max-height:100%; max-width:100%; width:auto; object-fit:contain; opacity:.9; transition:opacity .2s ease; }
-    #index-content .partners a:hover img.plogo{ opacity:1; }
-    #index-content .partners img.crop-b{ clip-path:inset(0 0 10% 0); }
+    #index-content .partners a{ flex:none; display:inline-flex; align-items:center; }
+    #index-content .partners .plogo{ display:block; height:38px; width:122px;
+      background-color:#F0AB00;
+      -webkit-mask:var(--logo) center/contain no-repeat; mask:var(--logo) center/contain no-repeat;
+      opacity:.5; transition:opacity .2s ease; }
+    #index-content .partners a:hover .plogo{ opacity:.9; }
+    #index-content .partners .plogo.crop-b{ clip-path:inset(0 0 10% 0); }
     @keyframes pmarq{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
     @media (prefers-reduced-motion:reduce){ #index-content .partners-track{ animation:none; } }
-    @media (max-width:640px){ #index-content .partners a{ height:48px; width:124px; padding:8px 14px; } }
+    @media (max-width:640px){ #index-content .partners .plogo{ height:30px; width:98px; } }
     #index-content .btn{ font-family:var(--font-header); font-size:11.5px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; padding:11px 18px; border:1px solid var(--gold); color:var(--text); background:transparent; text-decoration:none; transition:background .15s,color .15s; display:inline-flex; align-items:center; gap:8px; cursor:pointer; }
     #index-content .btn:hover{ background:var(--gold); color:var(--bg-page); }
     #index-content .btn.primary{ background:var(--gold); color:var(--bg-page); }
@@ -2136,26 +2137,26 @@ loadFile();
           </div>
           <div class="partners" aria-label="Project partners">
             <div class="partners-track">
-            <a href="https://www.asu.edu" target="_blank" rel="noopener" aria-label="Arizona State University"><img class="plogo" src="logos/asu.png" alt="Arizona State University" loading="lazy"></a>
-            <a href="https://www.wri.org" target="_blank" rel="noopener" aria-label="World Resources Institute"><img class="plogo" src="logos/wri.png" alt="World Resources Institute" loading="lazy"></a>
-            <a href="https://landcarbonlab.org" target="_blank" rel="noopener" aria-label="Land and Carbon Lab"><img class="plogo" src="logos/lcl.svg" alt="Land and Carbon Lab" loading="lazy"></a>
-            <a href="https://walmart.org" target="_blank" rel="noopener" aria-label="Walmart Foundation"><img class="plogo" src="logos/walmart.png" alt="Walmart Foundation" loading="lazy"></a>
-            <a href="https://taylorgeospatial.org" target="_blank" rel="noopener" aria-label="Taylor Geospatial"><img class="plogo" src="logos/taylor.png" alt="Taylor Geospatial" loading="lazy"></a>
-            <a href="https://source.coop" class="on-dark" target="_blank" rel="noopener" aria-label="Source Cooperative"><img class="plogo" src="logos/source-coop.svg" alt="Source Cooperative" loading="lazy"></a>
-            <a href="https://radiant.earth" target="_blank" rel="noopener" aria-label="Radiant Earth"><img class="plogo" src="logos/radiant-earth.png" alt="Radiant Earth" loading="lazy"></a>
-            <a href="https://fieldsofthe.world/" target="_blank" rel="noopener" aria-label="Fields of The World"><img class="plogo" src="logos/ftw.svg" alt="Fields of The World" loading="lazy"></a>
-            <a href="https://www.bolsadecereales.com" target="_blank" rel="noopener" aria-label="Bolsa de Cereales"><img class="plogo" src="logos/bolsa.png" alt="Bolsa de Cereales" loading="lazy"></a>
-            <a href="https://mundoagropecuario.com.py" target="_blank" rel="noopener" aria-label="Mundo Agropecuario"><img class="plogo crop-b" src="logos/mundo.png" alt="Mundo Agropecuario" loading="lazy"></a>
-            <a href="https://www.asu.edu" target="_blank" rel="noopener" aria-label="Arizona State University" aria-hidden="true" tabindex="-1"><img class="plogo" src="logos/asu.png" alt="Arizona State University" loading="lazy"></a>
-            <a href="https://www.wri.org" target="_blank" rel="noopener" aria-label="World Resources Institute" aria-hidden="true" tabindex="-1"><img class="plogo" src="logos/wri.png" alt="World Resources Institute" loading="lazy"></a>
-            <a href="https://landcarbonlab.org" target="_blank" rel="noopener" aria-label="Land and Carbon Lab" aria-hidden="true" tabindex="-1"><img class="plogo" src="logos/lcl.svg" alt="Land and Carbon Lab" loading="lazy"></a>
-            <a href="https://walmart.org" target="_blank" rel="noopener" aria-label="Walmart Foundation" aria-hidden="true" tabindex="-1"><img class="plogo" src="logos/walmart.png" alt="Walmart Foundation" loading="lazy"></a>
-            <a href="https://taylorgeospatial.org" target="_blank" rel="noopener" aria-label="Taylor Geospatial" aria-hidden="true" tabindex="-1"><img class="plogo" src="logos/taylor.png" alt="Taylor Geospatial" loading="lazy"></a>
-            <a href="https://source.coop" class="on-dark" target="_blank" rel="noopener" aria-label="Source Cooperative" aria-hidden="true" tabindex="-1"><img class="plogo" src="logos/source-coop.svg" alt="Source Cooperative" loading="lazy"></a>
-            <a href="https://radiant.earth" target="_blank" rel="noopener" aria-label="Radiant Earth" aria-hidden="true" tabindex="-1"><img class="plogo" src="logos/radiant-earth.png" alt="Radiant Earth" loading="lazy"></a>
-            <a href="https://fieldsofthe.world/" target="_blank" rel="noopener" aria-label="Fields of The World" aria-hidden="true" tabindex="-1"><img class="plogo" src="logos/ftw.svg" alt="Fields of The World" loading="lazy"></a>
-            <a href="https://www.bolsadecereales.com" target="_blank" rel="noopener" aria-label="Bolsa de Cereales" aria-hidden="true" tabindex="-1"><img class="plogo" src="logos/bolsa.png" alt="Bolsa de Cereales" loading="lazy"></a>
-            <a href="https://mundoagropecuario.com.py" target="_blank" rel="noopener" aria-label="Mundo Agropecuario" aria-hidden="true" tabindex="-1"><img class="plogo crop-b" src="logos/mundo.png" alt="Mundo Agropecuario" loading="lazy"></a>
+            <a href="https://www.asu.edu" target="_blank" rel="noopener" aria-label="Arizona State University"><span class="plogo" style="--logo:url('logos/asu.png')"></span></a>
+            <a href="https://www.wri.org" target="_blank" rel="noopener" aria-label="World Resources Institute"><span class="plogo" style="--logo:url('logos/wri.png')"></span></a>
+            <a href="https://landcarbonlab.org" target="_blank" rel="noopener" aria-label="Land and Carbon Lab"><span class="plogo" style="--logo:url('logos/lcl.svg')"></span></a>
+            <a href="https://walmart.org" target="_blank" rel="noopener" aria-label="Walmart Foundation"><span class="plogo" style="--logo:url('logos/walmart.png')"></span></a>
+            <a href="https://taylorgeospatial.org" target="_blank" rel="noopener" aria-label="Taylor Geospatial"><span class="plogo" style="--logo:url('logos/taylor.png')"></span></a>
+            <a href="https://source.coop" target="_blank" rel="noopener" aria-label="Source Cooperative"><span class="plogo" style="--logo:url('logos/source-coop.svg')"></span></a>
+            <a href="https://radiant.earth" target="_blank" rel="noopener" aria-label="Radiant Earth"><span class="plogo" style="--logo:url('logos/radiant-earth.png')"></span></a>
+            <a href="https://fieldsofthe.world/" target="_blank" rel="noopener" aria-label="Fields of The World"><span class="plogo" style="--logo:url('logos/ftw.svg')"></span></a>
+            <a href="https://www.bolsadecereales.com" target="_blank" rel="noopener" aria-label="Bolsa de Cereales"><span class="plogo" style="--logo:url('logos/bolsa.png')"></span></a>
+            <a href="https://mundoagropecuario.com.py" target="_blank" rel="noopener" aria-label="Mundo Agropecuario"><span class="plogo crop-b" style="--logo:url('logos/mundo.png')"></span></a>
+            <a href="https://www.asu.edu" target="_blank" rel="noopener" aria-label="Arizona State University" aria-hidden="true" tabindex="-1"><span class="plogo" style="--logo:url('logos/asu.png')"></span></a>
+            <a href="https://www.wri.org" target="_blank" rel="noopener" aria-label="World Resources Institute" aria-hidden="true" tabindex="-1"><span class="plogo" style="--logo:url('logos/wri.png')"></span></a>
+            <a href="https://landcarbonlab.org" target="_blank" rel="noopener" aria-label="Land and Carbon Lab" aria-hidden="true" tabindex="-1"><span class="plogo" style="--logo:url('logos/lcl.svg')"></span></a>
+            <a href="https://walmart.org" target="_blank" rel="noopener" aria-label="Walmart Foundation" aria-hidden="true" tabindex="-1"><span class="plogo" style="--logo:url('logos/walmart.png')"></span></a>
+            <a href="https://taylorgeospatial.org" target="_blank" rel="noopener" aria-label="Taylor Geospatial" aria-hidden="true" tabindex="-1"><span class="plogo" style="--logo:url('logos/taylor.png')"></span></a>
+            <a href="https://source.coop" target="_blank" rel="noopener" aria-label="Source Cooperative" aria-hidden="true" tabindex="-1"><span class="plogo" style="--logo:url('logos/source-coop.svg')"></span></a>
+            <a href="https://radiant.earth" target="_blank" rel="noopener" aria-label="Radiant Earth" aria-hidden="true" tabindex="-1"><span class="plogo" style="--logo:url('logos/radiant-earth.png')"></span></a>
+            <a href="https://fieldsofthe.world/" target="_blank" rel="noopener" aria-label="Fields of The World" aria-hidden="true" tabindex="-1"><span class="plogo" style="--logo:url('logos/ftw.svg')"></span></a>
+            <a href="https://www.bolsadecereales.com" target="_blank" rel="noopener" aria-label="Bolsa de Cereales" aria-hidden="true" tabindex="-1"><span class="plogo" style="--logo:url('logos/bolsa.png')"></span></a>
+            <a href="https://mundoagropecuario.com.py" target="_blank" rel="noopener" aria-label="Mundo Agropecuario" aria-hidden="true" tabindex="-1"><span class="plogo crop-b" style="--logo:url('logos/mundo.png')"></span></a>
             </div>
           </div>
     </div>
