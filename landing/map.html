@@ -386,8 +386,8 @@
     /* ── TOPBAR ─────────────────────────────────────────────────────────────── */
     #topbar {
       position: absolute;
-      top: 10px; left: 0; right: 0;
-      height: 46px;
+      top: 0; left: 0; right: 0;
+      height: 48px;
       background: rgba(7,16,5,0.38);
       border-bottom: 1px solid var(--border);
       backdrop-filter: blur(10px);
@@ -431,7 +431,7 @@
       transform: rotate(180deg); color: var(--gold);
     }
     .tnav-dropdown {
-      position: absolute; top: calc(100% + 16px); left: 0;
+      position: absolute; top: calc(100% + 6px); left: 0;
       min-width: 340px; max-width: 480px;
       background: rgba(7,15,4,0.97);
       border: 1px solid var(--border); border-top: none;
@@ -518,8 +518,8 @@
     .tnav-group {
       display: flex; align-items: stretch; flex-shrink: 0;
       position: relative;
-      margin-top: -10px;
-      padding-top: 10px;
+      margin-top: 0;
+      padding-top: 0;
     }
     .tnav-sep-pipe {
       width: 1px; height: 14px; background: var(--border);
@@ -618,7 +618,7 @@
     .tnav-trigger.nav-lit { animation: none; }
     /* offset map for topbar */
     #map { top: 42px !important; }
-    #info-panel { top: 74px !important; }
+    #info-panel { top: 66px !important; }
 
   </style>
 
