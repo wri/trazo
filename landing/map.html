@@ -534,13 +534,15 @@
     /* Release 2 / Trazo on the Ground: one hoverable label; items fan DOWN on hover */
     #tgroup-r2, #tgroup-uc{ align-items:center; }
     #tgroup-r2 > .tnav-group-label, #tgroup-uc > .tnav-group-label{
-      position:static; top:auto; left:auto; right:auto; text-align:left; pointer-events:auto; cursor:pointer;
+      position:relative; top:auto; left:auto; right:auto; text-align:left; pointer-events:auto; cursor:pointer;
       display:flex; align-items:center; gap:6px; height:100%; padding:0 13px;
       font-size:13px; font-weight:400; letter-spacing:.02em; text-transform:none;
-      color:var(--text-muted); border-bottom:2px solid transparent; transition:color .15s, border-color .15s;
+      color:var(--text-muted); transition:color .15s;
     }
     #tgroup-r2 > .tnav-group-label::after, #tgroup-uc > .tnav-group-label::after{ content:"▾"; font-size:9px; opacity:.7; }
-    #tgroup-r2:hover > .tnav-group-label, #tgroup-uc:hover > .tnav-group-label{ color:var(--gold); border-bottom-color:#F0AB00; }
+    #tgroup-r2 > .tnav-group-label::before, #tgroup-uc > .tnav-group-label::before{ content:""; position:absolute; left:13px; right:13px; top:calc(50% + 9px); height:2px; background:#F0AB00; opacity:0; transition:opacity .15s; pointer-events:none; }
+    #tgroup-r2:hover > .tnav-group-label, #tgroup-uc:hover > .tnav-group-label{ color:var(--gold); }
+    #tgroup-r2:hover > .tnav-group-label::before, #tgroup-uc:hover > .tnav-group-label::before{ opacity:1; }
     #tgroup-r2 .tnav-fan, #tgroup-uc .tnav-fan{
       position:absolute; top:calc(100% - 2px); left:6px; z-index:640;
       display:flex; flex-direction:column; min-width:190px; padding:5px;
@@ -589,7 +591,10 @@
       transition: color 0.15s;
       white-space: nowrap;
     }
-    .tnav-plain:hover{ color: var(--gold); border-bottom:2px solid #F0AB00; }
+    .tnav-plain{ position: relative; }
+    .tnav-plain::after{ content:""; position:absolute; left:13px; right:13px; top:calc(50% + 9px); height:2px; background:#F0AB00; opacity:0; transition:opacity .15s; pointer-events:none; }
+    .tnav-plain:hover{ color: var(--gold); }
+    .tnav-plain:hover::after{ opacity:1; }
 
     /* ── Release 2 / Trazo on the Ground sub-items: flat, unbracketed, index-style ── */
     #tgroup-r2 .tnav-trigger, #tgroup-uc .tnav-trigger{
@@ -1645,6 +1650,7 @@
     :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #legend,
     :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #landing-cta{ background-color:var(--chrome-bg); box-shadow:var(--chrome-shadow); }
     :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #topbar{ background:var(--chrome-bg); border-bottom:1px solid var(--border); }
+    [data-theme="simple"] #topbar{ background:rgba(255,255,255,0.94); }
     :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #topbar .tz-back{ color:var(--text); }
     :is([data-theme="warm"],[data-theme="prototype"],[data-theme="datalab"],[data-theme="schematic"],[data-theme="simple"]) #topbar .tz-back:hover{ color:var(--gold); }
     [data-theme="simple"] #topbar .tz-back:hover{ color:var(--text); }
