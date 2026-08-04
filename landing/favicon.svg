@@ -1,4 +1,3 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="6" fill="#ffffff"/>
   <rect x="7" y="7" width="18" height="18" rx="2" fill="#F0AB00" transform="rotate(12 16 16)"/>
 </svg>
