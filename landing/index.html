@@ -1012,12 +1012,12 @@
       .leaflet-control-zoom a{ width:40px !important; height:40px !important; line-height:40px !important; font-size:19px !important; }
 
       /* ── long-form masthead: keep every link reachable as a swipeable strip ── */
-      #index-content .masthead{ padding:12px 0 10px; }
-      #index-content .masthead-inner{ flex-wrap:wrap; gap:10px 16px; }
-      #index-content .mark{ font-size:15px; }
+      #index-content .masthead{ padding:0; }
+      #index-content .masthead-inner{ flex-wrap:nowrap; gap:16px; height:48px; }
+      #index-content .mark{ font-size:15px; flex:none; }
       #index-content nav.primary{
-        width:100%; gap:16px; font-size:10px; flex-wrap:nowrap; white-space:nowrap;
-        overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding-bottom:2px;
+        flex:1; min-width:0; gap:16px; font-size:10px; flex-wrap:nowrap; white-space:nowrap;
+        overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding-bottom:0;
       }
       #index-content nav.primary::-webkit-scrollbar{ display:none; }
       #index-content nav.primary a:not(.nav-cta){ display:inline-block !important; }

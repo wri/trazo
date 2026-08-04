@@ -142,10 +142,10 @@
     .primary a:hover{ color:var(--gold); border-bottom-color:#F0AB00; }
     .primary .nav-div{ display:inline-block; width:1px; height:14px; background:var(--border); flex:none; }
     @media (max-width:760px){
-      .masthead-inner{ flex-wrap:wrap; gap:10px 16px; height:auto; padding:10px 0; }
+      .masthead-inner{ flex-wrap:nowrap; gap:16px; height:48px; padding:0; }
       .primary{
-        width:100%; gap:14px; font-size:10px; flex-wrap:nowrap; white-space:nowrap;
-        overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding-bottom:2px;
+        flex:1; min-width:0; gap:14px; font-size:10px; flex-wrap:nowrap; white-space:nowrap;
+        overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding-bottom:0;
       }
       .primary::-webkit-scrollbar{ display:none; }
     }
