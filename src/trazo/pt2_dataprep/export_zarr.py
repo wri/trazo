@@ -9,6 +9,23 @@ import numpy as np
 import rasterio
 
 
+def _zarr_create_array(group, name, data, chunks=None):
+    """Create an array under a zarr Group, compatible with zarr v2 and v3.
+
+    zarr v3 exposes ``Group.create_array(name=..., data=..., chunks=...)``;
+    zarr v2 uses ``Group.create_dataset(name, data=..., chunks=...)``.
+    """
+    if hasattr(group, "create_array"):
+        kwargs = {"name": name, "data": data}
+        if chunks is not None:
+            kwargs["chunks"] = chunks
+        return group.create_array(**kwargs)
+    kwargs = {"data": data}
+    if chunks is not None:
+        kwargs["chunks"] = chunks
+    return group.create_dataset(name, **kwargs)
+
+
 def find_countries(root: str) -> list[str]:
     countries = []
     root_path = Path(root)
@@ -122,22 +139,11 @@ def create_zarr_for_country(root, country, mask_type, overwrite=False, verbose=T
 
     C, H, W = images_array.shape[1:]
 
-    z.create_array(
-        name="images",
-        data=images_array,
-        chunks=(1, C, H, W),
-        # compressor=zarr.Blosc(cname="zstd", clevel=3, shuffle=2),
-    )
-    
-    z.create_array(
-        name="masks",
-        data=masks_array,
-        chunks=(1, H, W),
-        # compressor=zarr.Blosc(cname="zstd", clevel=3, shuffle=2),
-    )
-    
+    _zarr_create_array(z, "images", images_array, chunks=(1, C, H, W))
+    _zarr_create_array(z, "masks", masks_array, chunks=(1, H, W))
+
     meta_json = np.array([json.dumps(m) for m in all_meta], dtype='U')
-    z.create_array(name="meta", data=meta_json)
+    _zarr_create_array(z, "meta", meta_json)
 
     # convert metadata to variable-length strings
     # convert metadata to variable-length UTF-8 strings
