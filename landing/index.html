@@ -848,7 +848,7 @@
     /* coverage + Trazo3 read-more paragraphs match the hero intro paragraphs (.hero-para) */
     #index-content .hc-body .section-intro, #index-content .rm-body .section-intro{ font-size:15px; line-height:1.7; color:var(--text-muted); max-width:82ch; margin-top:12px; }
     #index-content .rm-body .section-intro + .section-intro{ font-size:15px; line-height:1.7; color:var(--text-muted); margin-top:12px; }
-    #index-content .rm > .rm-body{ max-height:0; overflow:hidden; opacity:0; transition:max-height .5s ease, opacity .3s ease; }
+    #index-content .rm > .rm-body{ max-height:0; overflow:hidden; opacity:0; transition:max-height .9s ease-in-out, opacity .6s ease; }
     #index-content .rm:hover > .rm-body, #index-content .rm.pinned > .rm-body{ max-height:3200px; opacity:1; overflow:visible; }
     #index-content .eyebrow::before{ content:none; }
 
@@ -885,13 +885,13 @@
     #index-content .step h4{ font-family:var(--font-header); font-size:12.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--text); margin-bottom:6px; }
     #index-content .step p{ font-family:var(--font-body); font-size:13px; line-height:1.55; color:var(--text-muted); margin:0; }
     /* ── hover-to-reveal collapse ── */
-    #index-content .hc > .hc-body{ max-height:0; overflow:hidden; opacity:0; margin-top:0; transition:max-height .45s ease, opacity .3s ease, margin-top .3s ease; }
+    #index-content .hc > .hc-body{ max-height:0; overflow:hidden; opacity:0; margin-top:0; transition:max-height .9s ease-in-out, opacity .6s ease, margin-top .6s ease; }
     #index-content .hc:hover > .hc-body, #index-content .hc:focus-within > .hc-body{ max-height:1400px; opacity:1; margin-top:14px; overflow:visible; }
     #index-content .hc > .section-num{ cursor:default; }
-    #index-content .model-card .model-body, #index-content .model-card .model-foot-link{ max-height:0; overflow:hidden; opacity:0; padding-top:0; padding-bottom:0; transition:max-height .45s ease, opacity .3s ease, padding .3s ease; }
+    #index-content .model-card .model-body, #index-content .model-card .model-foot-link{ max-height:0; overflow:hidden; opacity:0; padding-top:0; padding-bottom:0; transition:max-height .9s ease-in-out, opacity .6s ease, padding .6s ease; }
     #index-content .model-card:hover .model-body, #index-content .model-card:focus-within .model-body{ max-height:520px; opacity:1; padding-top:18px; padding-bottom:20px; }
     #index-content .model-card:hover .model-foot-link, #index-content .model-card:focus-within .model-foot-link{ max-height:120px; opacity:1; padding-top:11px; padding-bottom:13px; }
-    #index-content .step p{ max-height:0; overflow:hidden; opacity:0; margin-top:0 !important; transition:max-height .35s ease, opacity .25s ease, margin-top .25s ease; }
+    #index-content .step p{ max-height:0; overflow:hidden; opacity:0; margin-top:0 !important; transition:max-height .85s ease-in-out, opacity .55s ease, margin-top .55s ease; }
     #index-content .step:hover p, #index-content .step:focus-within p{ max-height:240px; opacity:1; margin-top:6px !important; }
     @media (hover:none){
       #index-content .hc > .hc-body{ max-height:none; opacity:1; margin-top:14px; overflow:visible; }
