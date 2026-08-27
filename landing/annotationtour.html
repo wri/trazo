@@ -101,6 +101,14 @@
     .c-eyebrow::before { content:none; }
     .c-eyebrow .calib { color:var(--muted); text-decoration:none; border-bottom:1px solid rgba(20,20,18,0.22); }
     .c-eyebrow .calib:hover { color:var(--ink); border-color:var(--ink); }
+    /* ── partner-data process video (Mundo Agropecuario) ── */
+    .partner-vid-trigger { display:inline-block; margin-top:6px; font-family:var(--font-mono); font-size:9.5px; letter-spacing:0.05em; line-height:1.4; color:var(--gold); cursor:pointer; border-bottom:1px dotted rgba(240,171,0,0.7); }
+    .partner-vid-trigger:hover { color:#c68c00; border-bottom-color:#c68c00; }
+    #partner-vid-overlay { position:fixed; inset:0; z-index:9000; display:none; align-items:center; justify-content:center; padding:40px; background:rgba(252,252,251,0.80); -webkit-backdrop-filter:blur(3px); backdrop-filter:blur(3px); }
+    #partner-vid-overlay.show { display:flex; }
+    #partner-vid-el { max-width:min(90vw,440px); max-height:86vh; border-radius:10px; background:#000; box-shadow:0 24px 70px rgba(0,0,0,0.35); }
+    #partner-vid-close { position:fixed; top:20px; right:22px; width:44px; height:44px; border-radius:50%; border:1px solid rgba(20,20,18,0.18); background:rgba(255,255,255,0.92); color:var(--ink); font-family:var(--font-header); font-size:26px; line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:color .15s, border-color .15s, transform .15s; box-shadow:0 4px 16px rgba(0,0,0,0.12); }
+    #partner-vid-close:hover { color:var(--gold); border-color:var(--gold); transform:scale(1.06); }
     .c-desc { font-family:var(--font-body); font-size:13.5px; line-height:1.6; color:#2b2b29; margin-bottom:13px; }
     .c-strategy { font-family:var(--font-body); font-size:12px; line-height:1.55; color:var(--muted); margin-bottom:14px; }
     .c-strategy .lab { font-family:var(--font-mono); font-size:9px; letter-spacing:0.14em; text-transform:uppercase; color:#8a6d1f; display:block; margin-bottom:3px; }
@@ -228,6 +236,11 @@
 </div>
 
 <div id="attrib">Sentinel-2 chips + field annotations · Trazo by WRI &amp; ASU · basemap Esri</div>
+
+<div id="partner-vid-overlay" aria-hidden="true">
+  <button id="partner-vid-close" type="button" aria-label="Close video and return to tour">&times;</button>
+  <video id="partner-vid-el" src="https://wri-datalab-sandbox.s3.us-east-1.amazonaws.com/trazofields/Trazo+Landing+Images/smallholders_linkedin_1080x1350_wri_v7_with_comparison.mp4" playsinline controls preload="none"></video>
+</div>
 
 <script>
 (function(){
@@ -402,7 +415,7 @@
       ["Window", cur.win==="a" ? "A \u00b7 planting" : "B \u00b7 harvest"],
       ["Fields", nf ? String(nf) : "\u2014"],
       ["Annotators", '<span id="c-auth">\u2014</span>'],
-      ["Source", `<a href="${PAGE}/${f.id}/" ${NEWT}>source.coop</a>`]
+      ["Source", `<a href="${PAGE}/${f.id}/" ${NEWT}>source.coop</a>` + (f.id==="maparaguay" ? `<span id="partner-vid-trigger" tabindex="0" role="button" class="partner-vid-trigger">Hover to view process of adding partner data</span>` : "")]
     ];
     $("c-meta").innerHTML = rows.map(r=>`<div class="c-row"><span class="c-k">${r[0]}</span><span class="c-v">${r[1]}</span></div>`).join("");
     document.querySelectorAll(".seg-btn").forEach(b=>b.classList.toggle("active", b.dataset.win===cur.win));
@@ -586,6 +599,37 @@
     if (ok) scheduleNext(9000);
   });
   $("ds-select").addEventListener("change", (e)=>{ stopTimer(); goToFolder(+e.target.value); });
+
+  // ── partner-data process video: hover opens, pauses tour; X / Esc / backdrop closes ──
+  (function(){
+    var ov = document.getElementById("partner-vid-overlay");
+    var vid = document.getElementById("partner-vid-el");
+    var closeBtn = document.getElementById("partner-vid-close");
+    if (!ov || !vid) return;
+    function openVid(){
+      if (ov.classList.contains("show")) return;
+      stopTimer();
+      ov.classList.add("show"); ov.setAttribute("aria-hidden","false");
+      try { vid.currentTime = 0; var pr = vid.play(); if (pr && pr.catch) pr.catch(function(){}); } catch(e){}
+    }
+    function closeVid(){
+      if (!ov.classList.contains("show")) return;
+      ov.classList.remove("show"); ov.setAttribute("aria-hidden","true");
+      try { vid.pause(); } catch(e){}
+      scheduleNext(9000);
+    }
+    document.addEventListener("mouseover", function(e){
+      var t = e.target && e.target.closest ? e.target.closest("#partner-vid-trigger") : null;
+      if (t) openVid();
+    });
+    document.addEventListener("click", function(e){
+      var t = e.target && e.target.closest ? e.target.closest("#partner-vid-trigger") : null;
+      if (t) { e.preventDefault(); openVid(); }
+    });
+    closeBtn.addEventListener("click", closeVid);
+    ov.addEventListener("click", function(e){ if (e.target === ov) closeVid(); });
+    document.addEventListener("keydown", function(e){ if (e.key === "Escape") closeVid(); });
+  })();
   { const ct=$("card-toggle"); if (ct) ct.addEventListener("click", ()=>{ $("card").classList.toggle("expanded"); }); }
 
   // ── dropdown ──
