@@ -778,6 +778,10 @@
 
     /* masthead */
     .tzbar{ position:sticky; top:0; }   /* index bar sticks; shared shell in topbar.css */
+    /* index styles every link (#index-content a) with a gold underline; keep the bar links clean (underline is hover-only via topbar.css) */
+    #index-content .tzbar-brand{ text-decoration:none; color:var(--text); }
+    #index-content .tzbar-link{ text-decoration:none; color:var(--text-muted); }
+    #index-content .tzbar-link:hover{ color:var(--gold); }
     #index-content .masthead{ padding:12px 0 12px; border-bottom:1px solid var(--border-dim); background:var(--masthead-bg); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); position:sticky; top:0; z-index:50; }
     [data-theme="simple"] #index-content .masthead{ background:rgba(255,255,255,0.94); }
     #index-content .masthead-inner{ display:flex; align-items:center; justify-content:space-between; gap:32px; flex-wrap:wrap; }
