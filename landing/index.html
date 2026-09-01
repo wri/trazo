@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
   <title>Trazo</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="topbar.css">
 
   <!-- ═══ Google Analytics 4 (gtag.js) ═══ -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-WDZSV2M2G6"></script>
@@ -776,6 +777,7 @@
     #index-content section{ position:relative; z-index:2; }
 
     /* masthead */
+    .tzbar{ position:sticky; top:0; }   /* index bar sticks; shared shell in topbar.css */
     #index-content .masthead{ padding:12px 0 12px; border-bottom:1px solid var(--border-dim); background:var(--masthead-bg); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); position:sticky; top:0; z-index:50; }
     [data-theme="simple"] #index-content .masthead{ background:rgba(255,255,255,0.94); }
     #index-content .masthead-inner{ display:flex; align-items:center; justify-content:space-between; gap:32px; flex-wrap:wrap; }
@@ -2068,22 +2070,22 @@ loadFile();
 
 <div id="index-content">
   <!-- ═══ MASTHEAD ═══ -->
-  <header class="masthead">
-    <div class="wrap masthead-inner">
-      <a class="mark" href="#" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">
+  <header class="tzbar">
+    <div class="tzbar-inner">
+      <a class="tzbar-brand" href="#" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">
         <span class="dot"></span><span>Trazo</span>
       </a>
-      <nav class="primary">
-        <a href="map.html">Map</a>
-        <a href="annotationguide.html">Annotation</a>
-        <a href="https://www.wri.org/research/field-boundaries-south-america" target="_blank" rel="noopener">Technical Note</a>
-        <span class="nav-div" aria-hidden="true"></span>
-        <a href="#coverage">Coverage</a>
-        <a href="#models">Models</a>
-        <a href="#pipeline-section">Pipeline</a>
-        <a href="#use">Use</a>
-        <span class="nav-div" aria-hidden="true"></span>
-        <a href="#cite">Cite</a>
+      <nav class="tzbar-nav">
+        <a class="tzbar-link" href="map.html">Map</a>
+        <a class="tzbar-link" href="annotationguide.html">Annotation</a>
+        <a class="tzbar-link" href="https://www.wri.org/research/field-boundaries-south-america" target="_blank" rel="noopener">Technical Note</a>
+        <span class="tzbar-div" aria-hidden="true"></span>
+        <a class="tzbar-link" href="#coverage">Coverage</a>
+        <a class="tzbar-link" href="#models">Models</a>
+        <a class="tzbar-link" href="#pipeline-section">Pipeline</a>
+        <a class="tzbar-link" href="#use">Use</a>
+        <span class="tzbar-div" aria-hidden="true"></span>
+        <a class="tzbar-link" href="#cite">Cite</a>
       </nav>
     </div>
   </header>
@@ -2726,7 +2728,7 @@ window.TZ = (function(){
   function tick(){ if(!paths.length) return; idx=(idx+1)%paths.length; render(paths[idx]); }
   function start(){ if(paths.length){ render(paths[idx%paths.length]); if(!timer) timer=setInterval(tick,1000); } }
   function build(){
-    var dots=document.querySelectorAll('.mark .dot, .footer-brand-line .dot');
+    var dots=document.querySelectorAll('.tzbar-brand .dot, .footer-brand-line .dot');
     for(var i=0;i<dots.length;i++){ var d=dots[i];
       var host=document.createElement('span'); host.className='tz-geo'; host.setAttribute('aria-hidden','true');
       var a=mkSvg(),b=mkSvg(); host.appendChild(a); host.appendChild(b);

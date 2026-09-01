@@ -6,6 +6,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover"/>
   <title>Trazo</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="topbar.css">
 
   <!-- ═══ Google Analytics 4 (gtag.js) ═══ -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-WDZSV2M2G6"></script>
@@ -128,27 +129,8 @@
 
     .wrap{ width:100%; max-width:var(--max-w); margin:0 auto; padding-left:var(--gutter); padding-right:var(--gutter); }
 
-    /* ── MASTHEAD ───────────────────────────────────────────────────────────── */
-    .masthead{
-      position:sticky; top:0; z-index:50;
-      background:var(--chrome-bg); backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
-      border-bottom:1px solid var(--border);
-    }
-    .masthead-inner{ display:flex; align-items:center; gap:22px; height:48px; }
-    .mark{ display:flex; align-items:center; gap:9px; text-decoration:none; color:var(--text); font-family:var(--font-header); font-weight:700; letter-spacing:.08em; font-size:18px; text-transform:uppercase; }
-    .mark .dot{ width:10px; height:10px; border-radius:50%; background:var(--gold); }
-    .primary{ margin-left:auto; display:flex; align-items:center; gap:18px; }
-    .primary a{ color:var(--text-muted); text-decoration:none; font-family:var(--font-header); font-size:13px; letter-spacing:.02em; transition:color .15s, border-color .15s; white-space:nowrap; border-bottom:2px solid transparent; padding-bottom:2px; }
-    .primary a:hover{ color:var(--gold); border-bottom-color:#F0AB00; }
-    .primary .nav-div{ display:inline-block; width:1px; height:14px; background:var(--border); flex:none; }
-    @media (max-width:760px){
-      .masthead-inner{ flex-wrap:nowrap; gap:16px; height:48px; padding:0; }
-      .primary{
-        flex:1; min-width:0; gap:14px; font-size:10px; flex-wrap:nowrap; white-space:nowrap;
-        overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; padding-bottom:0;
-      }
-      .primary::-webkit-scrollbar{ display:none; }
-    }
+    /* ── MASTHEAD → shared shell in topbar.css; page-specific position only ── */
+    .tzbar{ position:sticky; top:0; }
     .theme-toggle-idx{
       background:none; border:none; cursor:pointer; font-family:var(--font-mono);
       font-size:9.5px; letter-spacing:.14em; text-transform:uppercase;
@@ -316,21 +298,21 @@
 <body>
 
   <!-- ═══ MASTHEAD ═══ -->
-  <header class="masthead">
-    <div class="wrap masthead-inner">
-      <a class="mark" href="index.html"><span class="dot"></span><span>Trazo</span></a>
-      <nav class="primary">
-        <a href="map.html">Map</a>
-        <a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">Annotation</a>
-        <a href="https://www.wri.org/research/field-boundaries-south-america" target="_blank" rel="noopener">Technical Note</a>
-        <span class="nav-div" aria-hidden="true"></span>
-        <a href="#field">Definition</a>
-        <a href="#approach">Method</a>
-        <a href="#guidelines">Guidelines</a>
-        <a href="#review">Quality</a>
-        <a href="#validation">Validation</a>
-        <span class="nav-div" aria-hidden="true"></span>
-        <a href="index.html#cite">Cite</a>
+  <header class="tzbar">
+    <div class="tzbar-inner">
+      <a class="tzbar-brand" href="index.html"><span class="dot"></span><span>Trazo</span></a>
+      <nav class="tzbar-nav">
+        <a class="tzbar-link" href="map.html">Map</a>
+        <a class="tzbar-link" href="#" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;">Annotation</a>
+        <a class="tzbar-link" href="https://www.wri.org/research/field-boundaries-south-america" target="_blank" rel="noopener">Technical Note</a>
+        <span class="tzbar-div" aria-hidden="true"></span>
+        <a class="tzbar-link" href="#field">Definition</a>
+        <a class="tzbar-link" href="#approach">Method</a>
+        <a class="tzbar-link" href="#guidelines">Guidelines</a>
+        <a class="tzbar-link" href="#review">Quality</a>
+        <a class="tzbar-link" href="#validation">Validation</a>
+        <span class="tzbar-div" aria-hidden="true"></span>
+        <a class="tzbar-link" href="index.html#cite">Cite</a>
       </nav>
     </div>
   </header>
@@ -901,7 +883,7 @@
   function tick(){ if(!paths.length) return; idx=(idx+1)%paths.length; render(paths[idx]); }
   function start(){ if(paths.length){ render(paths[idx%paths.length]); if(!timer) timer=setInterval(tick,1000); } }
   function build(){
-    var dots=document.querySelectorAll('.mark .dot, .footer-brand-line .dot');
+    var dots=document.querySelectorAll('.tzbar-brand .dot, .footer-brand-line .dot');
     for(var i=0;i<dots.length;i++){ var d=dots[i];
       var host=document.createElement('span'); host.className='tz-geo'; host.setAttribute('aria-hidden','true');
       var a=mkSvg(),b=mkSvg(); host.appendChild(a); host.appendChild(b);
