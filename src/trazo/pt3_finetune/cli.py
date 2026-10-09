@@ -24,6 +24,7 @@ CONFIG_DIR = Path(__file__).resolve().parent / "configs"
 
 STRATEGY_CONFIGS = {
     "full": "finetune_full.yaml",
+    "decoder": "finetune_decoder.yaml",
     "lastlayer": "finetune_lastlayer.yaml",
     "lora": "finetune_lora.yaml",
     "upgd": "finetune_upgd.yaml",

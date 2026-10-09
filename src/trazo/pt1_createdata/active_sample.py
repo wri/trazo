@@ -7,10 +7,10 @@ Integrated active-learning sampling pipeline for the trazo package.
 
 Runs FTW model inference from a user-supplied checkpoint, scores every chip
 against a local agricultural binary raster, and selects chips to re-label
-using four complementary strategies.
+using four strategies, plus a random control arm.
 
-Four sampling strategies
-------------------------
+Sampling strategies
+-------------------
 A  lc_discrepancy_all
        LC-raster vs. model predictions counting field boundaries AND interiors
        (all non-background pixels, i.e. ``predictions != 0``).
@@ -29,6 +29,12 @@ D  low_confidence_ag20pct
        Same as C, but restricted to chips where the AG raster flags at least
        20 % of the chip area as agricultural (configurable via
        ``--ag-threshold``).
+
+R  random
+       Uniform random sample, seeded by ``--seed``. The control arm.
+
+``--exclude`` (repeatable) drops chips labelled in earlier rounds: a directory
+of chip TIFFs or a text file of chip names.
 
 User-defined inputs
 -------------------
@@ -86,7 +92,7 @@ import random
 import shutil
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
 import rasterio
@@ -650,6 +656,38 @@ def strategy_low_confidence_ag20pct(
     return sorted(eligible, key=lambda r: r["confidence_mean"])[:n]
 
 
+def strategy_random(
+    records: List[ScoreRecord],
+    n: int = DEFAULT_N,
+    seed: Optional[int] = None,
+) -> List[ScoreRecord]:
+    """
+    **Strategy R** — Uniform random sample, the control arm.
+
+    Without it there is no way to tell whether strategies A-D beat labelling
+    the same number of chips at random, which is the question active learning
+    has to answer.
+    """
+    rng = random.Random(seed)
+    return rng.sample(records, min(n, len(records)))
+
+
+def load_exclusions(paths: Sequence[str]) -> set:
+    """Chip filenames to drop: from text files (one per line) or directories."""
+    names: set = set()
+    for raw in paths:
+        p = Path(raw).expanduser()
+        if p.is_dir():
+            names.update(f.name for f in p.glob("*.tif"))
+        elif p.is_file():
+            names.update(
+                Path(line.strip()).name for line in p.read_text().splitlines() if line.strip()
+            )
+        else:
+            raise FileNotFoundError(f"--exclude path not found: {p}")
+    return names
+
+
 # ============================================================================
 # Export helper
 # ============================================================================
@@ -728,7 +766,7 @@ def build_parser() -> argparse.ArgumentParser:
             "Active-learning chip sampling for trazo.  "
             "Runs FTW model inference from a checkpoint, scores chips against "
             "an agricultural binary raster, and exports chips selected by four "
-            "complementary strategies."
+            "strategies plus a random control."
         ),
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
@@ -754,6 +792,16 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "Agricultural land-cover binary GeoTIFF.  "
             "Pixels with value 1 are treated as agricultural."
+        ),
+    )
+    p.add_argument(
+        "--exclude",
+        action="append",
+        default=[],
+        metavar="PATH",
+        help=(
+            "Chips already labelled in an earlier round: a directory of chip "
+            "TIFFs or a text file of chip names. Repeatable."
         ),
     )
     req.add_argument(
@@ -921,6 +969,12 @@ def main(argv: Optional[List[str]] = None) -> None:
             file=sys.stderr,
         )
         sys.exit(1)
+
+    if args.exclude:
+        excluded = load_exclusions(args.exclude)
+        before = len(records)
+        records = [r for r in records if Path(r["file"]).name not in excluded]
+        print(f"[active_sample] excluded {before - len(records)} already-labelled chip(s)")
 
     # ── 2. Save full score table ────────────────────────────────────────
     scores_path = output_dir / "scores.json"
