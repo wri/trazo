@@ -7,7 +7,8 @@
 # with this config and then merge back toward the base checkpoint:
 #
 #   trazo-pt3-finetune merge --base ftw_3class.ckpt \
-#       --finetuned logs/version_0/checkpoints/best.ckpt --output merged.ckpt
+#       --finetuned logs/version_0/checkpoints/best.ckpt --output merged.ckpt \
+#       --scaling-coef 0.75   # 1.0 with one checkpoint is a no-op
 #
 # Run:
 #   trazo-pt3-finetune run --strategy full --config this_file.yaml

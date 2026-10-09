@@ -137,22 +137,31 @@ def inject_lora(
                   merge_weights=merge_weights)
     wrapped = 0
 
-    # EfficientNet encoders keep their convs behind `.conv` attributes on
-    # composite modules, so they need naming-aware handling.
+    # EfficientNet encoders (efficientnet-pytorch, as used by smp) store their
+    # convs directly as ``Conv2dStaticSamePadding`` attributes. Those are skipped
+    # by the generic sweep below, so they are wrapped here by name. Older code
+    # looked for a ``.conv`` attribute on them, which they do not have, so the
+    # whole encoder was silently left without adapters.
     encoder = getattr(model, "encoder", None)
     if encoder is not None and "efficientnet" in type(encoder).__name__.lower():
-        for attr in ("_conv_stem", "_conv_head"):
-            sub = getattr(encoder, attr, None)
-            if sub is not None and hasattr(sub, "conv"):
+        def wrap_attr(owner: nn.Module, attr: str) -> int:
+            sub = getattr(owner, attr, None)
+            if sub is None:
+                return 0
+            if hasattr(sub, "conv") and isinstance(sub.conv, nn.Conv2d):
                 sub.conv = _wrap(sub.conv, **kwargs)
-                wrapped += 1
+                return 1
+            if isinstance(sub, nn.Conv2d):
+                setattr(owner, attr, _wrap(sub, **kwargs))
+                return 1
+            return 0
+
+        for attr in ("_conv_stem", "_conv_head"):
+            wrapped += wrap_attr(encoder, attr)
         for blk in getattr(encoder, "_blocks", []):
             for attr in ("_expand_conv", "_depthwise_conv", "_project_conv",
                          "_se_reduce", "_se_expand"):
-                sub = getattr(blk, attr, None)
-                if sub is not None and hasattr(sub, "conv"):
-                    sub.conv = _wrap(sub.conv, **kwargs)
-                    wrapped += 1
+                wrapped += wrap_attr(blk, attr)
 
     # Everything else: a generic sweep over plain Conv2d children.
     def sweep(module: nn.Module) -> int:
@@ -208,6 +217,35 @@ def mark_only_lora_as_trainable(model: nn.Module, bias: str = "none") -> int:
 def lora_state_dict(model: nn.Module) -> dict:
     """Just the LoRA tensors, for saving an adapter without the base weights."""
     return {k: v for k, v in model.state_dict().items() if "lora_" in k}
+
+
+def has_lora(state: dict) -> bool:
+    return any(k.endswith("lora_A") for k in state)
+
+
+def fold_lora_state_dict(state: dict, scaling: float) -> dict:
+    """Fold LoRA adapters into their base weights, in state-dict space.
+
+    Returns a state dict with the original (pre-injection) key names and no
+    ``lora_`` tensors, so it loads into a plain smp model: ``ftw inference``,
+    the Step 4 trainer, or :mod:`trazo.pt3_finetune.merge`. Without this a LoRA
+    checkpoint is unusable downstream: the wrapped weights live under
+    ``<layer>.conv.weight`` and merging silently ignores the adapters.
+
+    Args:
+        state: State dict of a LoRA-injected model (Lightning prefixes are fine).
+        scaling: ``lora_alpha / lora_rank`` used in training.
+    """
+    out = dict(state)
+    prefixes = [k[: -len("lora_A")] for k in state if k.endswith("lora_A")]
+    for p in prefixes:
+        a = out.pop(p + "lora_A")
+        b = out.pop(p + "lora_B")
+        w = out.pop(p + "conv.weight")
+        out[p + "weight"] = w + ((b.float() @ a.float()).view_as(w) * scaling).to(w.dtype)
+        if p + "conv.bias" in out:
+            out[p + "bias"] = out.pop(p + "conv.bias")
+    return out
 
 
 def count_trainable(model: nn.Module) -> int:

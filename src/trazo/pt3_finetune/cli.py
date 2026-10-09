@@ -115,12 +115,26 @@ def run_finetune(args: argparse.Namespace) -> int:
 
 
 def run_merge(args: argparse.Namespace) -> int:
-    from .merge import merge_checkpoints, save_state_dict
+    from .merge import merge_checkpoints, model_hparams, save_state_dict
 
     state = merge_checkpoints(
         args.base, args.finetuned, method=args.method, scaling_coef=args.scaling_coef
     )
-    save_state_dict(state, args.output)
+    save_state_dict(state, args.output, model_hparams(args.base))
+    return 0
+
+
+def run_export(args: argparse.Namespace) -> int:
+    """Write a fine-tuned checkpoint as a plain model checkpoint.
+
+    LoRA adapters are folded into the base weights, so the output loads
+    anywhere a stock FTW checkpoint does (``ftw inference run``, Step 5).
+    """
+    from .merge import load_state_dict, model_hparams, save_state_dict
+
+    save_state_dict(
+        load_state_dict(args.checkpoint), args.output, model_hparams(args.checkpoint)
+    )
     return 0
 
 
@@ -187,6 +201,13 @@ def build_parser() -> argparse.ArgumentParser:
     merge.add_argument("--method", choices=["magmax", "sum"], default="magmax")
     merge.add_argument("--scaling-coef", type=float, default=1.0)
     merge.set_defaults(func=run_merge)
+
+    export = sub.add_parser(
+        "export", help="Fold LoRA adapters into the weights for inference."
+    )
+    export.add_argument("--checkpoint", required=True, help="Fine-tuned checkpoint.")
+    export.add_argument("--output", required=True, help="Output checkpoint path.")
+    export.set_defaults(func=run_export)
 
     configs = sub.add_parser("configs", help="List the bundled starter configs.")
     configs.set_defaults(func=list_configs)
