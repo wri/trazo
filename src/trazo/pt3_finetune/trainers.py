@@ -1,11 +1,13 @@
 """Fine-tuning task: the Step 4 trainer plus a choice of adaptation strategy.
 
-Four strategies, matching the technical note's fine-tuning comparison:
+Five strategies: the four from the technical note's fine-tuning comparison,
+plus ``decoder``:
 
 ==============  ==========================================================
 ``full``        Update every weight. Strongest on the target region in the
                 note's Chiquitania experiment (84.4% pixel IoU), and the
                 most prone to catastrophic forgetting elsewhere.
+``decoder``     Freeze the encoder; update decoder and head.
 ``lastlayer``   Freeze encoder and decoder; update the segmentation head
                 only. Cheapest, and underfits.
 ``lora``        Freeze the base weights; train rank-``r`` adapters.
@@ -44,7 +46,7 @@ from ..pt4_train.trainers import CustomSemanticSegmentationTask
 from .lora import inject_lora, mark_only_lora_as_trainable
 from .optimizers import UPGD
 
-STRATEGIES = ("full", "lastlayer", "lora", "upgd")
+STRATEGIES = ("full", "decoder", "lastlayer", "lora", "upgd")
 
 
 class FineTuneTask(CustomSemanticSegmentationTask):
@@ -67,7 +69,8 @@ class FineTuneTask(CustomSemanticSegmentationTask):
         """
         Args:
             pretrained_ckpt: Checkpoint to adapt (e.g. the FTW 3-class model).
-            strategy: One of ``full``, ``lastlayer``, ``lora``, ``upgd``.
+            strategy: One of ``full``, ``decoder``, ``lastlayer``, ``lora``,
+                ``upgd``.
             optimizer: ``adamw`` or ``upgd``. Defaults to ``upgd`` for the
                 ``upgd`` strategy and ``adamw`` otherwise.
             lora_rank: Rank of the LoRA adapters.
@@ -165,6 +168,18 @@ class FineTuneTask(CustomSemanticSegmentationTask):
                 param.requires_grad = True
             trainable = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
             print(f"[finetune] last-layer: {trainable:,} trainable parameters")
+
+        elif strategy == "decoder":
+            encoder = getattr(self.model, "encoder", None)
+            if encoder is None:
+                raise RuntimeError(
+                    "strategy 'decoder' needs a model with an encoder "
+                    f"(got {type(self.model).__name__})."
+                )
+            for param in encoder.parameters():
+                param.requires_grad = False
+            trainable = sum(p.numel() for p in self.model.parameters() if p.requires_grad)
+            print(f"[finetune] decoder: {trainable:,} trainable parameters")
 
         elif strategy == "lora":
             inject_lora(

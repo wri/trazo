@@ -325,9 +325,14 @@ trazo-pt3-finetune configs
 | `--strategy` | What it updates | Pixel IoU | Object recall | When to use it |
 |---|---|---|---|---|
 | `full` | every weight | **84.4%** | 34.16% | Best on the target region. Forgets the most. |
+| `decoder` | decoder and head, encoder frozen | — | — | Not in the note; see the re-run below. |
 | `lastlayer` | segmentation head only | 62.7% | 25.68% | Cheapest. Underfits. |
 | `lora` | rank-`r` adapters, base frozen | 64.0% | 28.33% | Small trainable footprint, low memory. |
 | `upgd` | every weight, utility-gated optimizer | 65.6% | 27.57% | Full-model updates with some forgetting protection. |
+
+**A re-run on Mato Grosso** (80 random chips per fold, 3 folds, scored on held-out chips that overlap no training chip; field-interior IoU, FTW base 0.44): `full` at lr 1e-4 reached 0.66, `decoder` 0.64, `lora` with the current config 0.68, `lastlayer` 0.45 and `upgd` 0.47. The earlier LoRA defaults (lr 1e-4, alpha 1) reached only 0.50.
+
+The same run found no forgetting on the soy, Cerrado and Chiquitania test sets after harmonizing the inputs: full fine-tuning raised all three. Before harmonizing, it collapsed on soy (0.47 to 0.03). The Mato Grosso chips came from a GEE export of `COPERNICUS/S2_SR`, which keeps a +1000 DN offset on 2024 scenes; the soy and Cerrado chips have none. Check that every training and test set uses the same radiometry before reading a cross-region drop as forgetting. Nobody has re-checked the note's India result for this.
 
 Common overrides:
 
@@ -369,11 +374,11 @@ In the note's cross-region evaluation MagMax scored the best pixel IoU on Kenya 
 
 ### > 3.2 Active-learning sampling
 
-`trazo-active-sample` scores every chip in a directory using a model checkpoint and selects the most informative ones for re-labeling using four complementary strategies.
+`trazo-active-sample` scores every chip in a directory using a model checkpoint and selects chips for re-labeling with four strategies, plus a random control.
 
 Install with `pip install -e ".[active]"`.
 
-**Four sampling strategies:**
+**Sampling strategies:**
 
 | Strategy | Description |
 |----------|-------------|
@@ -381,6 +386,11 @@ Install with `pip install -e ".[active]"`.
 | `lc_discrepancy_interiors` | Same discrepancy, but counting only field-interior predictions |
 | `low_confidence` | Chips where the model's mean softmax max-probability is lowest |
 | `low_confidence_ag20pct` | Same as above, restricted to chips that are ≥20 % agricultural land |
+| `random` | Uniform random sample. The control: without it there is no way to show the other four beat random labelling |
+
+In the Mato Grosso re-run above, 80 chips from `lc_discrepancy_all` scored level with 80 random chips (0.65 vs 0.64), and both `low_confidence` and `lc_discrepancy_interiors` scored lower (0.56, 0.55). The random set shared the test set's imagery source, which favors it, so treat this as unproven rather than negative.
+
+For later rounds, pass `--exclude` (repeatable) with a directory of chips or a text file of chip names already labelled, so they are not selected again.
 
 **Run:**
 
@@ -406,6 +416,8 @@ trazo-active-sample \
   low_confidence/
   low_confidence_ag20pct.json
   low_confidence_ag20pct/
+  random.json
+  random/
   inference/preds/                  # (optional) prediction TIFFs
   inference/conf/                   # (optional) confidence TIFFs
 ```

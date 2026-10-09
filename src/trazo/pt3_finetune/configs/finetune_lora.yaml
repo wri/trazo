@@ -8,6 +8,10 @@
 # Rank is the knob that matters: 4 is cheap and conservative, 16 adapts harder.
 # lora_alpha / lora_rank is the effective scale of the update.
 #
+# Earlier defaults (lr 1e-4, alpha 1 -> scale 0.25) barely moved the model: on 80
+# Mato Grosso chips they early-stopped near epoch 25 at 0.50 field IoU on held-out
+# chips. lr 1e-3 with alpha = rank reached 0.69, level with full fine-tuning.
+#
 # Run:
 #   trazo-pt3-finetune run --strategy lora --config this_file.yaml
 #       --checkpoint /models/ftw_3class.ckpt
@@ -57,10 +61,10 @@ model:
     class_weights: [0.05, 0.20, 0.75]   # boundary-weighted, per the note
     ignore_index: 3             # class 3 = unlabeled, presence-only masks
     patch_weights: false
-    lr: 1.0e-4                  # higher: only the adapters are learning
+    lr: 1.0e-3                  # higher: only the adapters are learning
     patience: 100               # cosine annealing T_max
     lora_rank: 4
-    lora_alpha: 1.0
+    lora_alpha: 4.0               # = rank, so the update scale is 1
     lora_dropout: 0.1
 
 data:
