@@ -33,7 +33,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
   <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/pmtiles@3.2.0/dist/pmtiles.js"></script>
@@ -70,8 +70,9 @@
       --text-dim:   #666666;
       /* Fonts */
       --font-header: 'Archivo', 'Segoe UI', sans-serif;
-      --font-body:   'Segoe UI', Calibri, sans-serif;
-      --font-mono:   'Courier New', monospace;
+      --font-body:   'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      --font-mono:   'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif;  /* labels = letterspaced humanist caps */
+      --font-code:   'IBM Plex Mono', ui-monospace, 'Courier New', monospace;            /* genuine code/data only */
       /* long-form / index tokens */
       --bg-page:      #050c03;
       --bg-elevated:  #0d160a;
@@ -934,7 +935,7 @@
     #index-content .cite-toggle summary:hover{ background:var(--surface-hover); }
     #index-content .cite-toggle .cite-arrow{ font-family:var(--font-mono); font-weight:400; transition:transform .2s; }
     #index-content .cite-toggle[open] .cite-arrow{ transform:rotate(-180deg); }
-    #index-content .cite-toggle .citation{ margin-top:0; background:var(--cite-bg); box-shadow:0 0 0 1px var(--border-faint); border-left:3px solid var(--gold); padding:20px 24px; font-family:var(--font-mono); font-size:12px; line-height:1.7; color:var(--text); white-space:pre-wrap; overflow-x:auto; }
+    #index-content .cite-toggle .citation{ margin-top:0; background:var(--cite-bg); box-shadow:0 0 0 1px var(--border-faint); border-left:3px solid var(--gold); padding:20px 24px; font-family:var(--font-code); font-size:12px; line-height:1.7; color:var(--text); white-space:pre-wrap; overflow-x:auto; }
 
     /* footer */
     #index-content footer{ background:var(--footer-bg); border-top:1px solid var(--border-dim); padding:48px 0 32px; color:var(--text-muted); }
