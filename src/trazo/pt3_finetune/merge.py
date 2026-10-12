@@ -30,6 +30,8 @@ from typing import Dict, Iterable, List, Optional, Sequence
 
 import torch
 
+from .lora import fold_lora_state_dict, has_lora
+
 StateDict = Dict[str, torch.Tensor]
 
 
@@ -39,7 +41,17 @@ def load_state_dict(path: str | Path) -> StateDict:
     state = obj.get("state_dict", obj) if isinstance(obj, dict) else obj
     if not isinstance(state, dict):
         raise ValueError(f"{path} does not contain a state dict")
-    return {k: v for k, v in state.items() if isinstance(v, torch.Tensor)}
+    state = {k: v for k, v in state.items() if isinstance(v, torch.Tensor)}
+    if has_lora(state):
+        hp = obj.get("hyper_parameters", {}) if isinstance(obj, dict) else {}
+        if "lora_alpha" not in hp or "lora_rank" not in hp:
+            raise ValueError(
+                f"{path} holds LoRA adapters but no lora_alpha/lora_rank "
+                "hyperparameters, so they cannot be folded into the base weights."
+            )
+        state = fold_lora_state_dict(state, hp["lora_alpha"] / hp["lora_rank"])
+        print(f"[merge] folded LoRA adapters in {path}")
+    return state
 
 
 def _mergeable_keys(base: StateDict, other: StateDict) -> List[str]:
@@ -152,6 +164,12 @@ def merge_checkpoints(
 ) -> StateDict:
     """Merge one or more fine-tuned checkpoints back into a base checkpoint."""
     vectors = [TaskVector(base, path) for path in finetuned]
+    if len(vectors) == 1 and scaling_coef == 1.0:
+        print(
+            "[merge] WARNING: one fine-tuned checkpoint at scaling_coef=1.0 "
+            "reproduces that checkpoint exactly; MagMax needs two or more task "
+            "vectors, and pulling back toward the base needs scaling_coef < 1."
+        )
     if method == "magmax":
         combined = magmax(vectors)
     elif method == "sum":
@@ -163,11 +181,36 @@ def merge_checkpoints(
     return combined.apply_to(base, scaling_coef=scaling_coef)
 
 
-def save_state_dict(state: StateDict, path: str | Path) -> None:
-    """Write a state dict as a Lightning-loadable checkpoint."""
+# Fine-tuning-only hyperparameters. Stripped on save so the output loads into
+# the plain segmentation task (``ftw inference``) rather than only FineTuneTask.
+_FINETUNE_HPARAMS = {
+    "pretrained_ckpt", "strategy", "optimizer", "lora_rank", "lora_alpha",
+    "lora_dropout", "upgd_weight_decay", "upgd_beta_utility", "upgd_sigma",
+}
+
+
+def model_hparams(path: str | Path) -> dict:
+    """The architecture hyperparameters of a checkpoint, minus fine-tuning ones."""
+    obj = torch.load(str(path), map_location="cpu", weights_only=False)
+    hp = obj.get("hyper_parameters", {}) if isinstance(obj, dict) else {}
+    return {k: v for k, v in dict(hp).items() if k not in _FINETUNE_HPARAMS}
+
+
+def save_state_dict(
+    state: StateDict, path: str | Path, hparams: Optional[dict] = None
+) -> None:
+    """Write a state dict as a Lightning-loadable checkpoint.
+
+    Pass ``hparams`` (see :func:`model_hparams`) so ``load_from_checkpoint`` can
+    rebuild the right architecture; without them it falls back to the task's
+    defaults and the load fails on shape mismatches.
+    """
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
-    torch.save({"state_dict": state, "pytorch-lightning_version": "2.0.0"}, path)
+    ckpt = {"state_dict": state, "pytorch-lightning_version": "2.0.0"}
+    if hparams:
+        ckpt["hyper_parameters"] = hparams
+    torch.save(ckpt, path)
     print(f"[merge] wrote {path}")
 
 
@@ -197,7 +240,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     state = merge_checkpoints(
         args.base, args.finetuned, method=args.method, scaling_coef=args.scaling_coef
     )
-    save_state_dict(state, args.output)
+    save_state_dict(state, args.output, model_hparams(args.base))
     return 0
 
 

@@ -352,7 +352,13 @@ trazo-pt3-finetune merge \
   --finetuned /models/ft_full/lightning_logs/version_0/checkpoints/best.ckpt \
   --output    /models/merged.ckpt \
   --method    magmax \
-  --scaling-coef 1.0
+  --scaling-coef 0.75
+```
+
+With a single `--finetuned` checkpoint, MagMax has nothing to choose between: at `--scaling-coef 1.0` the output is that checkpoint, unchanged. Pull back toward the base with a coefficient below 1, or pass two or more fine-tuned checkpoints. LoRA checkpoints are folded into plain weights automatically. To use one for inference without merging, fold it first:
+
+```bash
+trazo-pt3-finetune export --checkpoint /models/ft_lora/best.ckpt --output /models/ft_lora_plain.ckpt
 ```
 
 In the note's cross-region evaluation MagMax scored the best pixel IoU on Kenya (65.9%) and India (43.4%), recovered Brazil to 77.2%, and still held 79.2% on the target region — against 84.4% for unmerged full fine-tuning. `--method sum` does plain task-vector addition instead, which is the tool to reach for when combining several regional models.

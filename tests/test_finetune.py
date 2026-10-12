@@ -255,3 +255,68 @@ def test_lora_preserves_output_shape_on_efficientnet():
 
     assert after.shape == before.shape
     assert torch.allclose(before, after, atol=1e-4)
+
+
+def _effnet_unet():
+    smp = pytest.importorskip("segmentation_models_pytorch", reason="needs the pt3 extra")
+    pytest.importorskip("efficientnet_pytorch", reason="needs the efficientnet encoder")
+    return smp.Unet(encoder_name="efficientnet-b3", encoder_weights=None,
+                    in_channels=8, classes=3)
+
+
+def test_lora_adapts_the_efficientnet_encoder():
+    """efficientnet-pytorch convs are Conv2dStaticSamePadding with no `.conv`.
+
+    The earlier lookup skipped every one of them, so a "LoRA" run on the
+    default backbone only adapted the decoder and head (11 convs).
+    """
+    from trazo.pt3_finetune.lora import ConvLoRA, inject_lora
+
+    model = _effnet_unet()
+    inject_lora(model, r=4)
+    in_encoder = sum(isinstance(m, ConvLoRA) for m in model.encoder.modules())
+    assert in_encoder > 100
+
+
+def test_fold_lora_reproduces_the_adapted_model():
+    """A folded checkpoint must load into a plain model and give the same output."""
+    from trazo.pt3_finetune.lora import fold_lora_state_dict, inject_lora
+
+    torch.manual_seed(0)
+    model = _effnet_unet()
+    plain_keys = set(model.state_dict())
+    inject_lora(model, r=4, lora_alpha=2.0)
+    for name, p in model.named_parameters():
+        if name.endswith("lora_B"):
+            torch.nn.init.normal_(p, std=0.05)  # non-zero, so the fold matters
+    model.eval()
+    x = torch.randn(1, 8, 128, 128)
+    with torch.no_grad():
+        adapted = model(x)
+
+    folded = fold_lora_state_dict(model.state_dict(), scaling=2.0 / 4)
+    assert set(folded) == plain_keys
+
+    plain = _effnet_unet()
+    plain.load_state_dict(folded, strict=True)
+    plain.eval()
+    with torch.no_grad():
+        assert torch.allclose(plain(x), adapted, atol=1e-4)
+
+
+def test_merge_folds_lora_checkpoints(tmp_path):
+    """Merging used to drop LoRA deltas silently: their keys match nothing."""
+    from trazo.pt3_finetune.lora import inject_lora
+    from trazo.pt3_finetune.merge import load_state_dict
+
+    model = _effnet_unet()
+    inject_lora(model, r=4, lora_alpha=1.0)
+    path = tmp_path / "lora.ckpt"
+    torch.save({"state_dict": model.state_dict(),
+                "hyper_parameters": {"lora_rank": 4, "lora_alpha": 1.0}}, path)
+    state = load_state_dict(path)
+    assert not any("lora_" in k or ".conv.weight" in k for k in state)
+
+    torch.save({"state_dict": model.state_dict()}, path)
+    with pytest.raises(ValueError, match="lora_alpha"):
+        load_state_dict(path)

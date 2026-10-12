@@ -60,11 +60,14 @@ def decide_action(dtype: np.dtype, vmin: float, vmax: float,
     is_int = np.issubdtype(dtype, np.integer)
     is_float = np.issubdtype(dtype, np.floating)
 
-    if vmin >= target_min and vmax <= target_max:
-        return "skip" if is_int and dtype == np.uint16 else "cast"
-
+    # Reflectance floats also fall inside [0, TARGET_MAX], so this test must come
+    # first: checked second, a GEE `.divide(10000)` export was cast straight to
+    # uint16 and every pixel became 0.
     if is_float and vmax <= 1.0000001 and vmin >= -1e-6:
         return "scale"
+
+    if vmin >= target_min and vmax <= target_max:
+        return "skip" if is_int and dtype == np.uint16 else "cast"
 
     return "clip"
 
