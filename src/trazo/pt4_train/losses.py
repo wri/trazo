@@ -280,6 +280,12 @@ class BinaryTverskyFocalLoss(nn.Module):
     Pytorch version of Tversky focal loss proposed in
     "A novel focal Tversky loss function and improved Attention U-Net for
     lesion segmentation" (https://arxiv.org/abs/1810.07842)
+
+    ``alpha`` weights false negatives and ``beta = 1 - alpha`` weights false
+    positives, as in the paper, so ``alpha > 0.5`` favors recall. This is the
+    reverse of ``segmentation_models_pytorch.losses.TverskyLoss``, where
+    ``alpha`` weights false positives and ``beta`` false negatives. Swap the two
+    when moving a setting between this loss and the smp one.
     """
 
     def __init__(self, smooth=1, alpha=0.7, gamma=1.33):
@@ -464,6 +470,9 @@ class LocallyWeightedTverskyFocalLoss(nn.Module):
 class TverskyFocalCELoss(nn.Module):
     """
     Combination of Tversky focal loss and cross entropy loss.
+
+    ``tversky_alpha`` is the false-negative weight; see
+    ``BinaryTverskyFocalLoss`` for how this differs from smp's TverskyLoss.
     """
 
     def __init__(
